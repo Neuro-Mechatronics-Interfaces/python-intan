@@ -1,0 +1,9 @@
+matplotlib>=3.8.0
+numpy>=1.26.0
+pillow==11.0.0
+scipy==1.14.1
+tensorflow==2.17.0
+seaborn==0.13.2
+PyWavelets
+scikit-learn==1.5.2
+pandas==2.2.2
