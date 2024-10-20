@@ -12,8 +12,11 @@ import utilities.emg_processing as emg_proc
 
 def feature_extraction(data_dir, metrics_path, PCA_comp=8, visualize_pca_results=False):
 
+    print("Starting feature extraction...")
+
     # Load data metrics file
     data_metrics = pd.read_csv(metrics_path)
+    print(f"Loaded data metrics file with {len(data_metrics)} rows")
 
     # Load all the .rhd file paths in the root directory and specified in the metric file
     EMG_PCA_data_df = pd.DataFrame()
@@ -28,6 +31,7 @@ def feature_extraction(data_dir, metrics_path, PCA_comp=8, visualize_pca_results
     # Find the intersection of the file paths and the data_metrics['File Name'] column
     file_paths = list(set(file_paths).intersection(set(data_metrics['File Name'].values)))
 
+    print(f"Found {len(file_paths)} files to process")
     # Process the EMG data in each file
     for file in file_paths:
         result, data_present = rhd_utils.load_file(file, verbose=False)
@@ -80,16 +84,19 @@ def feature_extraction(data_dir, metrics_path, PCA_comp=8, visualize_pca_results
 if __name__ == "__main__":
 
     # Specify the root data path
-    root_dir = 'dataset/raw'
+    root_dir = r'G:\Shared drives\NML_shared\DataShare\HDEMG Human Healthy\intan_HDEMG_sleeve\raw'
 
     # Specify the data metrics file path
-    data_metrics_path = 'dataset/raw_data_metrics.csv'
+    data_metrics_path = r'G:\Shared drives\NML_shared\DataShare\HDEMG Human Healthy\intan_HDEMG_sleeve\raw_data_metrics.csv'
 
     # Specify the save path for the processed data
-    save_path = 'dataset/processed_data.csv'
+    save_path = r'G:\Shared drives\NML_shared\DataShare\HDEMG Human Healthy\intan_HDEMG_sleeve\processed_data.csv'
+
+    # Specify the number of principal components to return from PCA
+    pc = 30
 
     # Do feature extraction
-    df = feature_extraction(root_dir, data_metrics_path)
+    df = feature_extraction(root_dir, data_metrics_path, pc)
 
     # Save the processed EMG data to a CSV file
     df.to_csv(save_path, index=False)
