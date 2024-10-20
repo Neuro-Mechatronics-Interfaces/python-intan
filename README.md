@@ -30,24 +30,24 @@ Code was written and tested using Windows 11, Python 3.10.
    ```
 ## Usage
 1. Data Processing
-    The first step is to preprocess the raw EMG data. We also need to create a metrics file that will store the information about trials, trial length, gestures, etc. Run the command:
+    The first step is to preprocess the raw EMG data. We also need to create a metrics file that will store the information about trials, trial length, gestures, etc. Set the path in the file and run in the terminal:
     ```bash
     python 1_preprocess_data.py
     ```
 2. Feature Extraction
-    The next step is to extract features from the EMG data. This script currently supports PCA for dimensionality reduction. Run the command:
+    The next step is to extract features from the EMG data. This script currently supports PCA for dimensionality reduction. Set paths and run the command:
     ```bash
     python 2_feature_extraction.py
     ```
 3. Train Model
-    The final step is to train a machine learning model for gesture recognition. This script currently supports Random Forest classifiers. Run the command:
+    The final step is to train a machine learning model for gesture recognition. Set paths and run the command:
     ```bash
     python 3_train_model.py
     ```
    
 
 ## Future Improvements
- -  Add support for other classifiers
- -  Expand feature extraction to support CNN architectures.
- -  Add support for real-time classification using the trained models.
- -  Integrate with the Intan RHX system via TCP for real-time data streaming. - 
+ - [x] Add support for other classifiers
+ - [x] Expand feature extraction to support CNN architectures.
+ - [ ] Add support for real-time classification using the trained models.
+ - [ ] Integrate with the Intan RHX system via TCP for real-time data streaming. - 

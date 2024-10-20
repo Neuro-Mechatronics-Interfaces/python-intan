@@ -10,29 +10,45 @@ import utilities.rhd_utilities as rhd_utils
 import utilities.emg_processing as emg_proc
 
 
-def feature_extraction(data_dir, metrics_path, PCA_comp=8, visualize_pca_results=False):
+def feature_extraction(data_dir, 
+                       metrics_file_name='raw_data_metrics.csv', 
+                       save_filename='processed_data.csv', 
+                       PCA_comp=8, 
+                       visualize_pca_results=False, 
+                       save_df=False
+                       ):
+    """
+    This function processes EMG data, performs PCA, and optionally saves the processed feature data.
 
-    print("Starting feature extraction...")
+    Parameters:
+    - data_dir: Directory containing raw data and the metrics file.
+    - metrics_file_name: File name of the metrics CSV that contains file paths and gestures.
+    - save_filename: Name of the output file where processed features will be saved (optional).
+    - PCA_comp: Number of principal components to return from PCA.
+    - visualize_pca_results: Whether to plot the explained variance.
+    - save_df: Whether to save the processed DataFrame to a CSV file.
+    """
 
     # Load data metrics file
+    metrics_path = os.path.join(data_dir, metrics_file_name)
     data_metrics = pd.read_csv(metrics_path)
     print(f"Loaded data metrics file with {len(data_metrics)} rows")
+    
+    # The 'File Name' column contains paths that may start with 'raw'. 
+    data_metrics['Absolute File Path'] = data_metrics['File Name'].apply(
+        lambda x: os.path.join(data_dir, 'raw', x.lstrip("raw\\/"))  # Remove 'raw/' prefix if it exists
+    )
 
-    # Load all the .rhd file paths in the root directory and specified in the metric file
-    EMG_PCA_data_df = pd.DataFrame()
-    file_paths = emg_proc.get_rhd_file_paths(data_dir)
+    # Normalize the file paths to use consistent forward slashes for WSL2 compatibility
+    data_metrics['Absolute File Path'] = data_metrics['Absolute File Path'].apply(lambda x: os.path.normpath(x).replace("\\", "/"))
 
-    # We only want to process files that are contained in the data_matrics['File Name'] column
-    # This is to ensure that we only process files that have been annotated
-    # Normalize the file paths to ensure consistent format
-    file_paths = [os.path.normpath(file) for file in file_paths]
-    data_metrics['File Name'] = data_metrics['File Name'].apply(os.path.normpath)
-
-    # Find the intersection of the file paths and the data_metrics['File Name'] column
-    file_paths = list(set(file_paths).intersection(set(data_metrics['File Name'].values)))
-
+    # Get the absolute paths from the newly created column
+    file_paths = data_metrics['Absolute File Path'].tolist()
     print(f"Found {len(file_paths)} files to process")
+    #print(file_paths)  # Print out paths for debugging
+    
     # Process the EMG data in each file
+    EMG_PCA_data_df = pd.DataFrame()
     for file in file_paths:
         result, data_present = rhd_utils.load_file(file, verbose=False)
         if not data_present:
@@ -67,7 +83,7 @@ def feature_extraction(data_dir, metrics_path, PCA_comp=8, visualize_pca_results
         processed_data = pd.DataFrame(pca_data.T, columns=[f'Channel_{i}' for i in range(pca_data.shape[0])])
 
         # Find matching row in data_metrics for teh current file
-        matching_row = data_metrics[data_metrics['File Name'] == file]
+        matching_row = data_metrics[data_metrics['Absolute File Path'] == file]
         if not matching_row.empty:
             # Add the 'gesture' label to the PCA data as a new column
             row_data = matching_row.iloc[0]
@@ -78,26 +94,34 @@ def feature_extraction(data_dir, metrics_path, PCA_comp=8, visualize_pca_results
         else:
             print(f"No matching row found for file: {file}. Skipping...")
 
-    return EMG_PCA_data_df
-
+    if save_df and save_filename:
+        # Save the processed EMG data to the CSV file
+        #save_path = os.path.join(data_dir, save_filename)
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        save_path = os.path.join(current_dir, save_filename) # Saving locally
+        print(f"Saving processed feature data to:\n {save_path}")
+        try:
+            EMG_PCA_data_df.to_csv(save_path, index=False)
+            print("Data successfully saved!")
+        except Exception as e:
+            print(f"Error saving file: {e}")
+    else:
+        return EMG_PCA_data_df
 
 if __name__ == "__main__":
 
-    # Specify the root data path
-    root_dir = r'G:\Shared drives\NML_shared\DataShare\HDEMG Human Healthy\intan_HDEMG_sleeve\raw'
-
-    # Specify the data metrics file path
-    data_metrics_path = r'G:\Shared drives\NML_shared\DataShare\HDEMG Human Healthy\intan_HDEMG_sleeve\raw_data_metrics.csv'
-
-    # Specify the save path for the processed data
-    save_path = r'G:\Shared drives\NML_shared\DataShare\HDEMG Human Healthy\intan_HDEMG_sleeve\processed_data.csv'
-
-    # Specify the number of principal components to return from PCA
-    pc = 30
+    # Define the root data path once
+    root_dir = '/mnt/g/path/to/folder/with/raw/data'
 
     # Do feature extraction
-    df = feature_extraction(root_dir, data_metrics_path, pc)
-
-    # Save the processed EMG data to a CSV file
-    df.to_csv(save_path, index=False)
+    print("Starting feature extraction...")
+    feature_extraction(
+            data_dir=root_dir, 
+            metrics_file_name='raw_data_metrics.csv',  # Data metrics file name
+            save_filename='processed_data.csv',        # Saved feature data file name
+            PCA_comp=30,                               # Specify the number of principal components to return from PCA
+            visualize_pca_results=False,               # Whether to visualize PCA results
+            save_df=True                               # Whether to save the processed data to a file
+    )
+    print("done!")
 

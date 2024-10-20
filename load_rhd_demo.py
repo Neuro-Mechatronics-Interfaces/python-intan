@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
 
     # Specify the filename
-    filename = 'dataset/raw/2024_10_14/WristExtension_10x_241014_123522/WristExtension_10x_241014_123522.rhd'
+    filename = 'path/to/emg/file.rhd'
 
     # Load the data
     result, data_present = rhd_utils.load_file(filename)
