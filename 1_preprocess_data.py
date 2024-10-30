@@ -4,6 +4,7 @@
 """
 
 import os
+from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -16,12 +17,14 @@ class PreProcess:
     """
 
     def __init__(self, directory,  # directory containing the .rhd files
-                 save_path='dataset/data_metrics.csv',  # path to save the start times
+                 metrics_filename='data_metrics.csv',  # path to save the start times
                  trigger_channel=None,  # trigger channel to detect the rising edge
+                 verbose=False  # print debug messages
                  ):
         self.directory = directory
         self.trigger_channel = trigger_channel
-        self.save_path = save_path
+        self.metrics_filepath = os.path.join(directory, metrics_filename)
+        self.verbose = verbose
         self.vline = None
         self.hline = None
         self.start_times = []
@@ -208,20 +211,34 @@ class PreProcess:
 
         """
         # Step 1: Get all .rhd file paths in the directory
+        print("Searching in directory:", self.directory)
         file_paths = emg_proc.get_rhd_file_paths(self.directory)
-        print("Found .rhd files:", file_paths)
+        print(f"Found {len(file_paths)} .rhd files")
+
+        # Step 1.5, load the metrics file if it exists
+        file_names = None
+        if os.path.isfile(self.metrics_filepath):
+            metrics_file = pd.read_csv(self.metrics_filepath)
+            file_names = metrics_file['File Name'].tolist()
 
         # Step 2: Load the data from each file
         for file in file_paths:
+            filename = Path(file).name
             self.stop_channel_loop = False  # Reset the flag for each file
             self.start_times = []  # Clear start times for each file
 
+            # Check if the file is already in the metrics file
+            if metrics_file is not None and filename in file_names:
+                print(f"File {filename} already processed. Skipping...")
+                continue
+
+            # Load the data from the file
             result, data_present = rhd_utils.load_file(file)
             if not data_present:
                 print(f"No data found in {file}. Skipping...")
                 continue
 
-            print(f"Processing file: {file}")
+            print(f"Processing file: {filename}")
 
             if self.trigger_channel is not None:
                 if 'board_dig_in_data' in result and result['board_dig_in_data'].shape[0] > self.trigger_channel:
@@ -235,7 +252,7 @@ class PreProcess:
                         print(f"N_trials: {N_trials}, Trial Interval: {trial_interval:.2f}s")
                         self.start_times.append(
                             [file, self.trigger_channel, None, first_rising_edge_time, None, N_trials, trial_interval])
-                        self.save_start_times(self.save_path)
+                        self.save_start_times(self.metrics_filepath)
                         continue
                     else:
                         print("No rising edge detected on the trigger channel. Moving to manual selection...")
@@ -249,8 +266,7 @@ class PreProcess:
 
             # Step 3-6: Apply processing to EMG data (filtering, rectifying, etc.)
             print("Filtering data...")
-            filt_data = emg_proc.filter_emg(emg_data, filter_type='bandpass', lowcut=30, highcut=500, fs=sampling_rate,
-                                            verbose=True)
+            filt_data = emg_proc.filter_emg(emg_data, filter_type='bandpass', lowcut=30, highcut=500, fs=sampling_rate, verbose=True)
             print("Subtracting common average reference...")
             car_data = emg_proc.common_average_reference(filt_data)
             print("Rectifying data...")
@@ -265,7 +281,7 @@ class PreProcess:
                     self.stop_channel_loop = False  # Reset the flag for the next channel
                     break
                 print(f"Plotting channel {channel_name}...")
-                self.plot_emg_channel(rms_data[channel_index, :], time_vector, channel_name, sampling_rate, file)
+                self.plot_emg_channel(rms_data[channel_index, :], time_vector, channel_name, sampling_rate, filename)
 
             # === Prompt for N_trials and trial_interval after the loop stops ===
             if self.selected_channel_data:
@@ -285,25 +301,26 @@ class PreProcess:
 
                 # Save the data
                 self.selected_channel_data = []  # Clear the selected data
-                self.save_start_times(self.save_path)
-                print(f"Start times for {file} recorded. Moving to the next file...")
+                self.save_start_times(self.metrics_filepath)
+                print(f"Start times for {filename} recorded. Moving to the next file...")
 
         print("Processing complete.")
         return
 
 
 if __name__ == "__main__":
-    # Specify the root directory containing the .rhd files
-    data_root = 'dataset/raw/2024_10_14'
 
-    # Specify save path
-    metrics_path = 'dataset/raw_data_metrics.csv'
-
+    # Grab the paths from the config file, returning dictionary of paths
+    cfg = emg_proc.read_config_file('CONFIG.txt')
     trigger_name = None  # uncomment and change to name of the trigger channel if exists (ex: 1)
 
     # Create an instance of the PreProcess class and run the preprocess method. If no trigger data is found,
     # the user will be prompted to manually select the start time for each channel.
-    preprocessor = PreProcess(data_root, metrics_path, trigger_channel=trigger_name)
+    preprocessor = PreProcess(directory=cfg['raw_data_path'],
+                              metrics_filename=cfg['metrics_file_path'],
+                              trigger_channel=trigger_name,
+                              verbose=True,
+                   )
     preprocessor.preprocess_data()
 
     # Note that with this version of code, after the data metrics file is created, a new column for the gesture label

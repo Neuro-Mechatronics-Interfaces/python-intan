@@ -201,5 +201,26 @@ def plot_feature_correlation(emg_signal, sample_rate=4000, window_size=400, over
     plt.title('Feature Correlation Heatmap')
     plt.show()
 
+def plot_figure(fig_size=(10, 6), x=None, y=None, title='Example Plot', x_label='X-axis', y_label='Y-axis', legend=True):
+    """
+    """
+    # Create a figure and axis
+    fig, ax = plt.subplots(figsize=fig_size)
+
+    # Plot the data
+    ax.plot(x, y, label='Data')
+
+    # Add a title and labels
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+
+    # Add a legend
+    if legend:
+        ax.legend()
+
+    # Show the plot
+    plt.show()
+
 
 

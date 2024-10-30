@@ -1,27 +1,41 @@
 """ This module contains utility functions for processing EMG data.
 
 """
-
+import os
 import time
 import numpy as np
-from pathlib import Path
+import pandas as pd
 from scipy.signal import find_peaks, peak_widths, butter, filtfilt, hilbert
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 
-def get_rhd_file_paths(directory):
-    """
-    Returns a list of full paths for files ending with .rhd in the given directory and its subdirectories.
+def read_config_file(config_file):
+    # Dictionary to store the key-value pairs
+    config_data = {}
 
-    Args:
-        directory: The directory to search for .rhd files.
+    # Open the CONFIG.txt file and read its contents
+    with open(config_file, 'r') as file:
+        for line in file:
+            # Strip whitespace and ignore empty lines or comments
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
 
-    Returns:
-        rhd_files: List of full paths to .rhd files.
-    """
-    directory = Path(directory)
-    return [str(file) for file in directory.rglob('*.rhd')]
+            # Split the line into key and value at the first '='
+            key, value = line.split('=', 1)
+            config_data[key.strip()] = value.strip()
+
+    return config_data
+
+def get_metrics_file(metrics_filepath, verbose=False):
+    if os.path.isfile(metrics_filepath):
+        if verbose:
+            print("Metrics file found.")
+        return pd.read_csv(metrics_filepath)
+    else:
+        print(f"Metrics file not found: {metrics_filepath}. Please correct file path or generate the metrics file.")
+        return None
 
 
 def butter_bandpass(lowcut, highcut, fs, order=5):

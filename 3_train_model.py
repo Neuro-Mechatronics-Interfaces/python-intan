@@ -6,6 +6,7 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
 from tensorflow.keras import layers, models
 
+import utilities.emg_processing as emg_proc
 
 def build_cnn_model(input_shape, num_classes):
     # https://pmc.ncbi.nlm.nih.gov/articles/PMC10669079/
@@ -32,17 +33,10 @@ def build_cnn_model(input_shape, num_classes):
 
     return model
 
-
-def train_emg_classifier(root_dir, feature_filename='processed_data.csv', num_folds=5, epochs=100, batch_size=32):
+def train_emg_classifier(processed_filepath, num_folds=5, epochs=100, batch_size=32):
 
     # Load processed data file
-    feature_filepath = os.path.abspath(os.path.join(root_dir, feature_filename))
-    try:
-        print(f"Loading feature data from: {feature_filepath}")
-        feature_data = pd.read_csv(feature_filepath)
-    except FileNotFoundError:
-        print(f"File {feature_filepath} not found. Please check the path and file location.")
-        return
+    feature_data = pd.read_csv(processed_filepath)
 
     # Split features (X) and labels (y)
     X = feature_data.drop(columns=['Gesture'])
@@ -107,20 +101,15 @@ def train_emg_classifier(root_dir, feature_filename='processed_data.csv', num_fo
         
 if __name__ == "__main__":
 
-    # Define the path to the feature data
-    #root_dir = '/mnt/g/if/using/google/drive'
-    #root_dir = r'C:\absolute\path\to\your\folder'
-    root_dir = '/home/nml/also/works/with/wsl2'
+    # Grab the paths from the config file, returning dictionary of paths
+    cfg = emg_proc.read_config_file('CONFIG.txt')
 
     # Train the model
-    best_model, best_acc = train_emg_classifier(root_dir, 
-                                feature_filename='processed_data.csv', # Feature data file name
-                                num_folds=5,                           # Number of data splits to train for cross-validation
-                                epochs=150,                            # Total number of times model seees data
-                                batch_size=128,                        # Training samples processed before update
+    best_model, best_acc = train_emg_classifier(
+                                processed_filepath=cfg['processed_file_path'], # Feature data file name
+                                num_folds=5,                                    # Number of data splits to train for cross-validation
+                                epochs=150,                                    # Total number of times model seees data
+                                batch_size=128,                                # Training samples processed before update
                            )
-
-    if best_model:
-        best_model_path = os.path.join(root_dir, 'best_cnn_model.h5')
-        best_model.save(best_model_path)
-        print(f"Best model saved at {best_model_path} with accuracy: {best_acc * 100}%")
+    best_model.save(cfg['model_path'])
+    print(f"Best model saved at {cfg['model_path']} with accuracy: {best_acc * 100}%")

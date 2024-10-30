@@ -11,11 +11,55 @@ import struct
 import math
 import os
 import time
-
 import numpy as np
-
+from pathlib import Path
 import matplotlib.pyplot as plt
 
+def check_file_present(file, metrics_file, verbose=False):
+    """
+    Checks if the file is present in the metrics file.
+
+    Args:
+        file: The file to check.
+        metrics_file: The metrics file to search.
+        verbose:  (Optional) Boolean indicating if the function should print messages.
+
+    Returns:
+        filename: The name of the file.
+        is_present: Boolean indicating if the file is present in the metrics file.
+    """
+    filename = Path(file).name
+    if filename not in metrics_file['File Name'].tolist():
+        if verbose:
+            print(f"File {filename} not found in metrics file")
+        return filename, False
+
+    return filename, True
+
+def get_rhd_file_paths(directory, verbose=False):
+    """
+    Returns a list of full paths for files ending with .rhd in the given directory and its subdirectories.
+
+    Args:
+        directory: The directory to search for .rhd files.
+
+    Returns:
+        rhd_files: List of full paths to .rhd files.
+    """
+    # Sanitize the path
+    directory = Path(directory)
+
+    # Check if the directory exists
+    if verbose:
+        print("Searching in directory:", directory)
+    if not directory.exists():
+        print(f"Directory does not exist: {directory}")
+        return []
+
+    file_paths = [str(file) for file in directory.rglob('*.rhd')]
+    if verbose:
+        print(f"Found {len(file_paths)} .rhd files")
+    return file_paths
 
 def load_file(filename, verbose=True):
     """Loads .rhd file with provided filename, returning 'result' dict and

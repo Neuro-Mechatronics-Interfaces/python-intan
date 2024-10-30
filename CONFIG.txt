@@ -1,0 +1,5 @@
+# Replace the paths with your own paths
+raw_data_path=/mnt/g/Shared drives/NML_shared/DataShare/HDEMG Human Healthy/intan_HDEMG_sleeve/Jonathan
+metrics_file_path=/mnt/g/Shared drives/NML_shared/DataShare/HDEMG Human Healthy/intan_HDEMG_sleeve/Jonathan/raw_data_metrics.csv
+processed_file_path=/home/nml/github/Intan_EMG_Python/processed_data.csv
+model_path=/home/nml/github/Intan_EMG_Python/cnn_model.keras
