@@ -7,3 +7,4 @@ seaborn==0.13.2
 PyWavelets
 scikit-learn==1.5.2
 pandas==2.2.2
+pyyaml

@@ -5,26 +5,29 @@ import tensorflow as tf
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
 from tensorflow.keras import layers, models
+from tensorflow.keras.layers import Normalization
 
 import utilities.emg_processing as emg_proc
 
-def build_cnn_model(input_shape, num_classes):
-    # https://pmc.ncbi.nlm.nih.gov/articles/PMC10669079/
-    model = models.Sequential()
+def build_cnn_model(input_shape, num_classes, training_data):
 
-    # Input Layer
-    model.add(layers.InputLayer(input_shape=input_shape))
+    # Build the model
+    model = models.Sequential([
 
-    # Fully Connected Layer 1 with Dropout
-    model.add(layers.Dense(512, activation='relu'))
-    model.add(layers.Dropout(0.2))
+        # Add the pre-normalized data as the input layer
+        layers.InputLayer(input_shape=input_shape),
 
-    # Fully Connected Layer 2 with Dropout
-    model.add(layers.Dense(512, activation='relu'))
-    model.add(layers.Dropout(0.2))
+        # Fully Connected Layer 1 with Dropout
+        layers.Dense(512, activation='relu'),
+        layers.Dropout(0.2),
 
-    # Output Layer (10 classes with softmax)
-    model.add(layers.Dense(num_classes, activation='softmax'))
+        # Fully Connected Layer 2 with Dropout
+        layers.Dense(512, activation='relu'),
+        layers.Dropout(0.2),
+
+        # Output Layer
+        layers.Dense(num_classes, activation='softmax')
+    ])
 
     # Compile the model
     model.compile(optimizer='adam',
@@ -44,6 +47,13 @@ def train_emg_classifier(processed_filepath, num_folds=5, epochs=100, batch_size
     
     # Encode labels to numerical values
     y_encoded, _ = pd.factorize(y)
+
+    # print out the gestures and corresponding numerical values
+    print("Gesture labels and their corresponding numerical values:")
+    for i, gesture in enumerate(np.unique(y)):
+        print(f"{gesture} -> {i}")
+
+    #return 0, 0
     
     # Convert labels to one-hot encoding
     n_gestures = len(np.unique(y_encoded))
@@ -72,7 +82,7 @@ def train_emg_classifier(processed_filepath, num_folds=5, epochs=100, batch_size
         y_train, y_test = y_one_hot[train_idx], y_one_hot[test_idx]
 
         # Build the CNN model
-        model = build_cnn_model((X_train.shape[1],), n_gestures)
+        model = build_cnn_model((X_train.shape[1],), n_gestures, X_train)
 
         # Train the model
         history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, verbose=1)

@@ -5,7 +5,9 @@ collect features to build the final dataset to train our model with
 Author: Jonathan Shulgach
 Last Modified: 10/28/24
 """
-
+import yaml
+import time
+import numpy as np
 import pandas as pd
 import utilities.rhd_utilities as rhd_utils
 import utilities.plotting_utilities as plot_utils
@@ -25,8 +27,9 @@ def feature_extraction(data_dir, metrics_filepath, processed_filepath, PCA_comp=
     if metrics_file is None:
         return
 
-    # Process the EMG data in each file
+    # Initialize Dataframe for PCA data
     EMG_PCA_data_df = pd.DataFrame()
+    normalization_params = {}
     for file in file_paths:
 
         # Check if the file is already contained in the file_names list, if not continue
@@ -41,31 +44,39 @@ def feature_extraction(data_dir, metrics_filepath, processed_filepath, PCA_comp=
             continue
 
         # Step 3: Process the EMG data to remove noise. PCA is highly sensitive to noise
-        cleaned_emg = emg_proc.process_emg_pipeline(result)
-        sample_rate = int(result['frequency_parameters']['board_dig_in_sample_rate'])  # Extract sampling rate
-
+        #cleaned_emg = emg_proc.process_emg_pipeline(result)
+        #cleaned_emg = emg_proc.z_score_norm(cleaned_emg)
+        # Process data: bp filter, envelope, normalize, PCA
         # Step 4: There are a lot of channels, so we need to use PCA to get the most important features
-        pca_data, explained_variance = emg_proc.apply_pca(cleaned_emg, num_components=PCA_comp)
-        #pca_data = cleaned_emg
+        # pca_data, explained_variance = emg_proc.apply_pca(cleaned_emg, num_components=PCA_comp)
+        emg_data = result['amplifier_data']  # Extract EMG data
+        sample_rate = int(result['frequency_parameters']['board_dig_in_sample_rate'])
+
+        # Overwrite the first and last second of the data with 0 to remove edge effects
+        # emg_data[:, :sample_rate] = 0.0
+        emg_data[:, -sample_rate:] = 0.0  # Just first second
+        bandpass_filtered = emg_proc.filter_emg(emg_data, 'bandpass', lowcut=30, highcut=500, fs=sample_rate, order=5)
+        smoothed_emg = emg_proc.envelope_extraction(bandpass_filtered, method='hilbert')
+        norm_emg = emg_proc.z_score_norm(smoothed_emg)
+        print(f"Normalized EMG shape: {norm_emg.shape}")
+        pca_data, explained_variance = emg_proc.apply_pca(norm_emg, num_components=PCA_comp)
 
         # We can confirm the number of components is good by checking the increasing explained variance
-        explained_variance_sum = [0]
-        N_var = len(explained_variance)
-        for i in range(N_var):
-            explained_variance_sum.append(explained_variance_sum[i] + explained_variance[i])
+        explained_variance_sum = np.cumsum(explained_variance)
         print("Highest explained variance in percentage: {}".format(explained_variance_sum[-1]*100))
 
         # We can also plot it to see the elbow point
         if visualize_pca_results:
-            plot_utils.plot_figure(x=range(N_var), y=explained_variance_sum,
-                                   x_label="Number of components",
-                                   y_label="Explained variance",
-                                   title="Explained variance vs. Number of components")
+            plot_utils.plot_figure(
+                x=range(N_var),
+                y=explained_variance_sum,
+                x_label="Number of components",
+                y_label="Explained variance",
+                title="Explained variance vs. Number of components"
+            )
 
-        # Convert processed data to a DataFrame
+        # Convert processed data to a DataFrame and add time index
         processed_data = pd.DataFrame(pca_data.T, columns=[f'Channel_{i}' for i in range(pca_data.shape[0])])
-
-        # Add the time index to the DataFrame
         processed_data['Time (s)'] = result['t_amplifier']
 
         # Step 5: Add labels to data
