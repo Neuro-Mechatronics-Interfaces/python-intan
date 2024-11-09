@@ -28,7 +28,7 @@ if __name__ == "__main__":
         channels_to_plot = range(128)  # Channels 000 to 127
         time_vector = result['t_amplifier']  # Assuming t_amplifier contains the time vector
         plot_utils.waterfall_plot(result, channels_to_plot, time_vector,
-                                  plot_title='2024-10-11: Wrist Extension 10x'
+                                  plot_title='2024-10-22: Wrist Flexion 5x'
                                   )
         plt.show()
     else:

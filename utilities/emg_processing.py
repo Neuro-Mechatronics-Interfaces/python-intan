@@ -225,7 +225,7 @@ def sliding_window(data, window_size, step_size):
     return windows
 
 
-def apply_pca(data, num_components=8, verbose=True):
+def apply_pca(data, num_components=8, verbose=False):
     """
     Applies PCA to reduce the number of EMG channels to the desired number of components.
 
@@ -279,6 +279,22 @@ def apply_gesture_label(df, sampling_rate, data_metrics, start_index_name='Start
         df.loc[start_flex:end_flex, 'Gesture'] = gesture
 
     return df
+
+def z_score_norm(data):
+    """
+    Apply z-score normalization to the input data.
+
+    Args:
+        data: 2D numpy array of shape (channels, samples).
+
+    Returns:
+        normalized_data: 2D numpy array of shape (channels, samples) after z-score normalization.
+    """
+    mean = np.mean(data, axis=1)[:, np.newaxis]
+    std = np.std(data, axis=1)[:, np.newaxis]
+    normalized_data = (data - mean) / std
+    return normalized_data
+
 
 
 def z_score_norm(data):
