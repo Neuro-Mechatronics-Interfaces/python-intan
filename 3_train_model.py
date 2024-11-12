@@ -2,113 +2,107 @@ import os
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, train_test_split
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
+
 from tensorflow.keras import layers, models
 from tensorflow.keras.layers import Normalization
 
 import utilities.emg_processing as emg_proc
+import utilities.models as emg_models
 
-def build_cnn_model(input_shape, num_classes, training_data):
 
-    # Build the model
-    model = models.Sequential([
-
-        # Add the pre-normalized data as the input layer
-        layers.InputLayer(input_shape=input_shape),
-
-        # Fully Connected Layer 1 with Dropout
-        layers.Dense(512, activation='relu'),
-        layers.Dropout(0.2),
-
-        # Fully Connected Layer 2 with Dropout
-        layers.Dense(512, activation='relu'),
-        layers.Dropout(0.2),
-
-        # Output Layer
-        layers.Dense(num_classes, activation='softmax')
-    ])
-
-    # Compile the model
-    model.compile(optimizer='adam',
-                  loss='categorical_crossentropy',
-                  metrics=['accuracy'])
-
-    return model
-
-def train_emg_classifier(processed_filepath, num_folds=5, epochs=100, batch_size=32):
+def train_emg_classifier(processed_filepath, gesture_label_filepath='gesture_labels.csv', model_type='rf', do_kfold=True, num_folds=5, epochs=100, batch_size=32):
 
     # Load processed data file
     feature_data = pd.read_csv(processed_filepath)
+    print(f"Loaded processed data from {processed_filepath} with shape: {feature_data.shape}")
 
     # Split features (X) and labels (y)
-    X = feature_data.drop(columns=['Gesture'])
-    y = feature_data['Gesture']
+    X = feature_data.drop(columns=['Gesture']).values
+    y = feature_data['Gesture'].values
+
+    if len(np.unique(y)) < 2:
+        print("Not enough unique gestures to train the model. Exiting...")
+        return None, None
     
     # Encode labels to numerical values
     y_encoded, _ = pd.factorize(y)
+    n_gestures = len(np.unique(y_encoded))
 
     # print out the gestures and corresponding numerical values
     print("Gesture labels and their corresponding numerical values:")
     for i, gesture in enumerate(np.unique(y)):
         print(f"{gesture} -> {i}")
 
-    #return 0, 0
+    # Save gesture labels to a file
+    gesture_labels = pd.DataFrame({'Gesture': np.unique(y), 'Numerical Value': np.unique(y_encoded)})
+    gesture_labels.to_csv(gesture_label_filepath, index=False)
+
+    # Not using one-hot encoding
+    #y_one_hot = tf.keras.utils.to_categorical(y_encoded, num_classes=n_gestures)
     
-    # Convert labels to one-hot encoding
-    n_gestures = len(np.unique(y_encoded))
-    y_one_hot = tf.keras.utils.to_categorical(y_encoded, num_classes=n_gestures)
-    
-    print("Training model...")
-    # We can split up the data 80%/20% for training/testing, and fit the model, doing all this once...
-    #X_train, X_test, y_train, y_test = train_test_split(X, y_one_hot, test_size=0.2, random_state=42)
-    #cnn_model = build_cnn_model((30,), n_gestures)
-    #cnn_model.fit(X_train, y_train_one_hot, epochs=epochs, batch_size=batch_size, validation_split=0.2, verbose=1)
-    
-    # Or we can implement K-Fold cross validation to ensure the model's performance is stable across different 
-    # subsets and avoid overfitting!
-    kfold = KFold(n_splits=num_folds, shuffle=True, random_state=42)
-    fold_no = 1
-    accuracies = []
+    print(f"Training {model_type.upper()} model...")
 
-    # K-Fold Cross Validation
-    best_model = None
-    best_accuracy = 0
-    for train_idx, test_idx in kfold.split(X, y_one_hot):
-        print(f"Training on fold {fold_no}...")
-        
-        # Split the data into training and testing sets for this fold
-        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-        y_train, y_test = y_one_hot[train_idx], y_one_hot[test_idx]
+    if not do_kfold:
+        # We can split up the data 80%/20% for training/testing
+        X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
+        print(f"Training data shape: {X_train.shape}, Testing data shape: {X_test.shape}")
 
-        # Build the CNN model
-        model = build_cnn_model((X_train.shape[1],), n_gestures, X_train)
+        if model_type == 'rf':
+            model = RandomForestClassifier(n_estimators=100, random_state=42)
+            model.fit(X_train, y_train)
+            y_pred = model.predict(X_test)
+            acc = accuracy_score(y_test, y_pred)
+            print(f"Random Forest accuracy: {acc * 100}%")
 
-        # Train the model
-        history = model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, verbose=1)
+        elif model_type == 'rnn':
+            # Reshape for RNN (samples, timesteps, features)
+            X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+            X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
 
-        # Evaluate the model on the test set
-        scores = model.evaluate(X_test, y_test, verbose=0)
-        accuracy = scores[1] # Accuracy at index 1
-        print(f"Fold {fold_no} - Test accuracy: {scores[1] * 100}%")
+            model = emg_models.build_rnn_model((X_train.shape[1], 1), n_gestures)
+            model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, verbose=1)
+            acc = model.evaluate(X_test, y_test, verbose=1)
+            print(f"RNN accuracy: {acc[1] * 100}%")
 
-        # Store the accuracy for this fold
-        accuracies.append(scores[1])
+        elif model_type == 'cnn':
+            # Reshape for CNN (samples, features, channels)
+            X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+            X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
 
-        # Save the model if it is the best so far
-        if accuracy > best_accuracy:
-            best_accuracy = accuracy
-            best_model = model
-            
-        fold_no += 1
+            model = emg_models.build_cnn_model((X_train.shape[1], 1), n_gestures)
+            model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, verbose=1)
+            acc = model.evaluate(X_test, y_test, verbose=1)
+            print(f"CNN accuracy: {acc[1] * 100}%")
 
-    # Calculate and print the average accuracy across all folds
-    avg_accuracy = np.mean(accuracies)
-    print(f"Average test accuracy across {num_folds} folds: {avg_accuracy * 100}%")
+        elif model_type == 'grnn':
+            # Just train a simple GRNN model
+            model = emg_models.build_grnn_model()
+            model.fit(X_train, y_train)
+            y_test_labels = np.argmax(y_test, axis=1)
+            y_pred = model.predict(X_test)
+            acc = accuracy_score(y_test_labels, y_pred)
+            print(f"GRNN accuracy: {acc * 100}%")
 
-    return best_model, best_accuracy
-        
-        
+        elif model_type == 'intan':
+            # Just Intan cnn model
+            model = emg_models.build_intan_nn_model((X_train.shape[1],), n_gestures)
+            model.summary()
+            print(model.input_shape)
+            print(model.output_shape)
+            model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=1)
+            #y_test_labels = np.argmax(y_test, axis=1)
+            test_loss, acc = model.evaluate(X_test, y_test)
+            print(f"Intan CNN accuracy: {acc * 100}%")
+
+    else:
+        # Or we can implement K-Fold cross validation to ensure the model's performance is stable across different subsets and avoid overfitting!
+        kfold_training(model=model_type, X=X, y_one_hot=y_one_hot, num_folds=num_folds, epochs=epochs, batch_size=batch_size)
+
+    return model, acc
+
 if __name__ == "__main__":
 
     # Grab the paths from the config file, returning dictionary of paths
@@ -117,9 +111,13 @@ if __name__ == "__main__":
     # Train the model
     best_model, best_acc = train_emg_classifier(
                                 processed_filepath=cfg['processed_file_path'], # Feature data file name
-                                num_folds=5,                                    # Number of data splits to train for cross-validation
-                                epochs=150,                                    # Total number of times model seees data
+                                gesture_label_filepath=cfg['gesture_label_file_path'], # Gesture label file name
+                                model_type='intan',                               # Model type to train
+                                do_kfold=False,                                 # Whether to use K-Fold cross-validation
+                                num_folds=2,                                    # Number of data splits to train for cross-validation
+                                epochs=200,                                    # Total number of times model seees data
                                 batch_size=128,                                # Training samples processed before update
                            )
-    best_model.save(cfg['model_path'])
-    print(f"Best model saved at {cfg['model_path']} with accuracy: {best_acc * 100}%")
+    if best_model:
+        best_model.save(cfg['model_path'])
+        print(f"Best model saved at {cfg['model_path']} with accuracy: {best_acc * 100}%")

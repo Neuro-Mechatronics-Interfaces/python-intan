@@ -10,10 +10,41 @@ Last modified: 10/18/24 (Jonathan Shulgach)
 import struct
 import math
 import os
+import platform
 import time
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
+
+def adjust_path(path):
+    system = platform.system()
+
+    # Check if the system is running under WSL
+    if "microsoft" in platform.uname().release.lower():
+        system = "WSL"
+
+    # Modify the path based on the system type
+    if system == "Windows":
+        # If running on native Windows, return the path as is
+        return path
+
+
+    elif system == "WSL":
+        # If running on WSL, convert "C:/" to "/mnt/c/"
+        if len(path) > 1 and path[1] == ":":
+            drive_letter = path[0].lower()
+            # Properly replace backslashes without using them in f-string
+            linux_path = path[2:].replace("\\", "/")
+            return f"/mnt/{drive_letter}{linux_path}"
+        else:
+            return path
+
+    elif system == "Linux":
+        # If running on native Linux, assume Linux paths are provided correctly
+        return path
+
+    else:
+        raise ValueError(f"Unsupported system: {system}")
 
 def check_file_present(file, metrics_file, verbose=False):
     """

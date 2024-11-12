@@ -3,18 +3,65 @@
 """
 import os
 import time
+import pywt
 import numpy as np
 import pandas as pd
-from scipy.signal import find_peaks, peak_widths, butter, filtfilt, hilbert
+from scipy.signal import find_peaks, peak_widths, butter, filtfilt, hilbert, iirnotch
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
+# Define constants for windowing parameters and feature extraction
+WINDOW_SIZE = 400
+OVERLAP = 200
+
+# Define feature extraction functions
+def extract_wavelet_features(emg_data, window_size=WINDOW_SIZE, overlap=OVERLAP):
+    features = []
+    num_samples, num_channels = emg_data.shape
+    print(f"Num samples: {num_samples}, Num channels: {num_channels}")
+    step = window_size - overlap
+
+    for start in range(0, num_samples - window_size + 1, step):
+        window = emg_data[start:start + window_size]
+        window_features = []
+
+        for channel_data in window.T:
+            # Apply 2-level wavelet decomposition using dbl mother wavelet
+            coeffs = pywt.wavedec(channel_data, 'db4', level=2)
+
+            # Extract 19 statistical features from the detail and approximation coefficients
+            # Or pick and choose the features you want to extract
+            for coeff in coeffs:
+                window_features.extend([
+                    np.sum(np.abs(coeff)),  # IEMG
+                    np.mean(np.abs(coeff)),  # MAV
+                    np.sum(coeff ** 2),  # SSI
+                    np.sqrt(np.mean(coeff ** 2)),  # RMS
+                    np.var(coeff),  # VAR
+                    np.mean(coeff > 0),  # MYOP
+                    np.sum(np.abs(np.diff(coeff))),  # WL
+                    np.mean(np.abs(np.diff(coeff))),  # DAMV
+                    np.sum(coeff ** 2) / len(coeff),  # Second-order moment (M2)
+                    np.var(np.diff(coeff)),  # DVARV
+                    np.std(np.diff(coeff)),  # DASDV
+                    np.sum(np.abs(coeff) > 0.05),  # WAMP (threshold = 0.05)
+                    np.sum(np.abs(np.diff(coeff, 2))),  # IASD
+                    np.sum(np.abs(np.diff(coeff, 3))),  # IATD
+                    np.sum(np.exp(np.abs(coeff))),  # IEAV
+                    np.sum(np.log(np.abs(coeff) + 1e-6)),  # IALV
+                    np.sum(np.exp(coeff)),  # IE
+                    np.min(coeff),  # MIN
+                    np.max(coeff)  # MAX
+                ])
+        features.append(window_features)
+
+    return np.array(features)
 
 def read_config_file(config_file):
     # Dictionary to store the key-value pairs
     config_data = {}
 
-    # Open the CONFIG.txt file and read its contents
+    # Open the TRUECONFIG.txt file and read its contents
     with open(config_file, 'r') as file:
         for line in file:
             # Strip whitespace and ignore empty lines or comments
@@ -37,6 +84,12 @@ def get_metrics_file(metrics_filepath, verbose=False):
         print(f"Metrics file not found: {metrics_filepath}. Please correct file path or generate the metrics file.")
         return None
 
+def notch_filter(data, fs=4000, f0=60.0, Q=30):
+    """Applies a notch filter to the data to remove 60 Hz interference.
+        Assumes data shape (n_channels, n_samples).
+    """
+    b, a = iirnotch(f0, Q, fs)
+    return filtfilt(b, a, data, axis=1)
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
     # butterworth bandpass filter
@@ -54,16 +107,16 @@ def butter_lowpass(cutoff, fs, order=5):
     return b, a
 
 
-def butter_lowpass_filter(data, cutoff, fs, order=5):
+def butter_lowpass_filter(data, cutoff, fs, order=5, axis=0):
     b, a = butter_lowpass(cutoff, fs, order)
-    y = filtfilt(b, a, data, axis=0)  # Filter along axis 0 (time axis) for all channels simultaneously
+    y = filtfilt(b, a, data, axis=axis)  # Filter along axis 0 (time axis) for all channels simultaneously
     return y
 
 
-def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5, axis=0):
     # function to implement filter on data
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
-    y = filtfilt(b, a, data, axis=0)  # Filter along axis 0 (time axis) for all channels simultaneously
+    y = filtfilt(b, a, data, axis=axis)  # Filter channels simultaneously
     return y
 
 
@@ -147,6 +200,41 @@ def window_rms_1D(signal, window_size):
         Windowed RMS signal.
     """
     return np.sqrt(np.convolve(signal ** 2, np.ones(window_size) / window_size, mode='same'))
+
+# Root mean square (RMS) calculation
+def old_calculate_rms(data, window_size=300):
+    """
+    Calculate RMS over a window.
+    Args:
+        data (numpy.ndarray): Filtered EMG data.
+        window_size (int): Window size in samples (100 ms * 3000 Hz = 300 samples).
+    Returns:
+        numpy.ndarray: RMS values for each window.
+    """
+    n_samples = data.shape[0]
+    if n_samples < window_size:
+        raise ValueError(f"Insufficient data length ({n_samples}) for the specified window size ({window_size}).")
+
+    n_windows = n_samples // window_size
+    if n_windows == 0:
+        raise ValueError("Not enough data to create any windows for RMS calculation.")
+
+    rms_values = np.sqrt(np.mean(data[:n_windows * window_size].reshape(n_windows, window_size, -1) ** 2, axis=1))
+    return rms_values
+
+def calculate_rms(data, window_size):
+    """Calculates RMS features for each channel using non-overlapping windows."""
+    n_channels, n_samples = data.shape
+    n_windows = n_samples // window_size
+    rms_features = np.zeros((n_channels, n_windows))
+
+    for ch in range(n_channels):
+        for i in range(n_windows):
+            window = data[ch, i * window_size:(i + 1) * window_size]
+            rms_features[ch, i] = np.sqrt(np.mean(window ** 2))
+
+    return rms_features  # Shape (n_channels, n_windows)
+
 
 
 def common_average_reference(emg_data):
@@ -239,11 +327,11 @@ def apply_pca(data, num_components=8, verbose=False):
     """
     # Step 1: Standardize the data across the channels
     scaler = StandardScaler()
-    data_standardized = scaler.fit_transform(data.T).T  # Standardizing along the channels
+    features_std = scaler.fit_transform(data)  # Standardizing along the channels
 
     # Step 2: Apply PCA
     pca = PCA(n_components=num_components)
-    pca_data = pca.fit_transform(data_standardized.T).T  # Apply PCA on the transposed data
+    pca_data = pca.fit_transform(features_std) # Apply PCA on the transposed data
 
     if verbose:
         print("Original shape:", data.shape)
@@ -261,13 +349,17 @@ def apply_gesture_label(df, sampling_rate, data_metrics, start_index_name='Start
     """
 
     # Initialize a label column in the dataframe
-    df['Gesture'] = 'Rest'  # Default is 'Rest'
+    #df['Gesture'] = 'Rest'  # Default is 'Rest'
 
     # Collect the data metrics for the current file
     start_idx = data_metrics[start_index_name]
+    print(f"Start index: {start_idx}")
     n_trials = data_metrics[n_trials_name]
+    print(f"Number of trials: {n_trials}")
     trial_interval = data_metrics[trial_interval_name]
+    print(f"Trial interval: {trial_interval}")
     gesture = data_metrics[gesture_name]
+    print(f"Gesture: {gesture}")
 
     # Iterate over each trial and assign the gesture label to the corresponding samples
     for i in range(n_trials):
@@ -311,3 +403,34 @@ def z_score_norm(data):
     std = np.std(data, axis=1)[:, np.newaxis]
     normalized_data = (data - mean) / std
     return normalized_data
+
+# RMS (Root Mean Square)
+def compute_rms(emg_window):
+    return np.sqrt(np.mean(emg_window**2))
+
+# WL (Waveform Length)
+def compute_wl(emg_window):
+    return np.sum(np.abs(np.diff(emg_window)))
+
+# MAS (Median Amplitude Spectrum)
+def compute_mas(emg_window):
+    fft_values = np.fft.fft(emg_window)
+    magnitude_spectrum = np.abs(fft_values)
+    return np.median(magnitude_spectrum)
+
+# SampEn (Sample Entropy)
+import antropy as ant
+
+def compute_sampen(emg_window, m=2, r=0.2):
+    return ant.sample_entropy(emg_window, order=m)
+
+# Extract features for a given EMG window
+def extract_features(emg_window):
+    """https://link.springer.com/article/10.1007/s00521-019-04142-8"""
+    features = [
+        compute_rms(emg_window),
+        compute_wl(emg_window),
+        compute_mas(emg_window),
+        compute_sampen(emg_window)
+    ]
+    return np.array(features)

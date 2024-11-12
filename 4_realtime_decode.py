@@ -1,6 +1,7 @@
 import socket
 import keras
 import numpy as np
+import pandas as pd
 import time
 import asyncio
 import matplotlib.pyplot as plt
@@ -117,10 +118,11 @@ class IntanEMG:
         verbose (bool): Whether to display verbose output.
     """
     def __init__(self, model_path='model.keras',
+                       gesture_labels_filepath=None,
+                       channels=None,
                        ring_buffer_size=4000,
                        waveform_buffer_size=175000,
                        command_buffer_size=1024,
-                       channels=None,
                        show_plot=False,
                        verbose=False
                  ):
@@ -140,6 +142,13 @@ class IntanEMG:
         except FileNotFoundError:
             print(f"Model file not found at {model_path}")
             self.model = None
+
+        # Load the gesture labels
+        if gesture_labels_filepath:
+            self.gesture_labels = pd.read_csv(gesture_labels_filepath)
+            self.gesture_labels_dict = dict(zip(self.gesture_labels['Numerical Value'], self.gesture_labels['Gesture']))
+            print("Gesture Labels:")
+            print(self.gesture_labels_dict)
 
         # Setup TCP clients
         self.s_command = TCPClient('Command',
@@ -245,8 +254,8 @@ class IntanEMG:
                         self.ring_buffer.append(timestamp, frame_data)
 
                 end_t = time.time()
-                #if self.verbose:
-                print(f"Buffer length: {len(self.ring_buffer.samples)} samples.")
+                if self.verbose:
+                    print(f"Buffer length: {len(self.ring_buffer.samples)} samples.")
                 if self.verbose:
                     print(f"Intan data sampled in: {end_t - start_t:.4f} seconds")
                 await asyncio.sleep(0)
@@ -298,55 +307,126 @@ class IntanEMG:
 
             while not self.all_stop:
                 start_t = time.time()
-                emg_data, t = self.get_samples(100) # Pass in the number of samples (0.25 seconds)
-                if emg_data is None or len(emg_data) == 0:
-                    await asyncio.sleep(0.1)
+
+                if not self.ring_buffer.is_full():
+                    await asyncio.sleep(0.01)
                     continue
 
-                # Visualization shows down the update rate
-                if self.show_plot:
-                     # Update each channels subplot
-                     for i, channel in enumerate(self.channels):
-                         y = emg_dtata[:, i]
-                         self.ax[i].cla()
-                         self.ax[i].plot(t, y)
-                         self.ax[i].set_ylim(-1000, 1000)
-                         self.ax[i].grid()
-                         self.ax[i].set_ylabel(f'CH{channel}')
+                try:
+                    emg_data, t = self.get_samples(2000) # Pass in the number of samples (0.25 seconds)
+                    if emg_data is None or len(emg_data) == 0:
+                        await asyncio.sleep(0.1)
+                        continue
 
-                     plt.draw()
-                     plt.pause(0.001)
+                    # Visualization shows down the update rate
+                    if self.show_plot:
+                         # Update each channels subplot
+                         for i, channel in enumerate(self.channels):
+                             y = emg_data[:, i]
+                             self.ax[i].cla()
+                             self.ax[i].plot(t, y)
+                             self.ax[i].set_ylim(-1000, 1000)
+                             self.ax[i].grid()
+                             self.ax[i].set_ylabel(f'CH{channel}')
 
-                # Process data: bp filter, envelope, normalize, PCA
-                bandpass_filtered = emg_proc.filter_emg(emg_data, 'bandpass', lowcut=30, highcut=500, fs=self.sample_rate, order=5)
-                smoothed_emg = emg_proc.envelope_extraction(bandpass_filtered, method='hilbert')
-                norm_emg = emg_proc.z_score_norm(smoothed_emg)
-                pca_data, _ = emg_proc.apply_pca(norm_emg.T, num_components=31)
-                pca_data = pca_data.T
+                         plt.draw()
+                         plt.pause(0.001)
 
-                # Extract a single sample (most recent)
-                pca_data = pca_data[-1]
+                    # ===== Method 1 ======
+                    # Process data: bp filter, envelope, normalize, PCA
+                    #bandpass_filtered = emg_proc.filter_emg(emg_data, 'bandpass', lowcut=30, highcut=500, fs=self.sample_rate, order=5)
+                    #smoothed_emg = emg_proc.envelope_extraction(bandpass_filtered, method='hilbert')
+                    #norm_emg = emg_proc.z_score_norm(smoothed_emg)
+                    #pca_data, explained_variance = emg_proc.apply_pca(norm_emg, num_components=31)
 
-                # Add an extra dimension to pca_data to make it compatible with the model's expected input shape
-                pca_data = np.expand_dims(pca_data, axis=0)  # Now pca_data has shape (1, 31)
+                    # ===== Method 2 ======
+                    #feature_data = emg_proc.extract_wavelet_features(emg_data)
+                    #if feature_data is None or len(feature_data) == 0:
+                    #    print("feature extraction returned no data.")
+                    #    continue
+                    #print(f"Feature data shape: {feature_data.shape}")
+                    # Ensure the data has the correct shape for the model
+                    #if len(feature_data.shape) == 1:
+                    #    feature_data = np.expand_dims(feature_data, axis=0)
 
-                # Predict the gesture
-                if self.model:
-                    print("Predicting gesture...")
-                    try:
-                        p_gestures = self.model.predict(pca_data)  # Use .predict() for Keras models
-                        gesture_idx = np.argmax(p_gestures)# Get the gesture index with the highest probability
-                        print("Gesture Probabilities/: ")
-                        for i, p in enumerate(p_gestures[0]):
-                            print(f"{GESTURES[i]}: {p:.12f}")
+                    # Add the third dimension to match the model input (i.e., add a "feature" dimension)
+                    #feature_data = np.expand_dims(feature_data, axis=-1)  # Now feature_data has shape (1, 3072, 1)
+                    #if feature_data.shape[1:] != self.model.input_shape[1:]:
+                    #    print(
+                    #        f"Expected input shape with {self.model.input_shape[1:]} features, but got {feature_data.shape[1:]}. Skipping prediction...")
+                    #    continue
 
-                        #print(f"Predicted gesture: {GESTURES[gesture_idx]}")
-                    except Exception as e:
-                        print(f"Error predicting gesture: {e}")
+                    #print(f"Selecting channels: {self.channels}")
+                    # Select the subset of rows corresponding to the selected channels
+                    #full_emg_data = full_emg_data[self.channels, :]
+                    #print(f"Selected data shape: {emg_data.shape}")
 
-                end_t = time.time()
-                print(f"Loop time: {end_t - start_t:.4f} seconds")
-                await asyncio.sleep(0)
+                    # ===== Method 3 ======
+                    emg_data = emg_data.T  # Transpose to have shape (num_channels, num_samples)
+                    filtered_data = emg_proc.notch_filter(emg_data, fs=self.sample_rate, f0=60)  # 60Hz notch filter
+                    filtered_data = emg_proc.butter_bandpass_filter(filtered_data, lowcut=20, highcut=400,
+                                                                    fs=self.sample_rate, order=2, axis=1)  # bandpass filter
+                    #print(f"Filtered data shape: {filtered_data.shape}")
+                    bin_size = int(0.1 * self.sample_rate)  # 400ms bin size
+                    rms_features = emg_proc.calculate_rms(filtered_data, bin_size)  # Calculate RMS feature with 400ms sampling bin
+                    #print(f"RMS features shape: {rms_features.shape}")
+
+                    # Create lagged features by concatenating 4 preceding bins with the current bin
+                    num_bins = rms_features.shape[1]  # Total number of bins
+                    lagged_features = []
+                    for i in range(4, num_bins):
+                        # Concatenate the current bin with the previous 4 bins
+                        current_features = rms_features[:, (i - 4):i + 1].flatten()  # Flatten to create feature vector
+                        lagged_features.append(current_features)
+
+                    lagged_features = np.array(lagged_features)
+                    #print(f"Lagged features shape: {lagged_features.shape}")
+
+                    feature_data = lagged_features
+
+                    # Remove any additional dimensions to ensure input is 2D
+                    if len(feature_data.shape) == 3:
+                        feature_data = np.squeeze(feature_data, axis=-1)  # Remove the extra dimension
+
+                    # Double-check that the input is in the correct 2D shape
+                    if feature_data.shape[1] != self.model.input_shape[1]:
+                        print(
+                            f"Expected input shape with {self.model.input_shape[1]} features, "
+                            f"but got {feature_data.shape[1]}. Skipping prediction..."
+                        )
+                        continue
+
+                    # Predict the gesture
+                    if self.model:
+                        #print("Predicting gesture...")
+                        try:
+                            p_gestures = self.model.predict(feature_data, verbose=0)  # Use .predict() for Keras models
+                            #print all probabilities
+                            #print(p_gestures)
+                            pred_idx = np.argmax(p_gestures[0])
+                            print(f"Predicted gesture: {self.gesture_labels_dict[pred_idx]}")
+
+                            # print second highest probability
+                            sorted_idx = np.argsort(p_gestures[0])[::-1]
+                            #print(f"Second highest probability: {self.gesture_labels_dict[sorted_idx[1]]}")
+                        #    for i, p in enumerate(p_gestures[0]):
+                        #        print(f"{self.gesture_labels[i]}: {p:.12f}")
+                        except Exception as e:
+                            print(f"Error predicting gesture: {e}")
+
+                    end_t = time.time()
+                    #print(f"Loop time: {end_t - start_t:.4f} seconds\n\n")
+                    await asyncio.sleep(0)
+
+                except BlockingIOError:
+                    # No data available immediately, retry later
+                    await asyncio.sleep(0.1)
+                except socket.timeout:
+                    print("Read timed out, server may not be streaming.")
+                    await asyncio.sleep(0.1)
+                except Exception as e:
+                    print(f"Unexpected error in decode_gesture: {e}")
+                    await asyncio.sleep(0.1)
 
         except KeyboardInterrupt:
             print("Sampling stopped by user.")
@@ -359,27 +439,16 @@ class IntanEMG:
 # Main Execution
 if __name__ == "__main__":
 
-    chs = list(range(128))
+    # Grab the paths from the config file, returning dictionary of paths
+    cfg = emg_proc.read_config_file('CONFIG.txt')
 
-    GESTURES = {
-        0: '3_Finger',
-        1: 'Hand_Open',
-        2: 'Index_Finger',
-        3: 'Middle_Finger',
-        4: 'Pinch',
-        5: 'Pinky_Finger',
-        6: 'Power_Grip',
-        7: 'Rest',
-        8: 'Ring_Finger',
-        9: 'Thumb',
-        10: 'Wrist_Extension',
-        11: 'Wrist_Flexion'
-    }
+    #chs = list(range(128))  # All 128 channels
+    chs = list(range(0, 8)) + list(range(64, 72))  # Channels 1-8 and 65-72 (Python indexing starts at 0)
+
 
     # Specify buffer size and desired channels, e.g., channels=[0, 1, 4, 5]
     intan = IntanEMG(model_path='cnn_model.keras',
-                     ring_buffer_size=4000,
-                     waveform_buffer_size=100000,
+                     gesture_labels_filepath=cfg['gesture_label_file_path'],
                      channels=chs,
                      show_plot=False,
                      verbose=False

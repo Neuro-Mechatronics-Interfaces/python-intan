@@ -212,11 +212,19 @@ class PreProcess:
         """
         # Step 1: Get all .rhd file paths in the directory
         print("Searching in directory:", self.directory)
-        file_paths = emg_proc.get_rhd_file_paths(self.directory)
+
+        # Make the path an absolute directory
+        self.directory = os.path.abspath(self.directory)
+        #Make sure the directory exists
+        if not os.path.isdir(self.directory):
+            print(f"Directory {self.directory} not found.")
+            return
+        file_paths = rhd_utils.get_rhd_file_paths(self.directory)
         print(f"Found {len(file_paths)} .rhd files")
 
         # Step 1.5, load the metrics file if it exists
         file_names = None
+        metrics_file = None
         if os.path.isfile(self.metrics_filepath):
             metrics_file = pd.read_csv(self.metrics_filepath)
             file_names = metrics_file['File Name'].tolist()
