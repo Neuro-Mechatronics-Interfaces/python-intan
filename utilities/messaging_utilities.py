@@ -1,24 +1,29 @@
+import time
 import socket
 import serial
 import numpy as np
 import collections
 from statistics import mode, StatisticsError
 
+
 class PicoMessager:
     """Class for managing serial communication with a Raspberry Pi Pico."""
 
-    def __init__(self, port='COM13', baudrate=115200, buffer_size=10):
+    def __init__(self, port='COM13', baudrate=9600, buffer_size=1, verbose=False):
         """Initializes the PicoMessager.
-        
+
         Args:
             port (str): The serial port to connect to (e.g., 'COM13').
             baudrate (int): The baud rate for serial communication.
             buffer_size (int): The number of past gestures to keep in the buffer.
+            verbose (bool): Whether to print incoming messages automatically.
         """
         self.port = port
         self.baudrate = baudrate
         self.buffer = collections.deque(maxlen=buffer_size)
         self.current_gesture = None  # Keep track of the current gesture being sent
+        self.verbose = verbose
+        self.running = True  # To control the connection
 
         # Connect to the Pico via serial
         try:
@@ -27,6 +32,20 @@ class PicoMessager:
         except serial.SerialException as e:
             print(f"Error connecting to Pico: {e}")
             self.serial_connection = None
+
+    def dump_output(self, mute=False):
+        """Reads all available bytes from the serial connection and prints them.
+
+        This function reads all incoming messages from the Pico until there are no more bytes left.
+        """
+        if self.serial_connection and self.serial_connection.is_open:
+            try:
+                if self.serial_connection.in_waiting > 0:
+                    incoming_message = self.serial_connection.readline().decode().strip()
+                    if incoming_message and not mute:
+                        print(f"Message from Pico: {incoming_message}")
+            except serial.SerialException as e:
+                print(f"Error reading message: {e}")
 
     def update_gesture(self, new_gesture):
         """Updates the gesture buffer and sends the most common gesture if it changes.
@@ -66,7 +85,10 @@ class PicoMessager:
             print("Serial connection not available or not open.")
 
     def close_connection(self):
-        """Closes the serial connection to the Pico."""
+        """Closes the serial connection to the Pico and stops the background listener."""
+        # Stop the background thread
+        self.running = False
+
         if self.serial_connection and self.serial_connection.is_open:
             self.serial_connection.close()
             print("Closed connection to Pico.")
@@ -75,6 +97,14 @@ class PicoMessager:
 class TCPClient:
     """ Class for managing TCP connections to the Intan system."""
     def __init__(self, name, host, port, buffer=1024):
+        """Initializes the TCPClient.
+
+        Args:
+            name (str): Name of the client.
+            host (str): The IP address of the host to connect to.
+            port (int): The port number to connect to.
+            buffer (int): The buffer size for receiving data.
+        """
         self.name = name
         self.host = host
         self.port = port
@@ -83,11 +113,13 @@ class TCPClient:
         self.s.settimeout(5)  # Timeout after 5 seconds if no data received
 
     def connect(self):
+        """Connects to the host server."""
         self.s.setblocking(True)
         self.s.connect((self.host, self.port))
         self.s.setblocking(False)
 
     def send(self, data, wait_for_response=False):
+        """Sends data to the host server and optionally waits for a response."""
         # convert data to bytes if it is not already
         if not isinstance(data, bytes):
             data = data.encode()

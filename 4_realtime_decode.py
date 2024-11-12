@@ -1,6 +1,7 @@
 import keras
 import numpy as np
 import pandas as pd
+import socket
 import time
 import asyncio
 import matplotlib.pyplot as plt
@@ -48,8 +49,8 @@ class IntanEMG:
                        waveform_buffer_size=175000,
                        command_buffer_size=1024,
                        use_serial=False,
-                       COM_PORT='COM13' 
-                       BAUDRATE=9600                 # Baud rate set to match Pico's configuration
+                       COM_PORT='COM13',
+                       BAUDRATE=9600,                 # Baud rate set to match Pico's configuration
                        show_plot=False,
                        verbose=False
                  ):
@@ -59,9 +60,10 @@ class IntanEMG:
         self.sample_rate = None  # Sample rate of the Intan system, gets set during initialization
         self.all_stop = False
         self.ring_buffer = RingBuffer(len(self.channels), ring_buffer_size)
-        self.serial = None
+        self.pico = None
+        self.last_gesture = None
         if use_serial:
-            self.serial = PicoMessager(port=COM_PORT, baudrate=BAUDRATE)
+            self.pico = PicoMessager(port=COM_PORT, baudrate=BAUDRATE)
 
         # Load the model
         try:
@@ -229,6 +231,7 @@ class IntanEMG:
         """Begins data streaming from Intan and processes the data in real-time."""
         try:
             # Start streaming data
+            last_msg_time = None
             self.s_command.send('set runmode run')
             print("Sampling started.")
 
@@ -325,14 +328,29 @@ class IntanEMG:
 
                     # Predict the gesture
                     if self.model:
-                        #print("Predicting gesture...")
+                        #if self.verbose: print("Predicting gesture...")
                         try:
                             p_gestures = self.model.predict(feature_data, verbose=0)  # Use .predict() for Keras models
                             pred_idx = np.argmax(p_gestures[0])
-                            print(f"Predicted gesture: {self.gesture_labels_dict[pred_idx]}")
+                            gesture_str = self.gesture_labels_dict[pred_idx]
+                            print(f"Predicted gesture: {gesture_str}")
+                            if self.last_gesture != gesture_str:
+                                self.last_gesture = gesture_str
+                                self.pico.update_gesture(gesture_str)
+
+                                # Update PicoMessager with the detected gesture
+                                #if last_msg_time is None or time.time() - last_msg_time > 1:
+                                #    last_msg_time = time.time()
+                                #    if self.pico:
+                                #        self.pico.update_gesture(gesture_str)
+                                        #self.pico.dump_output()
+
+
+                            #print(f"Predicted gesture: {gesture_str}")
                             
                             # Update PicoMessager with the detected gesture
-                            pico_messenger.update_gesture(detected_gesture)
+                            #self.pico.update_gesture(gesture_str)
+                            #self.pico.dump_output(mute=True)
 
                         except Exception as e:
                             print(f"Error predicting gesture: {e}")
@@ -359,7 +377,7 @@ class IntanEMG:
             print("Stopping data streaming...")
             self.all_stop = True
             self._disconnect()
-            self.serial.close_connection()
+            self.pico.close_connection()
 
 
 # Main Execution
@@ -376,7 +394,8 @@ if __name__ == "__main__":
                      gesture_labels_filepath=cfg['gesture_label_file_path'],
                      channels=chs,
                      show_plot=False,
-                     use_serial=True,
+                     use_serial=False,
+                     COM_PORT='/dev/ttyACM0',
                      verbose=False
                     )
     intan.start()

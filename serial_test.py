@@ -2,7 +2,7 @@ import serial
 import time
 
 # Configure the serial connection
-COM_PORT = 'COM13'  # Known COM port for Pico
+COM_PORT = 'COM5'  # Known COM port for Pico
 BAUD_RATE = 9600    # Baud rate set to match Pico's configuration
 
 # Initialize the serial connection to the Pico
