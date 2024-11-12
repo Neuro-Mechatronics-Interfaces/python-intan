@@ -1,4 +1,3 @@
-import socket
 import keras
 import numpy as np
 import pandas as pd
@@ -6,6 +5,7 @@ import time
 import asyncio
 import matplotlib.pyplot as plt
 import utilities.emg_processing as emg_proc
+from utilities.messaging_utilities import TCPClient, RingBuffer, PicoMessager
 
 # Constants for parsing and data handling
 FRAMES_PER_BLOCK = 128 # Number of frames per data block from Intan (constant)
@@ -30,82 +30,6 @@ def readUint16(array, arrayIndex):
     arrayIndex += 2
     return variable, arrayIndex
 
-class TCPClient:
-    """ Class for managing TCP connections to the Intan system."""
-    def __init__(self, name, host, port, buffer=1024):
-        self.name = name
-        self.host = host
-        self.port = port
-        self.buffer = buffer
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.settimeout(5)  # Timeout after 5 seconds if no data received
-
-    def connect(self):
-        self.s.setblocking(True)
-        self.s.connect((self.host, self.port))
-        self.s.setblocking(False)
-
-    def send(self, data, wait_for_response=False):
-        # convert data to bytes if it is not already
-        if not isinstance(data, bytes):
-            data = data.encode()
-        self.s.sendall(data)
-        time.sleep(0.01)
-
-        if wait_for_response:
-            return self.read()
-
-    def read(self):
-        return self.s.recv(self.buffer)
-
-    def close(self):
-        self.s.close()
-
-class RingBuffer:
-    """Fixed-size ring buffer for storing recent data up to max number of samples. """
-    def __init__(self, num_channels, size_max=4000):
-        self.max = size_max
-        self.samples = np.zeros((size_max, num_channels), dtype=np.float32)
-        self.timestamp = np.zeros(size_max, dtype=np.float32)
-        self.cur = 0
-        self.size = 0
-
-    def append(self, t, x):
-        """Adds a new sample to the buffer, removing the oldest sample if full."""
-        #if len(self.samples) >= self.max:
-        #    self.samples.pop(0)
-        #    self.timestamp.pop(0)
-        #self.samples.append(x)
-        #self.timestamp.append(t)
-        self.samples[self.cur] = x
-        self.timestamp[self.cur] = t
-        self.cur = (self.cur + 1) % self.max
-        self.size = min(self.size + 1, self.max)
-
-    def get_samples(self, n=1):
-        """ Returns the current data in the ring buffer. """
-        #return self.samples
-        if n > self.size:
-            raise ValueError("Requested more samples than available in the buffer.")
-        end_idx = self.cur if self.size == self.max else self.size
-        start_idx = (end_idx - n) % self.max
-        if start_idx < end_idx:
-            return self.samples[start_idx:end_idx], self.timestamp[start_idx:end_idx]
-        else:
-            # When the wrap-around occurs
-            return np.vstack((self.samples[start_idx:], self.samples[:end_idx])), \
-                np.hstack((self.timestamp[start_idx:], self.timestamp[:end_idx]))
-
-    def is_full(self):
-        return self.size == self.max
-
-    #def get_timestamps(self):
-    #    """ Returns the current timestamps in the ring buffer. """
-    #    return self.timestamp
-
-    #def get_channel(self, ch):
-    #    """ Returns the current data for a specific channel in the ring buffer. """
-    #    return [x[ch] for x in self.samples]
 
 class IntanEMG:
     """Class for managing connection and data sampling from the Intan RHD recorder system.
@@ -123,6 +47,9 @@ class IntanEMG:
                        ring_buffer_size=4000,
                        waveform_buffer_size=175000,
                        command_buffer_size=1024,
+                       use_serial=False,
+                       COM_PORT='COM13' 
+                       BAUDRATE=9600                 # Baud rate set to match Pico's configuration
                        show_plot=False,
                        verbose=False
                  ):
@@ -132,6 +59,9 @@ class IntanEMG:
         self.sample_rate = None  # Sample rate of the Intan system, gets set during initialization
         self.all_stop = False
         self.ring_buffer = RingBuffer(len(self.channels), ring_buffer_size)
+        self.serial = None
+        if use_serial:
+            self.serial = PicoMessager(port=COM_PORT, baudrate=BAUDRATE)
 
         # Load the model
         try:
@@ -361,15 +291,13 @@ class IntanEMG:
                     #full_emg_data = full_emg_data[self.channels, :]
                     #print(f"Selected data shape: {emg_data.shape}")
 
-                    # ===== Method 3 ======
+                    # ===== Method 3 (working!) ======
                     emg_data = emg_data.T  # Transpose to have shape (num_channels, num_samples)
                     filtered_data = emg_proc.notch_filter(emg_data, fs=self.sample_rate, f0=60)  # 60Hz notch filter
                     filtered_data = emg_proc.butter_bandpass_filter(filtered_data, lowcut=20, highcut=400,
                                                                     fs=self.sample_rate, order=2, axis=1)  # bandpass filter
-                    #print(f"Filtered data shape: {filtered_data.shape}")
                     bin_size = int(0.1 * self.sample_rate)  # 400ms bin size
                     rms_features = emg_proc.calculate_rms(filtered_data, bin_size)  # Calculate RMS feature with 400ms sampling bin
-                    #print(f"RMS features shape: {rms_features.shape}")
 
                     # Create lagged features by concatenating 4 preceding bins with the current bin
                     num_bins = rms_features.shape[1]  # Total number of bins
@@ -380,7 +308,6 @@ class IntanEMG:
                         lagged_features.append(current_features)
 
                     lagged_features = np.array(lagged_features)
-                    #print(f"Lagged features shape: {lagged_features.shape}")
 
                     feature_data = lagged_features
 
@@ -401,21 +328,19 @@ class IntanEMG:
                         #print("Predicting gesture...")
                         try:
                             p_gestures = self.model.predict(feature_data, verbose=0)  # Use .predict() for Keras models
-                            #print all probabilities
-                            #print(p_gestures)
                             pred_idx = np.argmax(p_gestures[0])
                             print(f"Predicted gesture: {self.gesture_labels_dict[pred_idx]}")
+                            
+                            # Update PicoMessager with the detected gesture
+                            pico_messenger.update_gesture(detected_gesture)
 
-                            # print second highest probability
-                            sorted_idx = np.argsort(p_gestures[0])[::-1]
-                            #print(f"Second highest probability: {self.gesture_labels_dict[sorted_idx[1]]}")
-                        #    for i, p in enumerate(p_gestures[0]):
-                        #        print(f"{self.gesture_labels[i]}: {p:.12f}")
                         except Exception as e:
                             print(f"Error predicting gesture: {e}")
 
                     end_t = time.time()
-                    #print(f"Loop time: {end_t - start_t:.4f} seconds\n\n")
+                    if self.verbose: 
+                        print(f"Loop time: {end_t - start_t:.4f} seconds\n\n")
+                        
                     await asyncio.sleep(0)
 
                 except BlockingIOError:
@@ -434,6 +359,7 @@ class IntanEMG:
             print("Stopping data streaming...")
             self.all_stop = True
             self._disconnect()
+            self.serial.close_connection()
 
 
 # Main Execution
@@ -446,11 +372,11 @@ if __name__ == "__main__":
     chs = list(range(0, 8)) + list(range(64, 72))  # Channels 1-8 and 65-72 (Python indexing starts at 0)
 
 
-    # Specify buffer size and desired channels, e.g., channels=[0, 1, 4, 5]
     intan = IntanEMG(model_path='cnn_model.keras',
                      gesture_labels_filepath=cfg['gesture_label_file_path'],
                      channels=chs,
                      show_plot=False,
+                     use_serial=True,
                      verbose=False
                     )
     intan.start()

@@ -9,3 +9,4 @@ scikit-learn==1.5.2
 pandas==2.2.2
 opencv-python
 pyyaml
+pyserial

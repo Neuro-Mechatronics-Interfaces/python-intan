@@ -35,7 +35,6 @@ from usbserialreader import USBSerialReader
 __author__ = "Jonathan Shulgach"
 __version__ = "0.0.1"
 
-
 class Arm(object):
     """ Object for controlling the 3D printed robot arm usig Circuitpython
     
