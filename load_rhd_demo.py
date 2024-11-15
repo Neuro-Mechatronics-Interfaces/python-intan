@@ -20,14 +20,16 @@ if __name__ == "__main__":
 
     if data_present:
 
-        # For single channel visualization, uncomment and specify the channel name
+        # For single channel visualization
         #channel_name = 'A-007'  # Change this variable and re-run cell to plot a different channel
         #rhd_utils.plot_channel(channel_name, result)
 
-        # For multi-channel visualization, uncomment and specify the channel names
+        # For multi-channel visualization
+        emg_data = result['amplifier_data']  # Shape: (num_channels, num_samples)
         channels_to_plot = range(128)  # Channels 000 to 127
         time_vector = result['t_amplifier']  # Assuming t_amplifier contains the time vector
-        plot_utils.waterfall_plot(result, channels_to_plot, time_vector,
+
+        plot_utils.waterfall_plot(emg_data, channels_to_plot, time_vector,
                                   plot_title='2024-10-22: Wrist Flexion 5x'
                                   )
         plt.show()

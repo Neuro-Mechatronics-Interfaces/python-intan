@@ -107,6 +107,7 @@ def build_rnn_model(input_shape, num_classes):
 
 def build_intan_nn_model(input_shape, num_classes):
     """Build a 1D CNN model for EMG data classification.
+    https://www.nature.com/articles/s41598-024-64458-x
     """
     print(f"Input shape: {input_shape}")
     model = models.Sequential()
@@ -122,6 +123,7 @@ def build_intan_nn_model(input_shape, num_classes):
     model.compile(optimizer='adam',
                   loss='sparse_categorical_crossentropy',
                   metrics=['accuracy'])
+    model.summary()
 
     return model
 

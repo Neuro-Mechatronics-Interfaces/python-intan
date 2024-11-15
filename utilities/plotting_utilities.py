@@ -2,36 +2,122 @@
 
 """
 
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
-import utilities.rhd_utilities as rhd_utils
 import pywt
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import utilities.rhd_utilities as rhd_utils
+from matplotlib.collections import LineCollection
 
-def waterfall_plot(result, channel_indices, time_vector, plot_title=""):
+
+def waterfall_plot(data, channel_indices, time_vector, edges=[], plot_title="", line_width=0.8,
+                                     colormap='viridis'):
+    """
+    Creates a waterfall plot for the specified channels with amplitude-based coloring.
+    Colors are mapped based on the amplitude of the data similar to MATLAB surface plots.
+
+    Args:
+        data: The numpy array containing the EMG data (channels x time).
+        channel_indices: The indices of the channels to be plotted.
+        time_vector: The time vector for the x-axis.
+        plot_title: (Optional) Title for the plot provided by the user.
+        line_width: Width of the plotted lines.
+        colormap: Colormap to use for coloring the lines based on amplitude.
+    """
+    fig, ax = plt.subplots(figsize=(10, 12))
+
+    # Set normalization to the amplitude values across the entire dataset
+    norm = plt.Normalize(data.min(), data.max())
+    cmap = plt.get_cmap(colormap)  # Get the specified colormap
+
+    offset = 0  # Start with no offset
+    offset_increment = 200  # Increment for each row (adjust this based on data scale)
+
+    for i, channel_idx in enumerate(channel_indices):
+        channel_data = data[channel_idx, :]
+        print(f"Channel {channel_idx}")
+
+        # Prepare data points for the current line
+        points = np.array([time_vector, channel_data + offset]).T.reshape(-1, 1, 2)
+        segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+        # Create a LineCollection for the current channel, coloring by amplitude
+        lc = LineCollection(segments, cmap=cmap, norm=norm)
+        lc.set_array(channel_data)  # Set the amplitude data to color the segments
+        lc.set_linewidth(line_width)
+
+        # Add the line collection to the plot
+        ax.add_collection(lc)
+
+        offset += offset_increment
+
+    # If edges are provided, plot them as vertical lines
+    for edge in edges:
+        ax.axvline(x=edge, color='red', linestyle='--', linewidth=1)
+
+    # Set plot limits
+    ax.set_xlim(time_vector.min(), time_vector.max())
+    ax.set_ylim(-offset_increment, offset + offset_increment)  # Some padding for visualization
+
+    # Add a colorbar to indicate amplitude values
+    #fig.colorbar(lc, ax=ax, orientation='vertical', label='Amplitude (µV)')
+
+    # Plot title and labels
+    ax.set_title(plot_title, fontsize=14, fontweight='bold')
+    #ax.set_xlabel('Time (s)')
+    #ax.set_ylabel('Channel Offset')
+
+    # Custom scale bar
+    add_scalebars(ax)
+
+    # Turn off x and y axis tick labels for cleaner look if desired
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    # Remove the black box around the plot
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
+    # Insert text labels for channel 0 and channel 128
+    insert_channel_labels(ax, time_vector, len(channel_indices))
+
+    # Insert vertical labels for "Extensor" and "Flexor"
+    insert_vertical_labels(ax)
+
+    plt.show()
+
+def waterfall_plot_old(data, channel_indices, time_vector, edges=[], plot_title="", line_width=0.2, colormap='rainbow', downsampling_factor=1, verbose=False):
     """
     Creates a waterfall plot for the specified channels with a user-defined title,
     custom color styling, and scale bars for time and voltage.
 
     Args:
-        result: The dictionary containing the loaded RHD data.
+        data: The numpy array containing the EMG data.
         channel_indices: The indices of the channels to be plotted.
-        time_vector: The time vector for the x-axis.
+        time_vector: The time vector for the x-axis
         plot_title: (Optional) Title for the plot provided by the user.
     """
     fig, ax = plt.subplots(figsize=(10, 12))
 
     offset = 0  # Start with no offset
     offset_increment = 200  # Increment for each row (adjust this based on data scale)
-    cmap = plt.get_cmap('rainbow')  # You can also experiment with other color maps like 'jet', 'viridis', etc.
+    cmap = plt.get_cmap(colormap)  # You can also experiment with other color maps like 'jet', 'viridis', etc.
     num_channels = len(channel_indices)
 
+    # Downsample the data by the specified factor
+    data = data[:, ::downsampling_factor]
+    time_vector = time_vector[::downsampling_factor]
+
     for i, channel_idx in enumerate(channel_indices):
-        channel_data = result['amplifier_data'][channel_idx, :]
+        channel_data = data[channel_idx, :]
         # Use colormap to assign a color based on channel index
         color = cmap(i / num_channels)
-        ax.plot(time_vector, channel_data + offset, color=color, linewidth=0.2)
+        ax.plot(time_vector, channel_data + offset, color=color, linewidth=line_width)
         offset += offset_increment
+
+    # If edges are provided, plot them as vertical lines
+    for edge in edges:
+        ax.axvline(x=edge, color='red', linestyle='--', linewidth=1)
 
     # Labeling and visualization
     #ax.set_xlabel('Time (s)')

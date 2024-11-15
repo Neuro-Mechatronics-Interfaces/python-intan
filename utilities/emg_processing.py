@@ -113,7 +113,9 @@ def butter_lowpass_filter(data, cutoff, fs, order=5, axis=0):
     return y
 
 
-def butter_bandpass_filter(data, lowcut, highcut, fs, order=5, axis=0):
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5, axis=0, verbose=False):
+    if verbose:
+        print(f"| Applying butterworth bandpass filter: {lowcut}-{highcut} Hz {order} order")
     # function to implement filter on data
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
     y = filtfilt(b, a, data, axis=axis)  # Filter channels simultaneously
@@ -139,13 +141,15 @@ def filter_emg(emg_data, filter_type='bandpass', lowcut=30, highcut=500, fs=1259
     tic = time.process_time()
 
     if filter_type == 'bandpass':
+        if verbose: print(f"| Applying butterworth bandpass filter: {lowcut}-{highcut} Hz {order} order")
         filtered_data = butter_bandpass_filter(emg_data, lowcut, highcut, fs, order)
     elif filter_type == 'lowpass':
+        if verbose: print(f"| Applying butterworth lowpass filter: {lowcut} Hz {order} order")
         filtered_data = butter_lowpass_filter(emg_data, lowcut, fs, order)
 
     toc = time.process_time()
     if verbose:
-        print(f"Filtering time = {1000 * (toc - tic):.2f} ms")
+        print(f"| | Filtering time = {1000 * (toc - tic):.2f} ms")
 
     # Convert list of arrays to a single 2D numpy array
     filtered_data = np.stack(filtered_data, axis=0)  # Stack along axis 0 (channels)
@@ -168,7 +172,7 @@ def rectify_emg(emg_data):
     return rectified_data
 
 
-def window_rms(emg_data, window_size=400):
+def window_rms(emg_data, window_size=400, verbose=False):
     """
     Apply windowed RMS to each channel in the multi-channel EMG data.
 
@@ -179,6 +183,7 @@ def window_rms(emg_data, window_size=400):
     Returns:
         Smoothed EMG data with windowed RMS applied to each channel (same shape as input).
     """
+    if verbose: print(f"| Applying windowed RMS with window size {window_size}")
     num_channels, num_samples = emg_data.shape
     rms_data = np.zeros((num_channels, num_samples))
 
@@ -222,8 +227,10 @@ def old_calculate_rms(data, window_size=300):
     rms_values = np.sqrt(np.mean(data[:n_windows * window_size].reshape(n_windows, window_size, -1) ** 2, axis=1))
     return rms_values
 
-def calculate_rms(data, window_size):
+def calculate_rms(data, window_size, verbose=False):
     """Calculates RMS features for each channel using non-overlapping windows."""
+    if verbose:
+        print("| Calculating RMS features...")
     n_channels, n_samples = data.shape
     n_windows = n_samples // window_size
     rms_features = np.zeros((n_channels, n_windows))
@@ -235,9 +242,27 @@ def calculate_rms(data, window_size):
 
     return rms_features  # Shape (n_channels, n_windows)
 
+def downsample_data(emg_data, sampling_rate, target_fs=1000):
+    """
+    Downsamples the EMG data to the target sampling rate.
 
+    Args:
+        emg_data: 2D numpy array of shape (num_channels, num_samples).
+        sampling_rate: Sampling rate of the original EMG data.
+        target_fs: Target sampling rate for downsampling.
 
-def common_average_reference(emg_data):
+    Returns:
+        downsampled_data: 2D numpy array of shape (num_channels, downsampled_samples).
+    """
+    # Compute the downsampling factor
+    downsample_factor = int(sampling_rate / target_fs)
+
+    # Downsample the data by taking every nth sample
+    downsampled_data = emg_data[:, ::downsample_factor]
+
+    return downsampled_data
+
+def common_average_reference(emg_data, verbose=False):
     """
     Applies Common Average Referencing (CAR) to the multi-channel EMG data.
 
@@ -247,6 +272,8 @@ def common_average_reference(emg_data):
     Returns:
         car_data: 2D numpy array after applying CAR (same shape as input).
     """
+    if verbose:
+        print("| Subtracting common average reference")
     # Compute the common average (mean across all channels at each time point)
     common_avg = np.mean(emg_data, axis=0)  # Shape: (num_samples,)
 
@@ -434,3 +461,47 @@ def extract_features(emg_window):
         compute_sampen(emg_window)
     ]
     return np.array(features)
+
+def create_lagged_features(features, n_lags=4, verbose=False):
+    """
+    Create lagged features by concatenating the current bin with the previous n_lags bins.
+    Args:
+        features: input array of shape (n_channels, n_bins).
+        n_lags:  Number of previous bins to concatenate with the current bin.
+
+    Returns:
+        lagged_features: array of shape (n_bins - n_lags, n_channels * (n_lags + 1)).
+    """
+    if verbose: print(f"| Creating lagged features with {n_lags} lags...")
+    num_bins = features.shape[1]  # Total number of bins
+    lagged_features = []
+    for i in range(4, num_bins):
+        # Concatenate the current bin with the previous 4 bins
+        current_features = features[:, (i - 4):i + 1].flatten()  # Flatten to create feature vector
+        lagged_features.append(current_features)
+
+    if verbose: print(f"| Lagged features shape: {np.array(lagged_features).shape}")
+    return np.array(lagged_features)
+
+def compute_grid_average(emg_data, grid_spacing=8, axis=0):
+    """Function that computes the average of the EMG grids according to teh grid spacing. For example, a spacing of 8 means that
+    channels 1, 9, 17, etc. will be averaged together to form the first grid, and so on.
+
+    Args:
+        emg_data (np.ndarray): 2D numpy array of shape (num_channels, num_samples).
+        grid_spacing (int): Number of channels to average together.
+        axis (int): Axis along which to compute the grid averages.
+
+    Returns:
+        grid_averages (np.ndarray): 2D numpy array of shape (num_grids, num_samples).
+    """
+    num_channels, num_samples = emg_data.shape
+    num_grids = num_channels // grid_spacing
+    grid_averages = np.zeros((num_grids, num_samples))
+
+    for i in range(num_grids):
+        start_idx = i * grid_spacing
+        end_idx = (i + 1) * grid_spacing
+        grid_averages[i, :] = np.mean(emg_data[start_idx:end_idx, :], axis=axis)
+
+    return grid_averages

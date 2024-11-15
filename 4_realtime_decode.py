@@ -384,7 +384,9 @@ class IntanEMG:
 if __name__ == "__main__":
 
     # Grab the paths from the config file, returning dictionary of paths
-    cfg = emg_proc.read_config_file('CONFIG.txt')
+    #cfg = emg_proc.read_config_file('config.txt')
+    config_dir = r'/mnt/c/Users/NML/Desktop/hdemg_test/MCP01/2024_11_12/config.txt'
+    cfg = emg_proc.read_config_file(config_dir)
 
     #chs = list(range(128))  # All 128 channels
     chs = list(range(0, 8)) + list(range(64, 72))  # Channels 1-8 and 65-72 (Python indexing starts at 0)
