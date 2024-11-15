@@ -1,29 +1,33 @@
 """
  Script that preprocesses the data. It looks in a specified directory for all .rhd files and loads the data from each
  file. Every file is associated with a single gesture with repetitive movements.
+
+ Author: Jonathan Shulgach
+ Last Modified: 11/15/2024
 """
 
 import os
+import time
+import argparse
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import utilities.rhd_utilities as rhd_utils
 import utilities.emg_processing as emg_proc
+import utilities.plotting_utilities as plot_utils
 
 
 class PreProcess:
     """ PreProcess class which handles the preprocessing of EMG data by extracting timing of hand gestures.
     """
 
-    def __init__(self, directory,  # directory containing the .rhd files
-                 metrics_filename='data_metrics.csv',  # path to save the start times
+    def __init__(self, config_dir,  # filepath to config file, containing path to the .rhd files
                  trigger_channel=None,  # trigger channel to detect the rising edge
                  verbose=False  # print debug messages
                  ):
-        self.directory = directory
+        self.cfg = config_dir
         self.trigger_channel = trigger_channel
-        self.metrics_filepath = os.path.join(directory, metrics_filename)
         self.verbose = verbose
         self.vline = None
         self.hline = None
@@ -33,44 +37,113 @@ class PreProcess:
         self.ax = None
         self.selected_channel_data = []
 
-    def detect_rising_edge(self, trigger_signal, sampling_rate):
+    def detect_edges(self, trigger_signal, sampling_rate, min_stable_samples=10, show_plot=True, wait_time=0):
         """
-        Detects the rising edge in the trigger signal and calculates the number of trials and trial interval.
+        Detects both rising and falling edges in the trigger signal and calculates the number of trials and trial interval.
+        Ensures that edges are stable for at least 'min_stable_samples' to be considered valid.
+        Adds an optional wait time before starting edge detection to avoid initial transients.
 
         Args:
             trigger_signal: 1D numpy array containing the digital trigger signal (0 or 1 values).
             sampling_rate: Sampling rate of the data in Hz.
+            min_stable_samples: Minimum number of samples that need to be stable after a detected edge for it to be considered valid.
+            show_plot: Boolean indicating whether to show a plot of the trigger signal.
+            wait_time: Time in seconds to wait before starting edge detection. Default is 0 seconds.
 
         Returns:
-            first_rising_edge_time: The time (in seconds) of the first detected rising edge.
-            N_trials: The number of detected rising edges (trials).
-            trial_interval: The time interval (in seconds) between consecutive rising edges (if more than one).
+            edge_times: A 1D numpy array containing the times (in seconds) of the detected edges.
+            data: A dictionary containing the following information:
+                first_edge_time: The time (in seconds) of the first detected edge (rising or falling).
+                N_edges: The total number of detected edges.
+                average_edge_interval: The average time interval (in seconds) between consecutive edges (if more than one).
         """
-        # Convert the signal to a boolean array to detect transitions from 0 to 1
+        # Calculate the number of samples to skip based on the wait time
+        samples_to_skip = int(wait_time * sampling_rate)
+
+        # Skip the initial samples to wait for the specified period
+        if samples_to_skip > 0:
+            print(f"| Skipping the first {samples_to_skip} samples ({wait_time} seconds) to avoid initial transients.")
+            trigger_signal = trigger_signal[samples_to_skip:]
+
+        # Convert the signal to detect transitions from 0 to 1 (rising edges) and 1 to 0 (falling edges)
         rising_edges = np.where(np.diff(trigger_signal.astype(int)) == 1)[0]
+        falling_edges = np.where(np.diff(trigger_signal.astype(int)) == -1)[0]
 
-        # Check if any rising edges are detected
-        if len(rising_edges) > 0:
-            # First rising edge time (in samples)
-            first_rising_edge_sample = rising_edges[0]
-            first_rising_edge_time = first_rising_edge_sample / sampling_rate
+        # Filter the edges to ensure they are stable for at least 'min_stable_samples' samples
+        def filter_edges(edges, signal, stable_samples, expected_value):
+            valid_edges = []
+            for edge in edges:
+                if edge + stable_samples < len(signal) and np.all(signal[edge + 1: edge + 1 + stable_samples] == expected_value):
+                    valid_edges.append(edge)
 
-            # Calculate the number of trials based on the number of rising edges
-            N_trials = len(rising_edges)
+            valid_edges = np.array(valid_edges) # Convert valid edges to numpy array for easier handling
+            return valid_edges
 
-            # If there is more than one trial, calculate the average trial interval
-            if N_trials > 1:
-                trial_intervals = np.diff(rising_edges) / sampling_rate
-                trial_interval = np.mean(trial_intervals)  # Average time between trials
-            else:
-                trial_interval = None  # No interval if there's only one trial
+        valid_rising_edges = filter_edges(rising_edges, trigger_signal, min_stable_samples, 1)
+        valid_falling_edges = filter_edges(falling_edges, trigger_signal, min_stable_samples, 0)
+
+        if show_plot:
+            plt.figure(figsize=(12, 6))
+            plt.plot(trigger_signal, label="Trigger Signal")
+            # Plot the valid rising edges as vertical red lines
+            for edge in valid_rising_edges:
+                plt.axvline(edge, color='red', linestyle='--',
+                            label='Rising Edge' if edge == valid_rising_edges[0] else "")
+
+            # Plot the valid falling edges as vertical blue lines
+            for edge in valid_falling_edges:
+                plt.axvline(edge, color='blue', linestyle='--',
+                            label='Falling Edge' if edge == valid_falling_edges[0] else "")
+
+            plt.title("Trigger Signal with Detected Edges")
+            plt.xlabel("Sample Index")
+            plt.ylabel("Signal Value")
+            plt.legend()
+            plt.show()
+
+        # Let the user decide whether to keep only rising or falling edges
+        edge_type_selection = input(
+            "Would you like to keep only rising edges or falling edges? ([rising]/falling): ").strip().lower()
+
+        if edge_type_selection == 'rising':
+            print("Keeping only rising edges.")
+            edge_times = valid_rising_edges / sampling_rate # Times for valid edges
+        elif edge_type_selection == 'falling':
+            print("Keeping only falling edges.")
+            edge_times = valid_falling_edges / sampling_rate
         else:
-            # No rising edge detected, set values to None or defaults
-            first_rising_edge_time = None
-            N_trials = 0
-            trial_interval = None
+            print("Defaulting to keeping rising edges.")
+            edge_times = valid_rising_edges / sampling_rate
 
-        return first_rising_edge_time, N_trials, trial_interval
+        # Add back the skipped time
+        edge_times += wait_time
+
+        # Calculate first edge time, number of edges, and average edge interval
+        first_edge_time = edge_times[0] if len(edge_times) > 0 else None
+        N_edges = len(edge_times) if len(edge_times) > 0 else 0
+        edge_intervals = np.diff(edge_times) if len(edge_times) > 1 else None
+        average_edge_interval = np.mean(edge_intervals) if edge_intervals is not None else None
+
+        # Display the final detected values after selection
+        print(f"Final detected values:\n"
+              f"First Edge Time: {first_edge_time}\n"
+              f"Number of Edges (N_edges): {N_edges}\n"
+              f"Average Edge Interval: {average_edge_interval}\n")
+
+        # Prompt user to manually define number of edges and interval if needed
+        manual_input = input(
+            "Would you like to manually define the number of edges and edge interval? (y/[n]): ").strip().lower()
+
+        if manual_input == 'y':
+            N_edges = int(input("Enter the number of edge events: "))
+            average_edge_interval = float(input("Enter the time interval between edges (in seconds): "))
+            edge_times = np.arange(first_edge_time, first_edge_time + N_edges * average_edge_interval, average_edge_interval)
+
+        data = {'edge_times': edge_times}
+        data['first_edge_time'] = first_edge_time
+        data['N_trials'] = N_edges
+        data['trial_interval'] = average_edge_interval
+        return edge_times, data
 
     def onkeypress(self, event, channel_index):
         """
@@ -211,22 +284,14 @@ class PreProcess:
 
         """
         # Step 1: Get all .rhd file paths in the directory
-        print("Searching in directory:", self.directory)
-
-        # Make the path an absolute directory
-        self.directory = os.path.abspath(self.directory)
-        #Make sure the directory exists
-        if not os.path.isdir(self.directory):
-            print(f"Directory {self.directory} not found.")
-            return
-        file_paths = rhd_utils.get_rhd_file_paths(self.directory)
-        print(f"Found {len(file_paths)} .rhd files")
+        cfg = emg_proc.read_config_file(self.cfg)
+        file_paths = rhd_utils.get_rhd_file_paths(rhd_utils.adjust_path(cfg['root_directory']), True)
 
         # Step 1.5, load the metrics file if it exists
         file_names = None
-        metrics_file = None
-        if os.path.isfile(self.metrics_filepath):
-            metrics_file = pd.read_csv(self.metrics_filepath)
+        metrics_filepath = rhd_utils.adjust_path(os.path.join(cfg['root_directory'], cfg['metrics_filename']))
+        metrics_file = emg_proc.get_metrics_file(metrics_filepath, verbose=True)
+        if metrics_file is not None:
             file_names = metrics_file['File Name'].tolist()
 
         # Step 2: Load the data from each file
@@ -246,71 +311,62 @@ class PreProcess:
                 print(f"No data found in {file}. Skipping...")
                 continue
 
-            print(f"Processing file: {filename}")
-
-            if self.trigger_channel is not None:
-                if 'board_dig_in_data' in result and result['board_dig_in_data'].shape[0] > self.trigger_channel:
-                    trigger_signal = result['board_dig_in_data'][self.trigger_channel, :]
-                    sampling_rate = result['frequency_parameters']['amplifier_sample_rate']
-                    first_rising_edge_time, N_trials, trial_interval = self.detect_rising_edge(trigger_signal,
-                                                                                               sampling_rate)
-
-                    if first_rising_edge_time is not None:
-                        print(f"Detected first rising edge at {first_rising_edge_time:.2f}s")
-                        print(f"N_trials: {N_trials}, Trial Interval: {trial_interval:.2f}s")
-                        self.start_times.append(
-                            [file, self.trigger_channel, None, first_rising_edge_time, None, N_trials, trial_interval])
-                        self.save_start_times(self.metrics_filepath)
-                        continue
-                    else:
-                        print("No rising edge detected on the trigger channel. Moving to manual selection...")
-
-            # =========== Manual method if no trigger is detected ===========
             # Extract amplifier data (EMG data) and the sampling rate
             emg_data = result['amplifier_data']  # Shape: (num_channels, num_samples)
-            sampling_rate = result['frequency_parameters']['amplifier_sample_rate']  # Sampling rate of the data
             time_vector = result['t_amplifier']  # Time vector for the data
             channel_names = [ch['custom_channel_name'] for ch in result['amplifier_channels']]
+            sampling_rate = result['frequency_parameters']['amplifier_sample_rate'] # Sampling rate of the data
+            do_manual = False if self.trigger_channel is not None else True
 
-            # Step 3-6: Apply processing to EMG data (filtering, rectifying, etc.)
-            print("Filtering data...")
+            # Step 3: Apply processing to EMG data (filtering, CAR, RMS, etc.)
+            print(f"Processing file: {filename}")
+            emg_data = emg_proc.notch_filter(emg_data, sampling_rate, 60)
             filt_data = emg_proc.filter_emg(emg_data, filter_type='bandpass', lowcut=30, highcut=500, fs=sampling_rate, verbose=True)
-            print("Subtracting common average reference...")
-            car_data = emg_proc.common_average_reference(filt_data)
-            print("Rectifying data...")
-            rect_data = emg_proc.rectify_emg(car_data)
-            print("Applying RMS window...")
-            rms_data = emg_proc.window_rms(rect_data, window_size=800)
+            car_data = emg_proc.common_average_reference(filt_data, True)
+            grid_data = emg_proc.compute_grid_average(car_data, 8, 0)
+            grid_ch = list(range(grid_data.shape[0]))
+            rms_data = emg_proc.window_rms(car_data, window_size=800, verbose=True)
 
-            # Interactive channel plotting and selection
-            print("Instructions: Left-click to select start time, spacebar to skip channel.")
-            for channel_index, channel_name in enumerate(channel_names):
-                if self.stop_channel_loop:
-                    self.stop_channel_loop = False  # Reset the flag for the next channel
-                    break
-                print(f"Plotting channel {channel_name}...")
-                self.plot_emg_channel(rms_data[channel_index, :], time_vector, channel_name, sampling_rate, filename)
+            if self.trigger_channel is not None:
+                if 'board_dig_in_data' not in result:
+                    print("No digital input data found. Switching to manual...")
+                    do_manual=True
 
-            # === Prompt for N_trials and trial_interval after the loop stops ===
-            if self.selected_channel_data:
-                try:
+            if not do_manual:
+                # Handle trial indexing if trigger is specified and present
+                print(f"Selecting trigger channel {self.trigger_channel}")
+                trigger_signal = result['board_dig_in_data'][self.trigger_channel, :]
+                edges, edge_data = self.detect_edges(trigger_signal, sampling_rate, show_plot=True)
+                self.start_times.append([filename, self.trigger_channel, None, edge_data['first_edge_time'], None, edge_data['N_trials'], edge_data['trial_interval']])
+
+            else:
+                print("Instructions: Left-click to select start time, spacebar to skip channel.")
+                #for channel_index, channel_name in enumerate(channel_names):
+                for channel_index, channel_name in enumerate(grid_ch):
+
+                    if self.stop_channel_loop:
+                        self.stop_channel_loop = False  # Reset the flag for the next channel
+                        break
+                    print(f"Plotting channel {channel_name}...")
+                    #self.plot_emg_channel(car_data[channel_index, :], time_vector, channel_name, sampling_rate, filename)
+                    self.plot_emg_channel(grid_data[channel_index, :], time_vector, channel_name, sampling_rate, filename)
+
+                # === Prompt for N_trials and trial_interval after the loop stops ===
+                if self.selected_channel_data:
                     N_trials = int(input("Enter the number of trial repetitions: "))
                     trial_interval = float(input("Enter the time interval between trials (s): "))
-                except ValueError:
-                    print("Invalid input. Using default values of N_trials=1, trial_interval=0.")
-                    N_trials = 1
-                    trial_interval = 0.0
-
-                # Add the trial information to the selected channels and save
-                for data in self.selected_channel_data:
+                    data = self.selected_channel_data[0]
                     data.update({'N_trials': N_trials, 'Trial Interval (s)': trial_interval})
                     self.start_times.append([data['file_name'], data['channel_name'], data['start_index'],
                                              data['start_time'], data['amplitude'], N_trials, trial_interval])
+                    self.selected_channel_data = []  # Clear the selected data
+                    edges = np.arange(data['start_time'], data['start_time'] + N_trials * trial_interval, trial_interval)
 
-                # Save the data
-                self.selected_channel_data = []  # Clear the selected data
-                self.save_start_times(self.metrics_filepath)
-                print(f"Start times for {filename} recorded. Moving to the next file...")
+            # Plot the waterfall plot with the trial indices plotted as vertical red lines
+            plot_utils.waterfall_plot_old(car_data, emg_data.shape[0], time_vector, edges=edges, plot_title=filename, line_width=0.4, colormap='hsv')
+
+            self.save_start_times(metrics_filepath) # Save the data
+            print(f"Start times for {filename} recorded. Moving to the next file...")
 
         print("Processing complete.")
         return
@@ -318,19 +374,18 @@ class PreProcess:
 
 if __name__ == "__main__":
 
-    # Grab the paths from the config file, returning dictionary of paths
-    cfg = emg_proc.read_config_file('CONFIG.txt')
-    trigger_name = None  # uncomment and change to name of the trigger channel if exists (ex: 1)
+    # Set up argument parser to let user provide path to config file, using teh current path as default
+    parser = argparse.ArgumentParser(description='Preprocess EMG data to extract gesture timings.')
+    parser.add_argument('--config_path', type=str, default='config.txt', help='Path to the config file containing the directory of .rhd files.')
+    parser.add_argument('--trigger_channel', type=int, default=None, help='Index of the trigger channel to detect rising edges.')
+    parser.add_argument('--verbose', action='store_true', help='Print debug messages.')
+    args = parser.parse_args()
 
-    # Create an instance of the PreProcess class and run the preprocess method. If no trigger data is found,
-    # the user will be prompted to manually select the start time for each channel.
-    preprocessor = PreProcess(directory=cfg['raw_data_path'],
-                              metrics_filename=cfg['metrics_file_path'],
-                              trigger_channel=trigger_name,
-                              verbose=True,
-                   )
+    # Create an instance of the PreProcess class and run the preprocess method.
+    preprocessor = PreProcess(args.config_path, args.trigger_channel, args.verbose)
     preprocessor.preprocess_data()
 
     # Note that with this version of code, after the data metrics file is created, a new column for the gesture label
     # needs to be manually created. Open the .csv file and Fill in the rows for 'Gesture' with whatever gesture is being
     # performed in the corresponding file. Save the file and proceed to the next step.
+    print("Step 1: preprocessing done! Remember to create the Gesture column and define the gestures for each file in the metrics file.")

@@ -3,10 +3,12 @@ This is the high-level script that will first lead the .rdh files as well as the
 collect features to build the final dataset to train our model with
 
 Author: Jonathan Shulgach
-Last Modified: 10/28/24
+Last Modified: 11/15/24
 """
+import os
 import yaml
 import time
+import argparse
 import numpy as np
 import pandas as pd
 import utilities.rhd_utilities as rhd_utils
@@ -14,17 +16,16 @@ import utilities.plotting_utilities as plot_utils
 import utilities.emg_processing as emg_proc
 
 
-def feature_extraction(data_dir, metrics_filepath, processed_filepath, channels, PCA_comp=8, visualize_pca_results=False, save_df=True):
+def feature_extraction(config_dir, channels, PCA_comp=8, visualize_pca_results=False):
     """
     This function processes EMG data, performs PCA, and optionally saves the processed feature data.
     """
-
     # Step 1: Get all .rhd file paths in the directory
-    adjusted_data_dir = rhd_utils.adjust_path(data_dir)
-    file_paths = rhd_utils.get_rhd_file_paths(adjusted_data_dir, verbose=True)
+    cfg = emg_proc.read_config_file(config_dir)
+    file_paths = rhd_utils.get_rhd_file_paths(rhd_utils.adjust_path(cfg['root_directory']), verbose=True)
 
     # Step 2: Load the metrics file if it exists
-    adjusted_metrics_filepath = rhd_utils.adjust_path(metrics_filepath)
+    adjusted_metrics_filepath = rhd_utils.adjust_path(os.path.join(cfg['root_directory'], cfg['metrics_filename']))
     metrics_file = emg_proc.get_metrics_file(adjusted_metrics_filepath, verbose=True)
     if metrics_file is None:
         return
@@ -109,27 +110,12 @@ def feature_extraction(data_dir, metrics_filepath, processed_filepath, channels,
 
         # ====== Method 4 =====
         filtered_data = emg_proc.notch_filter(emg_data, fs=sample_rate, f0=60) # 60Hz notch filter
-        print(f"Filtered data shape: {filtered_data.shape}")
-        filtered_data = emg_proc.butter_bandpass_filter(filtered_data, lowcut=20, highcut=400, fs=sample_rate, order=2, axis=1) # bandpass filter
-        print(f"Bandpass filtered data shape: {filtered_data.shape}")
+        filtered_data = emg_proc.butter_bandpass_filter(filtered_data, lowcut=20, highcut=400, fs=sample_rate, order=2, axis=1, verbose=True) # bandpass filter
         bin_size = int(0.1*sample_rate) # 400ms bin size
-        rms_features = emg_proc.calculate_rms(filtered_data, bin_size) # Calculate RMS feature with 400ms sampling bin
-        print(f"RMS features shape: {rms_features.shape}")
+        rms_features = emg_proc.calculate_rms(filtered_data, bin_size, verbose=True) # Calculate RMS feature with 400ms sampling bin
+        lagged_features = emg_proc.create_lagged_features(rms_features, n_lags=4, verbose=True)
 
-        # Create lagged features by concatenating 4 preceding bins with the current bin
-        num_bins = rms_features.shape[1]  # Total number of bins
-        lagged_features = []
-        for i in range(4, num_bins):
-            # Concatenate the current bin with the previous 4 bins
-            current_features = rms_features[:, (i - 4):i + 1].flatten()  # Flatten to create feature vector
-            lagged_features.append(current_features)
-
-        lagged_features = np.array(lagged_features)
-        print(f"Lagged features shape: {lagged_features.shape}")
-
-        pca_data = lagged_features # no PCA
-        #pca_data = rms_features # no PCA
-        print(f"PCA data shape: {pca_data.shape}")
+        final_data = lagged_features
 
         # We can confirm the number of components is good by checking the increasing explained variance
         #print("Highest explained variance in percentage: {}".format(np.cumsum(explained_variance)[-1]*100))
@@ -145,9 +131,7 @@ def feature_extraction(data_dir, metrics_filepath, processed_filepath, channels,
         #    )
 
         # Convert processed data to a DataFrame and add time index
-        #print(pca_data)
-        processed_data = pd.DataFrame(pca_data, columns=[f'PC_{i+1}' for i in range(pca_data.shape[1])])
-        #processed_data['Time (s)'] = result['t_amplifier']
+        processed_data = pd.DataFrame(final_data, columns=[f'PC_{i+1}' for i in range(final_data.shape[1])])
         processed_data['Gesture'] = gesture
 
         # Find matching row in data_metrics for the current file
@@ -173,37 +157,27 @@ def feature_extraction(data_dir, metrics_filepath, processed_filepath, channels,
         # Downsample the data to 2kHz
         #EMG_PCA_data_df = EMG_PCA_data_df.iloc[::int(sample_rate/2000), :]
 
-    if save_df and processed_filepath:
+    # Save the processed EMG data to the CSV file
+    try:
+        processed_filepath = os.path.join(cfg['root_directory'], cfg['processed_data_filename'])
         adjusted_processed_filepath = rhd_utils.adjust_path(processed_filepath)
-        # Save the processed EMG data to the CSV file
         print(f"Saving processed feature data to:\n {adjusted_processed_filepath}")
-        try:
-            EMG_PCA_data_df.to_csv(adjusted_processed_filepath, index=False)
-            print("Data successfully saved!")
-        except Exception as e:
-            print(f"Error saving file: {e}")
-    else:
-        return EMG_PCA_data_df
+        EMG_PCA_data_df.to_csv(adjusted_processed_filepath, index=False)
+        print("Data successfully saved!")
+    except Exception as e:
+        print(f"Error saving file: {e}")
 
 
 if __name__ == "__main__":
 
-    # Grab the paths from the config file, returning dictionary of paths
-    cfg = emg_proc.read_config_file('CONFIG.txt')
+    # Set up argument parser
+    parser = argparse.ArgumentParser(description='Preprocess EMG data to extract gesture timings.')
+    parser.add_argument('--config_path', type=str, default='config.txt', description='Path to the config file containing the directory of .rhd files.')
+    parser.add_argument('--emg_channels', type=list, default=list(range(128)), description='Index of the trigger channel to detect rising edges.')
+    args = parser.parse_args()
 
-    # Select channels 1 through 8 in a list
-    chs = list(range(0, 8)) + list(range(64, 72))  # Channels 1-8 and 65-72 (Python indexing starts at 0)
-    #chs = [1]
-
-    # Do feature extraction
-    print("Starting feature extraction...")
-    feature_extraction(
-            data_dir=cfg['raw_data_path'],                 # Path to the raw data files
-            metrics_filepath=cfg['metrics_file_path'],     # Path to the metrics CSV that contains file names, gestures, etc.
-            processed_filepath=cfg['processed_file_path'], # Path to output file where processed feature data will be saved
-            channels=chs,
-            PCA_comp=3,                                   # Specify the number of principal components to return from PCA
-            visualize_pca_results=False,                   # Whether to visualize PCA results
-            save_df=True                                   # Whether to save the processed data to a file
+    feature_extraction(args.config_path, args.emg_channels,      # ==== May delete below ====
+                       PCA_comp=3,                               # Specify the number of principal components to return from PCA
+                       visualize_pca_results=False,              # Whether to visualize PCA results
     )
-    print("done!")
+    print("Step 2: feature extraction done!")

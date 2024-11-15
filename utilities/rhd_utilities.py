@@ -77,17 +77,19 @@ def get_rhd_file_paths(directory, verbose=False):
     Returns:
         rhd_files: List of full paths to .rhd files.
     """
-    # Sanitize the path
-    directory = Path(directory)
-
-    # Check if the directory exists
     if verbose:
         print("Searching in directory:", directory)
-    if not directory.exists():
-        print(f"Directory does not exist: {directory}")
+
+    # Convert the directory to an absolute path and a Path object for compatibility
+    directory = Path(os.path.abspath(directory))
+
+    # Check if the directory exists
+    if not directory.exists() or not directory.is_dir():
+        print(f"Directory '{directory}' not found or is not a valid directory.")
         return []
 
-    file_paths = [str(file) for file in directory.rglob('*.rhd')]
+    # Recursively find all .rhd files
+    file_paths = list(directory.rglob('*.rhd'))
     if verbose:
         print(f"Found {len(file_paths)} .rhd files")
     return file_paths
