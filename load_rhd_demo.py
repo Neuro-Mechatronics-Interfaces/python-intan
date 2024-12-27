@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
 
     # Specify the filename
-    filename = 'path/to/emg/file.rhd'
+    #filename = 'path/to/emg/file.rhd'
+    filename = filename = '/mnt/c/Users/NML/Desktop/hdemg_test/MCP01/2024_11_12/wrist_flexion_241112_170600/wrist_flexion_241112_170600.rhd'
 
     # Load the data
     result, data_present = rhd_utils.load_file(filename)
@@ -29,8 +30,8 @@ if __name__ == "__main__":
         channels_to_plot = range(128)  # Channels 000 to 127
         time_vector = result['t_amplifier']  # Assuming t_amplifier contains the time vector
 
-        plot_utils.waterfall_plot(emg_data, channels_to_plot, time_vector,
-                                  plot_title='2024-10-22: Wrist Flexion 5x'
+        plot_utils.waterfall_plot_old(emg_data, channels_to_plot, time_vector,
+                                  plot_title='2024-10-22: Index Flexion'
                                   )
         plt.show()
     else:

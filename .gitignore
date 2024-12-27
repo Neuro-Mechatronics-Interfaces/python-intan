@@ -1,0 +1,13 @@
+# Virtual environments
+.venv
+.idea
+
+# chache directories
+utilities/__pycache__
+
+# models made with keras or pytorch
+*.keras
+
+# New data files
+*.csv
+*.txt
