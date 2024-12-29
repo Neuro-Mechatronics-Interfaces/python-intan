@@ -1,4 +1,4 @@
-# Intan EMG Python
+# Python Intan
 
 This repository provides a set of tools and demonstrations for working with electromyography (EMG) data collected using Intan systems. It includes scripts for data preprocessing, feature extraction, machine learning (ML) model training, and real-time classification. These tools are designed to facilitate gesture recognition from sEMG signals, which can be applied in prosthetics, robotics, and neuromuscular research.
 
