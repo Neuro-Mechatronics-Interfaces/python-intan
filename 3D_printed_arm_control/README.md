@@ -14,7 +14,7 @@ The instructions for building your own arm can be found on the [Inmoov wesbite](
 
 Wiring instructions can be found in the diagram below:
 
-![](/../assets/pca9685-wiring.png)
+![](../assets/pca9685-wiring.png)
 
 
 Note: Adjust the pin definitions in the `code.py` file to match the pins used if they are different that the wiring diagram.
