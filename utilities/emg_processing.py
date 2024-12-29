@@ -14,6 +14,33 @@ from sklearn.preprocessing import StandardScaler
 WINDOW_SIZE = 400
 OVERLAP = 200
 
+
+def parse_channel_ranges(channel_arg):
+    """
+    Parses a channel range string (e.g., [1:8, 64:72]) and returns a flat list of integers.
+
+    Args:
+        channel_arg (str): The string containing channel ranges (e.g., "[1:8, 64:72]").
+
+    Returns:
+        list: A flat list of integers.
+    """
+    # Remove square brackets and split by commas
+    channel_arg = channel_arg.strip("[]")
+    ranges = channel_arg.split(",")
+
+    channel_list = []
+    for r in ranges:
+        if ":" in r:
+            start, end = map(int, r.split(":"))
+            #channel_list.extend(range(start - 1, end))  # Convert to 0-based indexing
+            channel_list.extend(range(start, end))
+        else:
+            #channel_list.append(int(r) - 1)  # Convert single channel to 0-based indexing
+            channel_list.append(int(r))
+    return channel_list
+
+
 # Define feature extraction functions
 def extract_wavelet_features(emg_data, window_size=WINDOW_SIZE, overlap=OVERLAP):
     features = []

@@ -1,10 +1,20 @@
+import os
+import sys
 import keras
+import argparse
 import numpy as np
 import pandas as pd
 import socket
 import time
 import asyncio
 import matplotlib.pyplot as plt
+
+# Add the parent directory to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+sys.path.append(parent_dir)
+
+# Get utilities
 import utilities.emg_processing as emg_proc
 from utilities.messaging_utilities import TCPClient, RingBuffer, PicoMessager
 
@@ -383,21 +393,24 @@ class IntanEMG:
 # Main Execution
 if __name__ == "__main__":
 
-    # Grab the paths from the config file, returning dictionary of paths
-    #cfg = emg_proc.read_config_file('config.txt')
-    config_dir = r'/mnt/c/Users/NML/Desktop/hdemg_test/MCP01/2024_11_12/config.txt'
-    cfg = emg_proc.read_config_file(config_dir)
+    args = argparse.ArgumentParser(description='Real-time EMG gesture decoding using a trained model.')
+    args.add_argument('--config_path', type=str, default='../config.txt', help='Path to the config file containing the directory of .rhd files.')
+    args.add_argument('--channels', type=str, nargs='+', default='1:8', help='List of channels to sample data from.')
+    args.add_argument('--use_serial', action='store_true', help='Use serial communication with PicoMessager.')
+    args.add_argument('--port', type=str, default='/dev/ttyACM0', help='COM port for PicoMessager. Windows machines use COMXX')
+    args.add_argument('--verbose', action='store_true', help='Enable verbose output.')
+    args = args.parse_args()
 
-    #chs = list(range(128))  # All 128 channels
-    chs = list(range(0, 8)) + list(range(64, 72))  # Channels 1-8 and 65-72 (Python indexing starts at 0)
+    # Parse the channel ranges
+    chs = emg_proc.parse_channel_ranges(args.channels[0])
 
-
+    # Read the configuration file
+    cfg = emg_proc.read_config_file(args.config_path)
     intan = IntanEMG(model_path='cnn_model.keras',
                      gesture_labels_filepath=cfg['gesture_label_file_path'],
                      channels=chs,
                      show_plot=False,
-                     use_serial=False,
-                     COM_PORT='/dev/ttyACM0',
-                     verbose=False
-                    )
+                     use_serial=args.use_serial,
+                     COM_PORT=args.port,
+                     verbose=args.verbose)
     intan.start()

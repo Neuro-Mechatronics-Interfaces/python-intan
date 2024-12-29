@@ -172,11 +172,14 @@ if __name__ == "__main__":
 
     # Set up argument parser
     parser = argparse.ArgumentParser(description='Preprocess EMG data to extract gesture timings.')
-    parser.add_argument('--config_path', type=str, default='config.txt', description='Path to the config file containing the directory of .rhd files.')
-    parser.add_argument('--emg_channels', type=list, default=list(range(128)), description='Index of the trigger channel to detect rising edges.')
+    parser.add_argument('--config_path', type=str, default='../config.txt', description='Path to the config file containing the directory of .rhd files.')
+    parser.add_argument('--channels', type=str, default='[0:128]', description='Index of the trigger channel to detect rising edges.')
     args = parser.parse_args()
 
-    feature_extraction(args.config_path, args.emg_channels,      # ==== May delete below ====
+    # Parse the channel ranges
+    chs = emg_proc.parse_channel_ranges(args.channels[0])
+
+    feature_extraction(args.config_path, chs,                    # ==== May delete below ====
                        PCA_comp=3,                               # Specify the number of principal components to return from PCA
                        visualize_pca_results=False,              # Whether to visualize PCA results
     )
