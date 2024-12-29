@@ -11,8 +11,8 @@ if __name__ == "__main__":
 
     # Specify the filename
     #filename = 'path/to/emg/file.rhd'
-    filename = filename = '/mnt/c/Users/NML/Desktop/hdemg_test/MCP01/2024_11_12/wrist_flexion_241112_170600/wrist_flexion_241112_170600.rhd'
-
+    #filename = '/mnt/c/Users/NML/Desktop/hdemg_test/MCP01/2024_11_12/wrist_flexion_241112_170600/wrist_flexion_241112_170600.rhd'
+    filename = '/mnt/g/Shared drives/NML_shared/DataShare/HDEMG_SCI/MCP01/2024_12_10/abduct_p1_0_241210_172524/abduct_p1_0_241210_172524.rhd'
     # Load the data
     result, data_present = rhd_utils.load_file(filename)
 
