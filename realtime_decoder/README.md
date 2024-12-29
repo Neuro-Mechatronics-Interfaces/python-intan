@@ -13,8 +13,8 @@ This repository contains scripts for performing real-time classification of elec
     - Note: be sure to pass the path of the config file as an argument during the training process. 
 3. To perform real-time classification of EMG data, you need to have an Intan system connected to your computer with the sampling rate set to 4kHz. Enable the "Waveform Output" and "Commands" servers from `Remote TCP Control` tab with default settings:
 
-![Remote_TCP.png](/../assets/Remote_TCP.png)
-![Commands.png](/../assets/Commands.png)
+![Remote_TCP.png](../assets/Remote_TCP.png)
+![Commands.png](../assets/Commands.png)
 
 ## Real-time Classification
 The real-time classification of gestures from EMG data is performed using the `realtime_decode.py` script. This script reads EMG data from the Intan system via TCP/IP and classifies the data using a trained model. The classification results are displayed in the terminal:
