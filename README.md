@@ -25,7 +25,7 @@ Code was written and tested using Windows 11, Python 3.10.
    ```
 2. Download the repository using git:
    ```bash
-   git clone https://github.com/Neuro-Mechatronics-Interfaces/Intan_EMG_Python.git
+   git clone https://github.com/Neuro-Mechatronics-Interfaces/Python_Intan.git
    cd Intan_EMG_Python
    ```
 3. To install dependencies, use the provided requirements file:
