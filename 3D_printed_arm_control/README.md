@@ -46,20 +46,20 @@ When the Pico is turned on, the script will wait for commands to be sent to perf
  
 To send messages to the Pico using the pyserial library, open a terminal and connect to the device. You can send your own gesture commands! Below is the list of recognized gestures that the robotic hand can perform using the serial interface:
 
-- flex: All fingers flex to a closed fist.
-- extend: All fingers extend straight.
-- pronate: Rotates the wrist downward.
-- supinate: Rotates the wrist upward.
-- thumb: Flexes only the thumb.
-- index: Flexes only the index finger.
-- ring: Flexes only the ring finger.
-- middle: Flexes only the middle finger.
-- pinky: Flexes only the pinky finger.
-- open: Opens all fingers to a neutral position.
-- grip: Closes all fingers tightly for a gripping motion.
-- pinch: Flexes the thumb and index finger for a pinch gesture.
-- point: Extends the index finger while flexing all other fingers.
-- spiderman: Extends the index and middle fingers, as well as the pinky, while flexing the ring and thumb (Spiderman gesture).
-- rest: Resets all fingers to the rest position.
+- `flex`: All fingers flex to a closed fist.
+- `extend`: All fingers extend straight.
+- `pronate`: Rotates the wrist downward.
+- `supinate`: Rotates the wrist upward.
+- `thumb`: Flexes only the thumb.
+- `index`: Flexes only the index finger.
+- `ring`: Flexes only the ring finger.
+- `middle`: Flexes only the middle finger.
+- `pinky`: Flexes only the pinky finger.
+- `open`: Opens all fingers to a neutral position.
+- `grip`: Closes all fingers tightly for a gripping motion.
+- `pinch`: Flexes the thumb and index finger for a pinch gesture.
+- `point`: Extends the index finger while flexing all other fingers.
+- `spiderman`: Extends the index and middle fingers, as well as the pinky, while flexing the ring and thumb (Spiderman gesture).
+- `rest`: Resets all fingers to the rest position.
 
 Feel free to test these gestures with the robotic hand and modify them in the code.py file to suit your project requirements.
