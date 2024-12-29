@@ -3,7 +3,7 @@
 This is a repository to hold the main firmware, scripts, and demos for a Circuitpython-controlled microcontroller operating a 3D-printed robotic hand.
 
 
-![](/../assets/arm-moving.gif)
+![](../assets/arm-moving.gif)
 
 
 # Installation
