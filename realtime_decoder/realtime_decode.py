@@ -93,10 +93,8 @@ class IntanEMG:
             print(self.gesture_labels_dict)
 
         # Setup TCP clients
-        self.s_command = TCPClient('Command',
-                                   host='127.0.0.1', port=5000,
-                                   buffer=command_buffer_size) # Socket to handle sending commands
-        self.s_waveform = TCPClient('Waveform', '127.0.0.1', 5001, waveform_buffer_size * len(self.channels)) # Socket to handle receiving waveform data
+        self.command_tcp = TCPClient(name='Command',  host='127.0.0.1', port=5000, buffer=command_buffer_size) # Socket to handle sending commands
+        self.waveform_tcp = TCPClient('Waveform', '127.0.0.1', 5001, waveform_buffer_size * len(self.channels)) # Socket to handle receiving waveform data
 
         # Set up plotting
         self.fig, self.ax = plt.subplots(len(self.channels), 1, figsize=(10, 6), sharex=True)
@@ -110,15 +108,15 @@ class IntanEMG:
         if not self._connect(): return
 
         # Ensure RHX is in "stop" mode to configure settings
-        resp = str(self.s_command.send('get runmode', wait_for_response=True), 'utf-8')
+        resp = str(self.command_tcp.send('get runmode', wait_for_response=True), 'utf-8')
         if "RunMode Stop" not in resp:
-            self.s_command.send('set runmode stop')
+            self.command_tcp.send('set runmode stop')
 
         # Clear all data outputs
-        self.s_command.send('execute clearalldataoutputs')
+        self.command_tcp.send('execute clearalldataoutputs')
 
         # Set up sample rate and channels
-        sample_rate_response = self.s_command.send('get sampleratehertz', True).decode()
+        sample_rate_response = self.command_tcp.send('get sampleratehertz', True).decode()
         self.sample_rate = float(sample_rate_response.split()[-1])
         print(f"Sample rate: {self.sample_rate} Hz")
 
@@ -126,19 +124,19 @@ class IntanEMG:
         for channel in self.channels:
             print("Setting up channel: ", channel)
             channel_cmd = f'set a-{channel:03}.tcpdataoutputenabled true'.encode()
-            self.s_command.send(channel_cmd)
+            self.command_tcp.send(channel_cmd)
 
         # Set the number of data blocks to write to the TCP output buffer
         print("Setting up data block size to 1...")
-        self.s_command.send('set TCPNumberDataBlocksPerWrite 1')
+        self.command_tcp.send('set TCPNumberDataBlocksPerWrite 1')
         print("Setup complete.")
 
     def _connect(self):
         """Connects to Intan TCP servers and sets up the sample rate and selected channels."""
         print("Connecting to Intan TCP servers...")
         try:
-            self.s_command.connect()  # Command server
-            self.s_waveform.connect()  # Waveform data server
+            self.command_tcp.connect()  # Command server
+            self.waveform_tcp.connect()  # Waveform data server
             print("Connected to Intan TCP servers.")
             return True
 
@@ -148,13 +146,13 @@ class IntanEMG:
 
     def _disconnect(self):
         """Stops data streaming and cleans up connections."""
-        self.s_command.send('set runmode stop')
+        self.command_tcp.send('set runmode stop')
 
         # Clear TCP data output to ensure no TCP channels are enabled.
-        self.s_command.send('execute clearalldataoutputs')
+        self.command_tcp.send('execute clearalldataoutputs')
 
-        self.s_command.close()
-        self.s_waveform.close()
+        self.command_tcp.close()
+        self.waveform_tcp.close()
         print("Connections closed and resources cleaned up.")
 
     async def _sample_intan(self):
@@ -162,7 +160,7 @@ class IntanEMG:
         while not self.all_stop:
             start_t = time.time()
             try:
-                raw_data = self.s_waveform.read()
+                raw_data = self.waveform_tcp.read()
                 if not raw_data:
                     print("No data received.")
                     await asyncio.sleep(0.1)
@@ -242,7 +240,7 @@ class IntanEMG:
         try:
             # Start streaming data
             last_msg_time = None
-            self.s_command.send('set runmode run')
+            self.command_tcp.send('set runmode run')
             print("Sampling started.")
 
             if self.show_plot:

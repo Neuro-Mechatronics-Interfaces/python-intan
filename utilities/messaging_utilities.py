@@ -118,7 +118,7 @@ class TCPClient:
         self.s.connect((self.host, self.port))
         self.s.setblocking(False)
 
-    def send(self, data, wait_for_response=False):
+    def sendall(self, data, wait_for_response=False):
         """Sends data to the host server and optionally waits for a response."""
         # convert data to bytes if it is not already
         if not isinstance(data, bytes):
@@ -127,10 +127,11 @@ class TCPClient:
         time.sleep(0.01)
 
         if wait_for_response:
-            return self.read()
+            return self.recv()
 
-    def read(self):
-        return self.s.recv(self.buffer)
+    def recv(self, bytes=self.buffer):
+        """ Reads and returns bytes by the buffer size unless specified """
+        return self.s.recv(bytes)
 
     def close(self):
         self.s.close()
