@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import socket
 import time
+import torch
 import asyncio
 import matplotlib.pyplot as plt
 
@@ -17,10 +18,12 @@ sys.path.append(parent_dir)
 # Get utilities
 import utilities.emg_processing as emg_proc
 from utilities.messaging_utilities import TCPClient, RingBuffer, PicoMessager
+from utilities.ml_utilities import EMGCNN
 
 # Constants for parsing and data handling
-FRAMES_PER_BLOCK = 128 # Number of frames per data block from Intan (constant)
-SAMPLE_SCALE_FACTOR = 0.195 # Microvolts per bit (used for scaling raw samples)
+FRAMES_PER_BLOCK = 128  # Number of frames per data block from Intan (constant)
+SAMPLE_SCALE_FACTOR = 0.195  # Microvolts per bit (used for scaling raw samples)
+
 
 # Byte Parsing Functions
 def readUint32(array, arrayIndex):
@@ -29,11 +32,13 @@ def readUint32(array, arrayIndex):
     arrayIndex += 4
     return variable, arrayIndex
 
+
 def readInt32(array, arrayIndex):
     variableBytes = array[arrayIndex: arrayIndex + 4]
     variable = int.from_bytes(variableBytes, byteorder='little', signed=True)
     arrayIndex += 4
     return variable, arrayIndex
+
 
 def readUint16(array, arrayIndex):
     variableBytes = array[arrayIndex: arrayIndex + 2]
@@ -52,56 +57,65 @@ class IntanEMG:
         show_plot (bool): Whether to display a real-time plot of the data.
         verbose (bool): Whether to display verbose output.
     """
-    def __init__(self, model_path='model.keras',
-                       gesture_labels_filepath=None,
-                       channels=None,
-                       ring_buffer_size=4000,
-                       waveform_buffer_size=175000,
-                       command_buffer_size=1024,
-                       use_serial=False,
-                       COM_PORT='COM13',
-                       BAUDRATE=9600,                 # Baud rate set to match Pico's configuration
-                       show_plot=False,
-                       verbose=False
+
+    def __init__(self, model_path='emg_cnn_model.pth',  # model_path='model.keras',
+                 gesture_labels_filepath=None,
+                 channels=None,
+                 ring_buffer_size=4000,
+                 waveform_buffer_size=175000,
+                 command_buffer_size=1024,
+                 use_serial=False,
+                 COM_PORT='COM13',
+                 BAUDRATE=9600,  # Baud rate set to match Pico's configuration
+                 show_plot=False,
+                 verbose=False
                  ):
-        self.channels = channels if channels is not None else list(range(64))  # Default to all 64 channels
+        self.channels = channels if channels is not None else list(range(128))  # Default to all 64 channels
         self.show_plot = show_plot
         self.verbose = verbose
         self.sample_rate = None  # Sample rate of the Intan system, gets set during initialization
         self.all_stop = False
         self.ring_buffer = RingBuffer(len(self.channels), ring_buffer_size)
+        print(f" Size of ring buffer: {ring_buffer_size} samples")
         self.pico = None
         self.last_gesture = None
         if use_serial:
             self.pico = PicoMessager(port=COM_PORT, baudrate=BAUDRATE)
 
-        # Load the model
-        try:
-            self.model = keras.models.load_model(model_path)
-            print(self.model.summary())
-            print("Model Input Shape:", self.model.input_shape)
-            print("Model Output Shape:", self.model.output_shape)
-        except FileNotFoundError:
-            print(f"Model file not found at {model_path}")
-            self.model = None
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = self._load_model(model_path)
 
         # Load the gesture labels
-        if gesture_labels_filepath:
-            self.gesture_labels = pd.read_csv(gesture_labels_filepath)
-            self.gesture_labels_dict = dict(zip(self.gesture_labels['Numerical Value'], self.gesture_labels['Gesture']))
-            print("Gesture Labels:")
-            print(self.gesture_labels_dict)
+        self.gesture_labels_dict = self._load_gesture_labels(gesture_labels_filepath)
 
         # Setup TCP clients
-        self.command_tcp = TCPClient(name='Command',  host='127.0.0.1', port=5000, buffer=command_buffer_size) # Socket to handle sending commands
-        self.waveform_tcp = TCPClient('Waveform', '127.0.0.1', 5001, waveform_buffer_size * len(self.channels)) # Socket to handle receiving waveform data
+        self.command_tcp = TCPClient(name='Command', host='127.0.0.1', port=5000, buffer=command_buffer_size)  # Socket to handle sending commands
+        self.waveform_tcp = TCPClient('Waveform', '127.0.0.1', 5001, waveform_buffer_size * len(self.channels))  # Socket to handle receiving waveform data
 
         # Set up plotting
         self.fig, self.ax = plt.subplots(len(self.channels), 1, figsize=(10, 6), sharex=True)
         if len(self.channels) == 1:
-            self.ax = [self.ax] # Make it iterable for single channel case
+            self.ax = [self.ax]  # Make it iterable for single channel case
 
         self._initialize_intan()
+
+    def _load_model(self, model_path):
+        """Loads the trained PyTorch model for gesture classification."""
+        model = EMGCNN(num_classes=8, input_channels=128)  # Adjust based on trained model
+        model.load_state_dict(torch.load(model_path, map_location=self.device))
+        model.to(self.device)
+        model.eval()  # Set model to evaluation mode
+        print("Loaded PyTorch model successfully.")
+        return model
+
+    def _load_gesture_labels(self, gesture_labels_filepath):
+        """Loads gesture labels from a CSV file."""
+        if gesture_labels_filepath:
+            gesture_labels = pd.read_csv(gesture_labels_filepath)
+            gesture_labels_dict = dict(zip(gesture_labels['Numerical Value'], gesture_labels['Gesture']))
+            print(f"Loaded Gesture Labels: {gesture_labels_dict}")
+            return gesture_labels_dict
+        return {}
 
     def _initialize_intan(self):
         """Connect and configures Intan system for data streaming."""
@@ -220,7 +234,7 @@ class IntanEMG:
 
     def start(self):
         """Make a call to the asyncronous library to run the main routine"""
-        asyncio.run(self._main()) # Need to pass the async function into the run method to start
+        asyncio.run(self._main())  # Need to pass the async function into the run method to start
 
     async def _main(self):
         """ Start main tasks and coroutines in a single function"""
@@ -233,7 +247,7 @@ class IntanEMG:
         # Can start other tasks in the background here if needed...
 
         while not self.all_stop:
-            await asyncio.sleep(0) # Calling sleep with 0 makes it run as fast as possible
+            await asyncio.sleep(0)  # Calling sleep with 0 makes it run as fast as possible
 
     async def decode_gesture(self):
         """Begins data streaming from Intan and processes the data in real-time."""
@@ -254,119 +268,110 @@ class IntanEMG:
                     continue
 
                 try:
-                    emg_data, t = self.get_samples(2000) # Pass in the number of samples (0.25 seconds)
+                    emg_data, t = self.get_samples(400)  # Pass in the number of samples (0.25 seconds)
+
+                    #print(f"Shape of emg_data: {emg_data.shape}")  # Should be (2000, num_channels)
+
+
                     if emg_data is None or len(emg_data) == 0:
                         await asyncio.sleep(0.1)
                         continue
 
                     # Visualization shows down the update rate
                     if self.show_plot:
-                         # Update each channels subplot
-                         for i, channel in enumerate(self.channels):
-                             y = emg_data[:, i]
-                             self.ax[i].cla()
-                             self.ax[i].plot(t, y)
-                             self.ax[i].set_ylim(-1000, 1000)
-                             self.ax[i].grid()
-                             self.ax[i].set_ylabel(f'CH{channel}')
+                        # Update each channels subplot
+                        for i, channel in enumerate(self.channels):
+                            y = emg_data[:, i]
+                            self.ax[i].cla()
+                            self.ax[i].plot(t, y)
+                            self.ax[i].set_ylim(-1000, 1000)
+                            self.ax[i].grid()
+                            self.ax[i].set_ylabel(f'CH{channel}')
 
-                         plt.draw()
-                         plt.pause(0.001)
+                        plt.draw()
+                        plt.pause(0.001)
 
-                    # ===== Method 1 ======
-                    # Process data: bp filter, envelope, normalize, PCA
-                    #bandpass_filtered = emg_proc.filter_emg(emg_data, 'bandpass', lowcut=30, highcut=500, fs=self.sample_rate, order=5)
-                    #smoothed_emg = emg_proc.envelope_extraction(bandpass_filtered, method='hilbert')
-                    #norm_emg = emg_proc.z_score_norm(smoothed_emg)
-                    #pca_data, explained_variance = emg_proc.apply_pca(norm_emg, num_components=31)
-
-                    # ===== Method 2 ======
-                    #feature_data = emg_proc.extract_wavelet_features(emg_data)
-                    #if feature_data is None or len(feature_data) == 0:
-                    #    print("feature extraction returned no data.")
-                    #    continue
-                    #print(f"Feature data shape: {feature_data.shape}")
-                    # Ensure the data has the correct shape for the model
-                    #if len(feature_data.shape) == 1:
-                    #    feature_data = np.expand_dims(feature_data, axis=0)
-
-                    # Add the third dimension to match the model input (i.e., add a "feature" dimension)
-                    #feature_data = np.expand_dims(feature_data, axis=-1)  # Now feature_data has shape (1, 3072, 1)
-                    #if feature_data.shape[1:] != self.model.input_shape[1:]:
-                    #    print(
-                    #        f"Expected input shape with {self.model.input_shape[1:]} features, but got {feature_data.shape[1:]}. Skipping prediction...")
-                    #    continue
-
-                    #print(f"Selecting channels: {self.channels}")
-                    # Select the subset of rows corresponding to the selected channels
-                    #full_emg_data = full_emg_data[self.channels, :]
-                    #print(f"Selected data shape: {emg_data.shape}")
-
-                    # ===== Method 3 (working!) ======
+                    # ===== EMG Processing ======
                     emg_data = emg_data.T  # Transpose to have shape (num_channels, num_samples)
+                    #print("Shape of emg_data: ", emg_data.shape)
                     filtered_data = emg_proc.notch_filter(emg_data, fs=self.sample_rate, f0=60)  # 60Hz notch filter
+                    #print("Shape of filtered data: ", filtered_data.shape)
                     filtered_data = emg_proc.butter_bandpass_filter(filtered_data, lowcut=20, highcut=400,
-                                                                    fs=self.sample_rate, order=2, axis=1)  # bandpass filter
+                                                                    fs=self.sample_rate, order=2,
+                                                                    axis=1)  # bandpass filter
+                    #print("Shape of bandpass filtered data: ", filtered_data.shape)
                     bin_size = int(0.1 * self.sample_rate)  # 400ms bin size
                     rms_features = emg_proc.calculate_rms(filtered_data, bin_size)  # Calculate RMS feature with 400ms sampling bin
+                    #print("Shape of RMS features: ", rms_features.shape)
 
-                    # Create lagged features by concatenating 4 preceding bins with the current bin
-                    num_bins = rms_features.shape[1]  # Total number of bins
-                    lagged_features = []
-                    for i in range(4, num_bins):
-                        # Concatenate the current bin with the previous 4 bins
-                        current_features = rms_features[:, (i - 4):i + 1].flatten()  # Flatten to create feature vector
-                        lagged_features.append(current_features)
+                    # Ensure RMS features have exactly 128 channels
+                    if rms_features.shape[0] < 128:
+                        print(f"Warning: Expected 128 channels but got {rms_features.shape[0]}. Padding with zeros.")
+                        pad_size = 128 - rms_features.shape[0]
+                        rms_features = np.pad(rms_features, ((0, pad_size), (0, 0)), mode='constant')
 
-                    lagged_features = np.array(lagged_features)
-
-                    feature_data = lagged_features
-
-                    # Remove any additional dimensions to ensure input is 2D
-                    if len(feature_data.shape) == 3:
-                        feature_data = np.squeeze(feature_data, axis=-1)  # Remove the extra dimension
-
-                    # Double-check that the input is in the correct 2D shape
-                    if feature_data.shape[1] != self.model.input_shape[1]:
+                    elif rms_features.shape[0] > 128:
                         print(
-                            f"Expected input shape with {self.model.input_shape[1]} features, "
-                            f"but got {feature_data.shape[1]}. Skipping prediction..."
-                        )
-                        continue
+                            f"Warning: Expected 128 channels but got {rms_features.shape[0]}. Trimming extra channels.")
+                        rms_features = rms_features[:128, :]
+
+                    if rms_features.shape[1] > 1:
+                        print(f"Warning: Expected 1 sample but got {rms_features.shape[1]}. Taking first sample.")
+                        rms_features = rms_features[:, 0]
+
+                    # Ensure data shape (1, 128, 1) before passing to model
+                    feature_tensor = torch.tensor(rms_features.T, dtype=torch.float32).unsqueeze(-1).to(self.device)
+                    #feature_tensor = torch.tensor(rms_features.T, dtype=torch.float32).unsqueeze(0).unsqueeze(-1).to(self.device)
 
                     # Predict the gesture
                     if self.model:
-                        #if self.verbose: print("Predicting gesture...")
+                        # if self.verbose: print("Predicting gesture...")
                         try:
-                            p_gestures = self.model.predict(feature_data, verbose=0)  # Use .predict() for Keras models
-                            pred_idx = np.argmax(p_gestures[0])
-                            gesture_str = self.gesture_labels_dict[pred_idx]
-                            print(f"Predicted gesture: {gesture_str}")
+                            #print(f"Feature tensor shape before model: {feature_tensor.shape}")  # Debugging
+
+                            # === Model Prediction ===
+                            with torch.no_grad():
+                                predictions = self.model(feature_tensor)  # Get logits
+                                pred_idx = torch.argmax(predictions, dim=1).item()  # Get class index
+                                gesture_str = self.gesture_labels_dict.get(pred_idx, "Unknown")
+                                print(f"Predicted Gesture: {gesture_str}")
+
+                            # === Handle Gesture Output ===
                             if self.last_gesture != gesture_str:
                                 self.last_gesture = gesture_str
-                                self.pico.update_gesture(gesture_str)
+                                print(f"Predicted Gesture: {gesture_str}")
+
+                                if self.pico:
+                                    self.pico.update_gesture(gesture_str)
+
+                            #p_gestures = self.model.predict(feature_data, verbose=0)  # Use .predict() for Keras models
+                            #pred_idx = np.argmax(p_gestures[0])
+                            #gesture_str = self.gesture_labels_dict[pred_idx]
+                            #print(f"Predicted gesture: {gesture_str}")
+                            #if self.last_gesture != gesture_str:
+                            #    self.last_gesture = gesture_str
+                            #    self.pico.update_gesture(gesture_str)
 
                                 # Update PicoMessager with the detected gesture
-                                #if last_msg_time is None or time.time() - last_msg_time > 1:
+                                # if last_msg_time is None or time.time() - last_msg_time > 1:
                                 #    last_msg_time = time.time()
                                 #    if self.pico:
                                 #        self.pico.update_gesture(gesture_str)
-                                        #self.pico.dump_output()
+                                # self.pico.dump_output()
 
+                            # print(f"Predicted gesture: {gesture_str}")
 
-                            #print(f"Predicted gesture: {gesture_str}")
-                            
                             # Update PicoMessager with the detected gesture
-                            #self.pico.update_gesture(gesture_str)
-                            #self.pico.dump_output(mute=True)
+                            # self.pico.update_gesture(gesture_str)
+                            # self.pico.dump_output(mute=True)
 
                         except Exception as e:
                             print(f"Error predicting gesture: {e}")
 
                     end_t = time.time()
-                    if self.verbose: 
+                    if self.verbose:
                         print(f"Loop time: {end_t - start_t:.4f} seconds\n\n")
-                        
+
                     await asyncio.sleep(0)
 
                 except BlockingIOError:
@@ -390,22 +395,26 @@ class IntanEMG:
 
 # Main Execution
 if __name__ == "__main__":
-
     args = argparse.ArgumentParser(description='Real-time EMG gesture decoding using a trained model.')
     args.add_argument('--config_path', type=str, default='../config.txt', help='Path to the config file containing the directory of .rhd files.')
-    args.add_argument('--channels', type=str, nargs='+', default='1:8', help='List of channels to sample data from.')
-    args.add_argument('--use_serial', action='store_true', help='Use serial communication with PicoMessager.')
+    args.add_argument('--channels', type=str, nargs='+', default='1:9', help='List of channels to sample data from.')
+    args.add_argument('--use_serial', type=bool, default=False, help='Use serial communication with PicoMessager.')
     args.add_argument('--port', type=str, default='/dev/ttyACM0', help='COM port for PicoMessager. Windows machines use COMXX')
     args.add_argument('--verbose', action='store_true', help='Enable verbose output.')
     args = args.parse_args()
 
     # Parse the channel ranges
-    chs = emg_proc.parse_channel_ranges(args.channels[0])
+    #chs = emg_proc.parse_channel_ranges(args.channels)
+    #print("Channels to sample: ", chs)
+    chs = None # Defaults to 128 channels
 
     # Read the configuration file
     cfg = emg_proc.read_config_file(args.config_path)
-    intan = IntanEMG(model_path='cnn_model.keras',
-                     gesture_labels_filepath=cfg['gesture_label_file_path'],
+
+    gesture_labels_filepath = os.path.join(cfg['root_directory'], 'gesture_labels.csv')
+    model_path = os.path.join(cfg['root_directory'], "emg_cnn_model.pth")
+    intan = IntanEMG(model_path=model_path,
+                     gesture_labels_filepath=gesture_labels_filepath,
                      channels=chs,
                      show_plot=False,
                      use_serial=args.use_serial,

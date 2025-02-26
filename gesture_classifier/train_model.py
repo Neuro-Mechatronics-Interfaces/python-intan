@@ -1,110 +1,100 @@
-""" This script will train a machine learning model to classify EMG data into different gestures.
+""" Script to train a new classification model for gestures using EMG data.
 
- Author: Jonathan Shulgach
- Last Modified: 11/15/2024
+Usage:
+  python train.py --config_path "/mnt/c/Users/NML/Desktop/hdemg_test/Jonathan/2025_02_25/CONFIG.txt"
 """
+
 import os
+import sys
+import torch
 import argparse
 import numpy as np
-import pandas as pd
-import tensorflow as tf
-from sklearn.model_selection import KFold, train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score
+from torch.utils.data import DataLoader, TensorDataset, random_split
 
-from tensorflow.keras import layers, models
-from tensorflow.keras.layers import Normalization
+# Add the parent directory to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+sys.path.append(parent_dir)
 
-import utilities.emg_processing as emg_proc
-import utilities.models as emg_models
+from utilities import emg_processing as emg_proc
+from utilities import ml_utilities as ml_utils
+from utilities import rhd_utilities as rhd_utils
 
+def process_emg_data(file_paths, metrics_data, gesture_map, verbose):
+    X_list, y_list = [], []
+    for file in file_paths:
+        # Load EMG Data
+        result, data_present = rhd_utils.load_file(file, verbose=verbose)
+        if not data_present:
+            continue
 
-def train_emg_classifier(config_filepath, model_type, epochs=100, batch_size=32, do_kfold=False, num_folds=5, save_model=True):
+        emg_data = result['amplifier_data']
+        sample_rate = int(result['frequency_parameters']['board_dig_in_sample_rate'])
 
-    # Load processed data file
-    cfg = emg_proc.read_config_file(config_filepath)
-    processed_filepath = os.path.join(cfg['root_directory'], cfg['processed_data_filename'])
-    feature_data = pd.read_csv(processed_filepath)
-    print(f"Loaded processed data from {processed_filepath} with shape: {feature_data.shape}")
+        # Preprocess the EMG signal, output should be rms features
+        rms_features = emg_proc.preprocess_emg(emg_data, sample_rate)
 
-    # Split features (X) and labels (y)
-    X = feature_data.drop(columns=['Gesture']).values
-    y = feature_data['Gesture'].values
+        # Retrieve gesture label
+        file_name = os.path.basename(file)
+        if file_name not in metrics_data['File Name'].values:
+            print(f"⚠️ Warning: No entry found for {file_name} in metrics data. Skipping.")
+            continue
 
-    if len(np.unique(y)) < 2:
-        print("Not enough unique gestures to train the model. Exiting...")
-        return None, None
-    
-    # Encode labels to numerical values
-    y_encoded, _ = pd.factorize(y)
-    n_gestures = len(np.unique(y_encoded))
+        gesture = metrics_data[metrics_data['File Name'] == file_name]['Gesture'].values[0]
 
-    # print out the gestures and corresponding numerical values
-    print("Gesture labels and their corresponding numerical values:")
-    for i, gesture in enumerate(np.unique(y)):
-        print(f"{gesture} -> {i}")
+        # Append to lists
+        X_list.append(rms_features.T)  # Shape (N_samples, 128)
+        y_list.append(np.full(rms_features.shape[1], gesture_map[gesture]))
 
-    # Save gesture labels to a file
-    gesture_labels = pd.DataFrame({'Gesture': np.unique(y), 'Numerical Value': np.unique(y_encoded)})
-    gesture_label_filepath = os.path.join(cfg['root_directory'], cfg['gesture_label_filename'])
-    gesture_labels.to_csv(gesture_label_filepath, index=False)
+    return X_list, y_list
 
-    print(f"Training {model_type.upper()} model...")
-    if not do_kfold:
-        # We can split up the data 80%/20% for training/testing
-        X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
-        print(f"Training data shape: {X_train.shape}, Testing data shape: {X_test.shape}")
+def train_emg_classifier(config_path, epochs, verbose):
+    """ Main function that trains a new classification model for gestures using EMG data. """
+    # hard code the path to the configuration file. Will use the argparse module to pass this in the future
+    cfg = emg_proc.read_config_file(config_path)
 
-        if model_type == 'rf':
-            model = RandomForestClassifier(n_estimators=100, random_state=42)
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
-            acc = accuracy_score(y_test, y_pred)
+    # Load the metrics data
+    metrics_filepath = os.path.join(cfg['root_directory'], cfg['metrics_filename'])
+    metrics_data, gesture_map = emg_proc.load_metrics_data(metrics_filepath)
 
-        elif model_type == 'rnn':
-            # Reshape for RNN (samples, timesteps, features)
-            X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
-            X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
+    # Load and process the EMG data
+    file_paths = emg_proc.get_file_paths(cfg['root_directory'], file_type='.rhd', verbose=verbose)
+    X_list, y_list = process_emg_data(file_paths, metrics_data, gesture_map, verbose=verbose)
 
-            model = emg_models.build_rnn_model((X_train.shape[1], 1), n_gestures)
-            model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, verbose=1)
-            acc = model.evaluate(X_test, y_test, verbose=1)
+    # Convert EMG data and labels into tensors
+    X_tensor, y_tensor = ml_utils.convert_lists_to_tensors(X_list, y_list)
+    num_classes = torch.unique(y_tensor).shape[0]
+    print(f"Final unique labels in y_tensor: {torch.unique(y_tensor)}")
 
-        elif model_type == 'cnn':
-            # Reshape for CNN (samples, features, channels)
-            X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
-            X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
+    # Prepare Datasets into training and validation
+    dataset = TensorDataset(X_tensor, y_tensor)
+    train_size = int(0.8 * len(dataset))  # 80% training, 20% testing
+    val_size = len(dataset) - train_size
+    train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
-            model = emg_models.build_cnn_model((X_train.shape[1], 1), n_gestures)
-            model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.2, verbose=1)
-            acc = model.evaluate(X_test, y_test, verbose=1)
+    # DataLoaders
+    train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=16, shuffle=False)
 
-        elif model_type == 'grnn':
-            # Just train a simple GRNN model
-            model = emg_models.build_grnn_model()
-            model.fit(X_train, y_train)
-            y_test_labels = np.argmax(y_test, axis=1)
-            y_pred = model.predict(X_test)
-            acc = accuracy_score(y_test_labels, y_pred)
+    # Model training
+    model = ml_utils.EMGCNN(num_classes=num_classes, input_channels=X_tensor.shape[1])
+    train_losses, val_losses, val_accuracies = ml_utils.train_pytorch_model(model, train_loader, val_loader, num_epochs=epochs)
 
-        elif model_type == 'intan':
-            # Just Intan cnn model
-            model = emg_models.build_intan_nn_model((X_train.shape[1],), n_gestures)
-            model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size, verbose=1)
-            test_loss, acc = model.evaluate(X_test, y_test)
+    # Save trained model and training metrics
+    model_savepath = os.path.join(cfg['root_directory'], cfg["model_filename"])
+    model.save(model_savepath)
 
-    else:
-        # Or we can implement K-Fold cross validation to ensure the model's performance is stable across different subsets and avoid overfitting!
-        kfold_training(model=model_type, X=X, y_one_hot=y_one_hot, num_folds=num_folds, epochs=epochs, batch_size=batch_size)
+    # training results file
+    results_savepath = os.path.join(cfg['root_directory'], "training_results.txt")
+    with open(results_savepath, 'w') as f:
+        f.write(f"Train Losses: {train_losses}\n")
+        f.write(f"Validation Losses: {val_losses}\n")
+        f.write(f"Validation Accuracies: {val_accuracies}\n")
+    print(f"Saved training results to {results_savepath}")
 
-    print(f"Model accuracy: {acc * 100}%")
-    with open(os.path.join(cfg['root_directory'], 'model_accuracy.txt'), 'w') as f:
-        f.write(f"Model accuracy: {acc * 100}%")
+    # Plot the training and validation losses
+    ml_utils.plot_training_metrics(train_losses, val_losses, val_accuracies)
 
-    if save_model:
-        model_filepath = os.path.join(cfg['root_directory'], cfg['model_filename'])
-        model.save(model_filepath)
-        print(f"Best model saved at {model_filepath} with accuracy: {acc * 100}%")
 
 if __name__ == "__main__":
 
@@ -115,8 +105,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=128, help='Batch size for training the model.')
     parser.add_argument('--do_kfold', type=bool, default=False, help='Whether to use K-Fold cross-validation.')
     parser.add_argument('--num_folds', type=int, default=5, help='Number of data splits to train for cross-validation.')
+    parser.add_argument('--verbose', type=bool, default=False, help='Whether to print verbose output.')
     args = parser.parse_args()
 
-    # Train the model
-    train_emg_classifier(args.config_path, 'intan', args.epochs, args.batch_size, args.do_kfold, args.num_folds, save_model=True)
-    print("Step 3: Model training Done!")
+    train_emg_classifier(args.config_path, args.epochs, args.verbose)

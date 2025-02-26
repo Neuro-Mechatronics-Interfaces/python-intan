@@ -10,3 +10,6 @@ pandas==2.2.2
 opencv-python
 pyyaml
 pyserial
+torch
+torchvision
+torchaudio

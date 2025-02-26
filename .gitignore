@@ -11,3 +11,11 @@ utilities/__pycache__
 # New data files
 *.csv
 *.txt
+
+# Images
+gesture_classifier/*.png
+*.png
+
+# PyTorch models
+gesture_classifier/*.pth
+*.pth

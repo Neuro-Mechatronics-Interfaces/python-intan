@@ -4,6 +4,7 @@ import serial
 import numpy as np
 import collections
 from statistics import mode, StatisticsError
+import collections
 
 
 class PicoMessager:
@@ -118,7 +119,7 @@ class TCPClient:
         self.s.connect((self.host, self.port))
         self.s.setblocking(False)
 
-    def sendall(self, data, wait_for_response=False):
+    def send(self, data, wait_for_response=False):
         """Sends data to the host server and optionally waits for a response."""
         # convert data to bytes if it is not already
         if not isinstance(data, bytes):
@@ -127,16 +128,19 @@ class TCPClient:
         time.sleep(0.01)
 
         if wait_for_response:
-            return self.recv()
+            return self.read()
 
-    def recv(self, bytes=self.buffer):
+    def read(self, bytes=None):
         """ Reads and returns bytes by the buffer size unless specified """
-        return self.s.recv(bytes)
+        if bytes is None:
+            return self.s.recv(self.buffer)
+        else:
+            return self.s.recv(bytes)
 
     def close(self):
         self.s.close()
 
-class RingBuffer:
+class OldRingBuffer:
     """Fixed-size ring buffer for storing recent data up to max number of samples. """
     def __init__(self, num_channels, size_max=4000):
         self.max = size_max
@@ -168,3 +172,34 @@ class RingBuffer:
 
     def is_full(self):
         return self.size == self.max
+
+
+class RingBuffer:
+    """Fixed-size ring buffer for storing recent data up to max number of samples."""
+
+    def __init__(self, num_channels, size_max=4000):
+        self.max = size_max
+        self.samples = collections.deque(maxlen=size_max)  # Stores (timestamp, data)
+        self.num_channels = num_channels
+
+    def append(self, t, x):
+        """Adds a new sample to the buffer, automatically removing the oldest if full."""
+        x = np.array(x, dtype=np.float32).reshape(1, -1)  # Ensure it remains multi-channel
+        self.samples.append((t, x))
+
+    def get_samples(self, n=1):
+        """Returns the last n samples from the buffer as NumPy arrays."""
+        if len(self.samples) < n:
+            raise ValueError("Requested more samples than available in the buffer.")
+
+        recent_samples = list(self.samples)[-n:]  # Get last n elements
+        timestamps, data = zip(*recent_samples)  # Separate timestamps and data
+
+        # Convert to NumPy arrays and ensure shape is correct
+        data_array = np.vstack(data)  # Stack samples to shape (n, num_channels)
+
+        return data_array, np.array(timestamps)
+
+    def is_full(self):
+        """Checks if the buffer is at max capacity."""
+        return len(self.samples) == self.max

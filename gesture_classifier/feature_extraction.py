@@ -6,14 +6,20 @@ Author: Jonathan Shulgach
 Last Modified: 11/15/24
 """
 import os
+import sys
 import yaml
 import time
 import argparse
 import numpy as np
 import pandas as pd
-import utilities.rhd_utilities as rhd_utils
-import utilities.plotting_utilities as plot_utils
-import utilities.emg_processing as emg_proc
+
+# Add the parent directory to sys.path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+sys.path.append(parent_dir)
+
+from utilities import rhd_utilities as rhd_utils
+from utilities import emg_processing as emg_proc
 
 
 def feature_extraction(config_dir, channels, PCA_comp=8, visualize_pca_results=False):
@@ -172,15 +178,15 @@ if __name__ == "__main__":
 
     # Set up argument parser
     parser = argparse.ArgumentParser(description='Preprocess EMG data to extract gesture timings.')
-    parser.add_argument('--config_path', type=str, default='../config.txt', description='Path to the config file containing the directory of .rhd files.')
-    parser.add_argument('--channels', type=str, default='[0:128]', description='Index of the trigger channel to detect rising edges.')
+    parser.add_argument('--config_path', type=str, default='../config.txt', help='Path to the config file containing the directory of .rhd files.')
+    parser.add_argument('--channels', type=str, default='[0:128]', help='Index of the trigger channel to detect rising edges.')
+    parser.add_argument('--n_components', type=int, default=8, help='Number of principal components to return from PCA.')
     args = parser.parse_args()
 
     # Parse the channel ranges
-    chs = emg_proc.parse_channel_ranges(args.channels[0])
-
+    chs = emg_proc.parse_channel_ranges(args.channels)
     feature_extraction(args.config_path, chs,                    # ==== May delete below ====
-                       PCA_comp=3,                               # Specify the number of principal components to return from PCA
+                       PCA_comp=args.n_components,               # Specify the number of principal components to return from PCA
                        visualize_pca_results=False,              # Whether to visualize PCA results
     )
     print("Step 2: feature extraction done!")
