@@ -1,9 +1,11 @@
 # Virtual environments
 .venv
 .idea
+.ipynb_checkpoints/
 
 # chache directories
 utilities/__pycache__
+__pycache__/
 
 # models made with keras or pytorch
 *.keras
