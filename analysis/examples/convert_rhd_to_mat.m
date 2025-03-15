@@ -15,18 +15,19 @@ clear; clc;
 CHANNEL_LABEL = [
   "1", "TA";        % Can assign labels to individual channels, or...
   "2:64", "TA";     % ...assign to range of values as string
-  "65:128", "SOL";  % Just make sure all channels have a label
-  "129:192", "TA";
-  "193:256", "NG";
+  "65:128", "TA";  % Just make sure all channels have a label
+  % "129:192", "SOL";
+  % "193:256", "NG";
   % You can add/remove channels and labels as needed
 ];
 
-% Define full file path and pass in to the reader...
-%fname = "C:/example/path/to/IsometricFlexionRamp_1_241022_150834/IsometricFlexionRamp_241022_150834.rhd";
-%x = io.read_Intan_RHD2000_file(fname);
-x = io.read_Intan_RHD2000_file();              % ... or call up the GUI to select the file.
 
-% ======================================================================================
+%fname = "C:/example/path/to/IsometricFlexionRamp_1_241022_150834/IsometricFlexionRamp_241022_150834.rhd";
+%x = io.read_Intan_RHD2000_file(fname);              % Define full file path and pass in to the reader...
+%x = io.read_Intan_RHD2000_file();                   % ... or call up the GUI to select the file.
+x = io.read_Intan_RHD2000_files("Concatenate",true); % Load multiple fies with the GUI as well
+
+%% ======================================================================================
 
 % Let's parse out the data
 % Get sample rate from unipolar EMG channels

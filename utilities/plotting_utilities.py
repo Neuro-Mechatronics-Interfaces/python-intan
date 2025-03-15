@@ -10,7 +10,7 @@ import utilities.rhd_utilities as rhd_utils
 from matplotlib.collections import LineCollection
 
 
-def waterfall_plot(data, channel_indices, time_vector, edges=[], plot_title="", line_width=0.8,
+def waterfall_plot_broken(data, channel_indices, time_vector, edges=[], plot_title="", line_width=0.8,
                                      colormap='viridis'):
     """
     Creates a waterfall plot for the specified channels with amplitude-based coloring.
@@ -86,7 +86,7 @@ def waterfall_plot(data, channel_indices, time_vector, edges=[], plot_title="", 
 
     plt.show()
 
-def waterfall_plot_old(data, channel_indices, time_vector, edges=[], plot_title="", line_width=0.2, colormap='rainbow', downsampling_factor=1, verbose=False):
+def waterfall_plot(data, channel_indices, time_vector, edges=[], plot_title="", line_width=0.2, colormap='rainbow', downsampling_factor=1, verbose=False):
     """
     Creates a waterfall plot for the specified channels with a user-defined title,
     custom color styling, and scale bars for time and voltage.
@@ -287,7 +287,7 @@ def plot_feature_correlation(emg_signal, sample_rate=4000, window_size=400, over
     plt.title('Feature Correlation Heatmap')
     plt.show()
 
-def plot_figure(fig_size=(10, 6), x=None, y=None, title='Example Plot', x_label='X-axis', y_label='Y-axis', legend=True):
+def plot_figure(y, x, title='Example Plot', x_label='time (s)', y_label='Y-axis', legend=True, fig_size=(10, 6)):
     """
     """
     # Create a figure and axis

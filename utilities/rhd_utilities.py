@@ -13,6 +13,8 @@ import os
 import platform
 import time
 import numpy as np
+import tkinter as tk
+from tkinter import filedialog
 from pathlib import Path
 import matplotlib.pyplot as plt
 
@@ -94,10 +96,18 @@ def get_rhd_file_paths(directory, verbose=False):
         print(f"Found {len(file_paths)} .rhd files")
     return file_paths
 
-def load_file(filename, verbose=True):
+def load_file(filename=None, verbose=True):
     """Loads .rhd file with provided filename, returning 'result' dict and
     'data_present' Boolean.
     """
+    if not filename:
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
+        filename = filedialog.askopenfilename()
+        if not filename:
+            print("No file selected, returning.")
+            return None, False
+
     # Start timing
     tic = time.time()
 
@@ -262,6 +272,57 @@ def read_header(fid):
     read_signal_summary(header, fid)
 
     return header
+
+
+def load_files_from_path(folder_path=None, concatenate=False):
+    """ Loads all .rhd files from a specified path or using a file dialog. Concatenates teh data if specified.
+
+    Args:
+        folder_path: The path to the folder containing the .rhd files.
+        concatenate: Boolean indicating if the data from all files should be concatenated.
+
+    Returns:
+        all_results: A list of 'result' dictionaries if concatenate is False, otherwise a single 'result' dictionary.
+        success: Boolean indicating if the files were loaded successfully.
+    """
+    if folder_path is None:
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
+        folder_path = filedialog.askdirectory()
+        if not folder_path:
+            print("No file selected, returning.")
+            return None, False
+
+    # Get the absolute paths of all files locates in the directory
+    file_list = get_rhd_file_paths(folder_path)
+    all_results = None
+    for file in file_list:
+        result, _ = load_file(file, verbose=False)
+        if not result:
+            continue
+
+        if concatenate:
+            if all_results is None:
+                all_results = result
+            else:
+                # Assuming all_results has the same fields, update the specific ones
+                keys = ['t_aux_input', 'aux_input_data', 't_amplifier', 'amplifier_data', 't_board_adc','board_adc_data', ]
+                for key in keys:
+                    original_data = all_results[key]
+                    new_data = result[key]
+                    # If there is more than oen column, concatenate along axis=1, otherwise axis=0
+                    if len(original_data.shape) > 1:
+                        all_results[key] = np.concatenate((original_data, new_data), axis=1)
+                    else:
+                        all_results[key] = np.concatenate((original_data, new_data), axis=0)
+        else:
+            if all_results is None:
+                all_results = [result]
+            else:
+                all_results.append(result)
+
+    return all_results, True
+
 
 
 def check_magic_number(fid):
@@ -838,7 +899,7 @@ def data_to_result(header, data, result):
     return result
 
 
-def plot_channel(channel_name, result):
+def plot_channel_by_name(channel_name, result):
     """Plots all data associated with channel specified as 'channel_name' in
     'result' dict.
     """
@@ -888,13 +949,34 @@ def plot_channel(channel_name, result):
                 'Plotting failed; signal type ', signal_type, ' not found')
 
         ax.set_ylabel(ylabel)
-
         ax.plot(t_vector, result[signal_data_name][signal_index, :])
         ax.margins(x=0, y=0)
+
+        print("Plotting channel: ", channel_name)
+        plt.show()
 
     else:
         raise ChannelNotFoundError(
             'Plotting failed; channel ', channel_name, ' not found')
+
+def plot_channel_by_index(channel_index, result):
+    """Plots all data associated with channel specified as 'channel_index' in
+    'result' dict.
+    """
+    N_channels = len(result['amplifier_channels'])
+    if channel_index >= N_channels:
+        raise ChannelNotFoundError(
+            'Plotting failed; channel index ', channel_index, ' not found')
+    else:
+        _, ax = plt.subplots()
+        ax.set_title(result['amplifier_channels'][channel_index]['custom_channel_name'])
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Voltage (microVolts)')
+        ax.plot(result['t_amplifier'], result['amplifier_data'][channel_index, :])
+        ax.margins(x=0, y=0)
+
+        print("Plotting channel: ", result['amplifier_channels'][channel_index]['custom_channel_name'])
+        plt.show()
 
 
 def read_qstring(fid):

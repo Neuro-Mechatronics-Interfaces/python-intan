@@ -1,41 +1,36 @@
 """
-Quick demo showing the lading of RHD data and displaying the data from a user-specified channel name A-007
-
+Quick demo that shows how to load an .rhd file recorded from the Intan RHX controller and visualize some of the data
 """
-import utilities.rhd_utilities as rhd_utils
-from utilities import plotting_utilities as plot_utils
-import matplotlib.pyplot as plt
 
+import utilities.rhd_utilities as rhd_utils
+import utilities.plotting_utilities as plot_utils
 
 if __name__ == "__main__":
 
-    # Specify the filename
-    #filename = 'path/to/emg/file.rhd'
-    #filename = '/mnt/c/Users/NML/Desktop/hdemg_test/MCP01/2024_11_12/wrist_flexion_241112_170600/wrist_flexion_241112_170600.rhd'
-    filename = '/mnt/g/Shared drives/NML_shared/DataShare/HDEMG_SCI/MCP01/2024_12_10/abduct_p1_0_241210_172524/abduct_p1_0_241210_172524.rhd'
-    # Load the data
-    result, data_present = rhd_utils.load_file(filename)
+    # ========== Load the data ==========
+    # result, _ = rhd_utils.load_file('C:/absolute/path/to/emg/file.rhd') # Specify the file path...
+    result, _ = rhd_utils.load_file()  # ...or use the file dialog to select the file
 
-    # Display names of all available channels
+    # === If we have multiple files (for example, Intan saves separate files in 60 second increments) we can load and concatenate them ===
+    #result, _ = rhd_utils.load_files_from_path(concatenate=True) # Specify folder or use file dialog
+
+    # Get some data from the file to help
+    emg_data = result.get('amplifier_data')                                   # Shape: (num_channels, num_samples)
+    fs = result['frequency_parameters']['amplifier_sample_rate']              # Sampling frequency
+    t_s = result.get('t_amplifier')                                           # t_amplifier contains the time vector
+    analog_data = result.get('board_adc_data')                                # Shape: (num_channels, num_samples)
+
+    # ==== Display names of all available channels ====
     rhd_utils.print_all_channel_names(result)
 
-    if data_present:
+    # ==== For multi-channel visualization, we can do a waterfall plot ====
+    plot_utils.waterfall_plot(emg_data, range(128), t_s, plot_title='Intan EMG data')
 
-        # For single channel visualization
-        #channel_name = 'A-007'  # Change this variable and re-run cell to plot a different channel
-        #rhd_utils.plot_channel(channel_name, result)
+    # ==== For single channel visualization ====
+    ch_name = result.get('amplifier_channels')[4].get('native_channel_name')  # Get the name of the 5th channel "A-005"
+    rhd_utils.plot_channel_by_name(ch_name, result)  # By name
+    rhd_utils.plot_channel_by_index(8, result)  # By index
 
-        # For multi-channel visualization
-        emg_data = result['amplifier_data']  # Shape: (num_channels, num_samples)
-        channels_to_plot = range(128)  # Channels 000 to 127
-        time_vector = result['t_amplifier']  # Assuming t_amplifier contains the time vector
-
-        plot_utils.waterfall_plot_old(emg_data, channels_to_plot, time_vector,
-                                  plot_title='2024-10-22: Index Flexion'
-                                  )
-        plt.show()
-    else:
-        print('Plotting not possible; no data in this file')
-
-
-
+    # ====== Plot the data from analog_data ====
+    if analog_data is not None:
+        plot_utils.plot_figure(analog_data[0, :], t_s, 'Analog data')
