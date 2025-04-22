@@ -33,7 +33,7 @@ from adafruit_servokit import ServoKit
 from usbserialreader import USBSerialReader
 
 __author__ = "Jonathan Shulgach"
-__version__ = "0.0.2"
+__version__ = "0.0.1"
 
 
 class Arm(object):
@@ -65,9 +65,9 @@ class Arm(object):
         self.connected = False
         self.usb_serial = USBSerialReader(use_UART=self.use_uart, TERMINATOR=self.command_delimiter, verbose=self.verbose)
         
-        # Check whether to flip servo directions: wrist, thumb, index, middle, ring, pinky
-        self.flip_direction = {'wrist':False, 'thumb':True, 'index':True, 'middle':False, 'ring':False, 'pinky':True} 
-        self.servo_index = {'wrist':15, 'thumb':14, 'index':13, 'middle':12, 'ring':11, 'pinky':10}
+        # Check whether to flip servo directions: Wrist, Thumb, Index, Middle, Ring, Pinky
+        self.flip_direction = {'Wrist':False, 'Thumb':True, 'Index':True, 'Middle':False, 'Ring':False, 'Pinky':True} 
+        self.servo_index = {'Wrist':15, 'Thumb':14, 'Index':13, 'Middle':12, 'Ring':11, 'Pinky':10}
         self.servos = None
         if not self.simulate:
             # necessary to create the custom busio.I2C object instead of the ServoKit default due to some dormant library issue 
@@ -105,113 +105,52 @@ class Arm(object):
             
     async def parse_command(self, msg_list):
         """ Parses serial messages to control joint positions """
-        if self.verbose: 
-            print(f"Received {msg_list}")
+        print(f"Received {msg_list}")
         for msg in msg_list:
-            if not msg:
-                if self.verbose: 
-                    self.logger("Empty message")
-                continue
-                
-            cmd=msg.pop(0)
-            if cmd == 'set_joint':
-                if len(msg) < 2:
-                    if self.verbose: 
-                        self.logger("set command detected, need to pass a servo key and value", warning=True)
-                    continue
-                    
-                servo_key = msg.pop(0)
-                #self.logger(f"Second argument: {servo_key}")
-                
-                servo_val = msg.pop(0)
-                #self.logger(f"Third argument: {servo_val}")
-                
-                # Convert value to integer safely
-                try:
-                    servo_val = int(servo_val)
-                except ValueError:
-                    if self.verbose: 
-                        self.logger(f"Invalid servo value: {servo_val}", warning=True)
-                    return
-
-                # Log and send command to update servo
-                if self.verbose: 
-                    self.logger(f"Setting {servo_key} to {servo_val}")
-                self.update_servo(servo_key, servo_val)
-            
-            elif cmd == 'set_joints':
-                if self.verbose: 
-                    print("Received set_joints command")
-                if len(msg) > 1:
-                    val = int(msg.pop(0))
-                    #self.logger(f"Setting wrist to {val}")
-                    self.update_servo('wrist', val)
-                    if len(msg) > 0:
-                        val = int(msg.pop(0))
-                        #self.logger(f"Setting thumb to {val}")
-                        self.update_servo('thumb', val)
-                        if len(msg) > 0:
-                            val = int(msg.pop(0))
-                            #self.logger(f"Setting index to {val}")
-                            self.update_servo('index', val)
-                            if len(msg) > 0:
-                                val = int(msg.pop(0))
-                                #self.logger(f"Setting middle to {val}")
-                                self.update_servo('middle', val)
-                                if len(msg) > 0:
-                                    val = int(msg.pop(0))
-                                    #self.logger(f"Setting ring to {val}")
-                                    self.update_servo('ring', val)
-                                    if len(msg) > 0:
-                                        val = int(msg.pop(0))
-                                        #self.logger(f"Setting pinky to {val}")
-                                        self.update_servo('pinky', val)                       
-                
-            elif cmd == 'close':
-                servo_positions = {'wrist':90, 'thumb':0, 'index':120, 'ring':120, 'middle':120, 'pinky':120}
+            cmd=msg[0]
+            if cmd == 'flex':
+                servo_positions = {'Wrist':90, 'Thumb':0, 'Index':180, 'Ring':180, 'Middle':180, 'Pinky':180}
                 for key, angle in servo_positions.items():
-                    #time.sleep(0.2)
                     self.update_servo(key, angle)
             elif cmd == 'extend':
-                servo_positions = {'wrist':90, 'thumb':0, 'index':0, 'ring':0, 'middle':0, 'pinky':0}
+                servo_positions = {'Wrist':90, 'Thumb':0, 'Index':0, 'Ring':0, 'Middle':0, 'Pinky':0}
                 for key, angle in servo_positions.items():
-                    #time.sleep(0.2)
                     self.update_servo(key, angle)
             elif cmd == 'pronate':
-                self.update_servo('wrist', 0)
+                self.update_servo('Wrist', 0)
             elif cmd == 'supinate':
-                self.update_servo('wrist', 180)                
+                self.update_servo('Wrist', 180)                
             elif cmd == 'thumb':
-                self.update_servo('thumb', 180)
+                self.update_servo('Thumb', 180)
             elif cmd == 'index':
-                self.update_servo('index', 120)
+                self.update_servo('Index', 180)
             elif cmd == 'ring':
-                self.update_servo('ring', 120)
+                self.update_servo('Ring', 180)
             elif cmd == 'middle':
-                self.update_servo('middle', 120)
+                self.update_servo('Middle', 180)
             elif cmd == 'pinky':
-                self.update_servo('pinky', 120)
+                self.update_servo('Pinky', 180)
             elif cmd == 'open':
-                servo_positions = {'wrist':90, 'thumb':0, 'index':0, 'ring':0, 'middle':0, 'pinky':0}
+                servo_positions = {'Wrist':90, 'Thumb':0, 'Index':0, 'Ring':0, 'Middle':0, 'Pinky':0}
                 for key, angle in servo_positions.items():
                     self.update_servo(key, angle)
             elif cmd == 'grip':
-                servo_positions = {'wrist':90, 'thumb':120, 'index':120, 'ring':120, 'middle':120, 'pinky':120}
+                servo_positions = {'Wrist':90, 'Thumb':180, 'Index':180, 'Ring':180, 'Middle':180, 'Pinky':180}
                 for key, angle in servo_positions.items():
                     self.update_servo(key, angle)
             elif cmd == 'pinch':
-                self.update_servo('thumb', 180)
-                self.update_servo('index', 180)
+                self.update_servo('Thumb', 180)
+                self.update_servo('Index', 180)
             elif cmd == 'point':
-                servo_positions = {'wrist':90, 'thumb':180, 'index':0, 'ring':180, 'middle':180, 'pinky':180}
+                servo_positions = {'Wrist':90, 'Thumb':180, 'Index':0, 'Ring':180, 'Middle':180, 'Pinky':180}
                 for key, angle in servo_positions.items():
                     self.update_servo(key, angle)                
             elif cmd == 'spiderman':
-                servo_positions = {'wrist':90, 'thumb':0, 'index':0, 'ring':180, 'middle':180, 'pinky':0}
+                servo_positions = {'Wrist':90, 'Thumb':0, 'Index':0, 'Ring':180, 'Middle':180, 'Pinky':0}
                 for key, angle in servo_positions.items():
                     self.update_servo(key, angle)                
             elif cmd == 'rest':
-                servo_positions = {'wrist':90, 'thumb':0, 'index':0, 'ring':0, 'middle':0, 'pinky':0}
+                servo_positions = {'Wrist':90, 'Thumb':0, 'Index':0, 'Ring':0, 'Middle':0, 'Pinky':0}
                 for key, angle in servo_positions.items():
                     self.update_servo(key, angle)
             else:
@@ -220,29 +159,27 @@ class Arm(object):
     def update_servo(self, key, servo_val):
         """ Update the phsyical servo configured from the ServoKit, given specific index and angle value """
         try:
-            if self.verbose: 
-                self.logger(f"{key} set to {servo_val} degrees")
+            self.logger(f"{key} set to {servo_val} degrees")
             if not self.simulate:
                 if self.flip_direction[key]: servo_val = 180-servo_val
                 idx = self.servo_index[key]
                 self.servos.servo[idx].angle = servo_val 
         except ValueError as e:
-           if self.verbose: 
-               print(f"Error updating servo {key}: {e}")
+            print(f"Error updating servo {key}: {e}")
 
 
 if __name__ == "__main__":
     
     
     # Servo positions at rest
-    #    thumb: 180
-    #    index: 180
-    #    middle: 0
-    #    ring:  0
-    #    pinky: 180
+    #    Thumb: 180
+    #    Index: 180
+    #    Middle: 0
+    #    Ring:  0
+    #    Pinky: 180
     
     
-    arm = Arm('3D-printed Arm', simulate=False, use_uart=False, verbose=False)
+    arm = Arm('3D-printed Arm', simulate=False, use_uart=False, verbose=True)
     try:
         arm.start()
     except KeyboardInterrupt:
