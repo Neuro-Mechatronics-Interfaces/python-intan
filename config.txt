@@ -1,8 +1,0 @@
-# Replace the paths with your own paths
-root_directory=/mnt/c/Users/path/to/raw/data
-
-# File names
-metrics_filename=raw_data_metrics.csv
-processed_data_filename=processed_data.csv
-model_filename=model.keras
-gesture_label_filename=gesture_labels.csv

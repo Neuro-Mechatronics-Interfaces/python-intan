@@ -6,7 +6,7 @@
 [![PyPI version](https://badge.fury.io/py/python-intan.svg)](https://badge.fury.io/py/python-intan)
 
 <p align="center">
-  <img src="docs/figs/repo-logo.png">
+  <img src="./docs/figs/repo-logo.png">
 </p>
 
 
@@ -16,9 +16,7 @@
 
 - Reading `.rhd` and `.dat` data files
 - Preprocessing and feature extraction
-- Real-time classification with trained ML models
 - Integration with external hardware for closed-loop applications
-- Experimental EMG gesture control
 
 Whether you're analyzing offline data or streaming real-time EMG from the RHX system, `python-intan` aims to make the workflow seamless and modular.
 
