@@ -1,0 +1,24 @@
+[project]
+name = "python-intan"
+version = "0.0.2"
+description = "Python utilities for working with Intan electrophysiology data"
+authors = [{ name = "Jonathan Shulgach", email = "jshulgac@andrew.cmu.edu" }]
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = ["intan", "emg", "neurotech", "signal processing", "biomedical"]
+dependencies = [
+    "numpy>=1.26.0",
+    "scipy==1.14.1",
+    "matplotlib",
+    "pandas",
+    "PySerial",
+    "scikit-learn"
+]
+
+[project.urls]
+Homepage = "https://github.com/Neuro-Mechatronics-Interfaces/python-intan"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

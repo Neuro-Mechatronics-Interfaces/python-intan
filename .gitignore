@@ -21,3 +21,7 @@ gesture_classifier/*.png
 # PyTorch models
 gesture_classifier/*.pth
 *.pth
+
+# Temporary files used for debugging 
+/temp/
+temp/*

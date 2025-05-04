@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the following metadata."
+title: "Python Intan Package"
+authors:
+  - family-names: Shulgach
+    given-names: Jonathan
+    affiliation: Carnegie Mellon University
+    orcid: https://orcid.org/0009-0004-0449-9918
+  - family-names: Foy
+    given-names: Adrian
+    affiliation: Intan Technologies
+date-released: 2025-05-02
+version: 0.1.0
+license: MIT
+repository-code: https://github.com/Neuro-Mechatronics-Interfaces/python-intan
