@@ -6,7 +6,7 @@
 [![PyPI version](https://badge.fury.io/py/python-intan.svg)](https://badge.fury.io/py/python-intan)
 
 <p align="center">
-  <img src="./docs/figs/repo-logo.png">
+  <img src="./docs/figs/logo.png">
 </p>
 
 
