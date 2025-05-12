@@ -320,93 +320,97 @@ class EMGViewerApp:
                                                                                                      padx=(0, 5))
         ttk.Button(label_button_frame, text="Remove Label", command=self.remove_selected_label).pack(side="left")
 
-        # === Right: Filters + Features ===
+        # === Right: Feature + Preprocessing Settings ===
         right_panel = ttk.Frame(container)
         right_panel.pack(side="left", fill="y")
 
-        # Preprocessing Filters
-        ttk.Label(right_panel, text="Preprocessing Filters:").pack(anchor="w", pady=(0, 5))
-        self.training_filters = {
-            "bandpass": tk.BooleanVar(value=True),
-            "notch": tk.BooleanVar(value=True),
-            "rectify": tk.BooleanVar(),
-            "smooth_rms": tk.BooleanVar()
-        }
-        for label, var in self.training_filters.items():
-            ttk.Checkbutton(right_panel, text=label.replace("_", " ").title(), variable=var).pack(anchor="w")
+        # === Preprocessing Settings ===
+        pre_frame = ttk.LabelFrame(right_panel, text="Preprocessing", padding=(5, 5))
+        pre_frame.pack(fill="x", pady=(0, 10))
 
-        # Feature Selection with Parameters
         self.training_features = {}
         self.feature_controls = {}
 
-        self.training_features["rms"] = tk.BooleanVar(value=True)
-        frame_rms = ttk.Frame(right_panel)
-        frame_rms.pack(anchor="w", fill="x")
-        ttk.Checkbutton(frame_rms, text="RMS", variable=self.training_features["rms"]).pack(side="left")
-    
+        self.training_features["notch"] = tk.BooleanVar(value=True)
+        ttk.Checkbutton(pre_frame, text="Notch Filter (60 Hz)", variable=self.training_features["notch"]).pack(
+            anchor="w")
 
-        # --- Sliding Window Parameters ---
-        ttk.Label(right_panel, text="Sliding Window Settings:", font=("Arial", 9, "bold")).pack(anchor="w",
-                                                                                                pady=(10, 2))
-        ttk.Label(right_panel, text="Window Size (ms):").pack(anchor="w", pady=(10, 0))
-        self.window_size_entry = ttk.Entry(right_panel, width=10)
-        self.window_size_entry.insert(0, "250")  # default 200ms
+        self.training_features["bandpass"] = tk.BooleanVar(value=True)
+        ttk.Checkbutton(pre_frame, text="Bandpass Filter", variable=self.training_features["bandpass"]).pack(anchor="w")
+
+        self.training_features["rectify"] = tk.BooleanVar(value=True)
+        ttk.Checkbutton(pre_frame, text="Rectify Signal", variable=self.training_features["rectify"]).pack(anchor="w")
+
+        self.training_features["envelop_smooth"] = tk.BooleanVar(value=True)
+        ttk.Checkbutton(pre_frame, text="Envelope Smooth", variable=self.training_features["envelop_smooth"]).pack(
+            anchor="w")
+
+        ttk.Label(pre_frame, text="Envelope LF (Hz):").pack(anchor="w")
+        self.smooth_f_entry = ttk.Entry(pre_frame, width=10)
+        self.smooth_f_entry.insert(0, "5")
+        self.smooth_f_entry.pack(anchor="w", pady=(0, 5))
+
+        # === Feature Extraction Settings ===
+        feat_frame = ttk.LabelFrame(right_panel, text="Feature Extraction", padding=(5, 5))
+        feat_frame.pack(fill="x", pady=(0, 10))
+
+        self.training_features["use_sliding_window"] = tk.BooleanVar(value=True)
+        ttk.Checkbutton(feat_frame, text="Use Sliding Window",
+                        variable=self.training_features["use_sliding_window"]).pack(anchor="w")
+
+        ttk.Label(feat_frame, text="Window Size (ms):").pack(anchor="w")
+        self.window_size_entry = ttk.Entry(feat_frame, width=10)
+        self.window_size_entry.insert(0, "250")
         self.window_size_entry.pack(anchor="w")
-
-        ttk.Label(right_panel, text="Step Size (ms):").pack(anchor="w", pady=(5, 0))
-        self.step_size_entry = ttk.Entry(right_panel, width=10)
-        self.step_size_entry.insert(0, "250")  # default 50ms
+        ttk.Label(feat_frame, text="Step Size (ms):").pack(anchor="w")
+        self.step_size_entry = ttk.Entry(feat_frame, width=10)
+        self.step_size_entry.insert(0, "50")
         self.step_size_entry.pack(anchor="w")
 
-        # === Mean Absolute Value (MAV) ===
-        self.training_features["mean_absolute_value"] = tk.BooleanVar(value=False)
-        frame_mav = ttk.Frame(right_panel)
-        frame_mav.pack(anchor="w", fill="x")
-        ttk.Checkbutton(frame_mav, text="Mean Absolute Value",
-                        variable=self.training_features["mean_absolute_value"]).pack(side="left")
-        self.feature_controls["mean_absolute_value"] = {}
+        self.training_features["rms"] = tk.BooleanVar(value=True)
+        ttk.Checkbutton(feat_frame, text="RMS", variable=self.training_features["rms"]).pack(anchor="w")
 
-        # === Zero Crossings (ZC) ===
-        self.training_features["zero_crossings"] = tk.BooleanVar()
-        frame_zc = ttk.Frame(right_panel)
+        self.training_features["mean_absolute_value"] = tk.BooleanVar(value=True)
+        ttk.Checkbutton(feat_frame, text="Mean Absolute Value",
+                        variable=self.training_features["mean_absolute_value"]).pack(anchor="w")
+
+        self.training_features["zero_crossings"] = tk.BooleanVar(value=True)
+        frame_zc = ttk.Frame(feat_frame)
         frame_zc.pack(anchor="w", fill="x")
         ttk.Checkbutton(frame_zc, text="Zero Crossings", variable=self.training_features["zero_crossings"]).pack(
             side="left")
-        ttk.Label(frame_zc, text="Thresh:").pack(side="left", padx=2)
+        ttk.Label(frame_zc, text="Thresh:").pack(side="left")
         zc_thresh = ttk.Entry(frame_zc, width=6)
         zc_thresh.insert(0, "0.01")
         zc_thresh.pack(side="left")
         self.feature_controls["zero_crossings"] = {"threshold": zc_thresh}
 
-        # === Slope Sign Changes (SSC) ===
-        self.training_features["slope_sign_changes"] = tk.BooleanVar()
-        frame_ssc = ttk.Frame(right_panel)
+        self.training_features["slope_sign_changes"] = tk.BooleanVar(value=True)
+        frame_ssc = ttk.Frame(feat_frame)
         frame_ssc.pack(anchor="w", fill="x")
         ttk.Checkbutton(frame_ssc, text="Slope Sign Changes",
                         variable=self.training_features["slope_sign_changes"]).pack(side="left")
-        ttk.Label(frame_ssc, text="ΔThresh:").pack(side="left", padx=2)
+        ttk.Label(frame_ssc, text="ΔThresh:").pack(side="left")
         ssc_thresh = ttk.Entry(frame_ssc, width=6)
         ssc_thresh.insert(0, "0.01")
         ssc_thresh.pack(side="left")
         self.feature_controls["slope_sign_changes"] = {"delta_threshold": ssc_thresh}
 
-        # === Waveform Length (WL) ===
-        self.training_features["waveform_length"] = tk.BooleanVar()
-        frame_wl = ttk.Frame(right_panel)
+        self.training_features["waveform_length"] = tk.BooleanVar(value=True)
+        frame_wl = ttk.Frame(feat_frame)
         frame_wl.pack(anchor="w", fill="x")
         ttk.Checkbutton(frame_wl, text="Waveform Length", variable=self.training_features["waveform_length"]).pack(
             side="left")
-        ttk.Label(frame_wl, text="Window (ms):").pack(side="left", padx=2)
+        ttk.Label(frame_wl, text="Window (ms):").pack(side="left")
         wl_window_entry = ttk.Entry(frame_wl, width=6)
-        wl_window_entry.insert(0, "200")  # default 200ms
+        wl_window_entry.insert(0, "200")
         wl_window_entry.pack(side="left")
         self.feature_controls["waveform_length"] = {"window_ms": wl_window_entry}
 
-        
-        # === PCA Settings ===
+        # === PCA Components ===
         ttk.Label(right_panel, text="PCA Components:").pack(anchor="w", pady=(10, 0))
         self.pca_components_entry = ttk.Entry(right_panel, width=10)
-        self.pca_components_entry.insert(0, "50")  # default for 128-channel data
+        self.pca_components_entry.insert(0, "50")
         self.pca_components_entry.pack(anchor="w", pady=(0, 10))
 
         ttk.Button(right_panel, text="Build Training Set", command=self.build_training_dataset).pack(pady=15)
@@ -439,6 +443,17 @@ class EMGViewerApp:
                 full_path = os.path.join(folder_path, fname)
                 self.training_dir_table.insert("", "end", values=[full_path])
                 self.update_training_labels_from_filename(fname)
+
+    def update_training_labels_from_directory(self):
+        """ Helper function to refresh the training labels listbox with all the labels detected from the current directories"""
+        # Delete all labels from the listbox
+        self.training_labels_listbox.delete(0, "end")
+
+        # Iterate through each directory in training_dir_table
+        for item in self.training_dir_table.get_children():
+            path = self.training_dir_table.item(item)["values"][0]
+            if os.path.exists(path):
+                self.update_training_labels_from_filename(path)
 
     def remove_training_directory(self):
         selected = self.training_dir_table.selection()
@@ -790,20 +805,6 @@ class EMGViewerApp:
         self.current_channel = self.channel_selector.current()
         self.plot_channel()
 
-    def apply_filters(self, data):
-        fs = self.sampling_rate
-        low = float(self.low_cut.get())
-        high = float(self.high_cut.get())
-        order = int(self.filter_order.get())
-
-        b, a = butter(order, [low / (fs / 2), high / (fs / 2)], btype="band")
-        filtered = filtfilt(b, a, data)
-
-        if self.notch_enabled.get():
-            b_notch, a_notch = iirnotch(60, 30, fs)
-            filtered = filtfilt(b_notch, a_notch, filtered)
-        return filtered
-
     def plot_channel(self, event=None):
 
         self.ax.clear()
@@ -817,17 +818,7 @@ class EMGViewerApp:
             time = np.arange(len(ch_data)) / fs
 
             # Apply filters from Features tab
-            if self.training_filters["bandpass"].get():
-                b, a = butter(4, [20, 450], btype="band", fs=fs)
-                ch_data = filtfilt(b, a, ch_data)
-            if self.training_filters["notch"].get():
-                b, a = iirnotch(60, 30, fs)
-                ch_data = filtfilt(b, a, ch_data)
-            if self.training_filters["rectify"].get():
-                ch_data = np.abs(ch_data)
-            if self.training_filters["smooth_rms"].get():
-                kernel = np.ones(int(0.2 * fs)) / int(0.2 * fs)
-                ch_data = np.convolve(ch_data, kernel, mode='same')
+            ch_data = self.apply_training_filters(ch_data)
 
             self.ax.plot(time, ch_data, label="Segment Ch {}".format(self.current_channel))
 
@@ -996,50 +987,85 @@ class EMGViewerApp:
             print("Training dataset has been created in memory.")
 
     def extract_td_features(self, segment):
+        """ Computes a variety of unique features from segmented EMG data. Input shape expects (channels x samples). """
         features = []
         fs = self.segment_fs or self.sampling_rate or 2000
 
         for ch_data in segment:
-            if self.training_features["mean_absolute_value"].get():
-                mav = np.mean(np.abs(ch_data))
-                features.append(mav)
+            ch_features = []
 
-            if self.training_features["zero_crossings"].get():
+            # Mean Absolute Value (MAV)
+            if self.training_features.get("mean_absolute_value", tk.BooleanVar()).get():
+                ch_features.append(np.mean(np.abs(ch_data)))
+
+            # Zero Crossings (ZC)
+            if self.training_features.get("zero_crossings", tk.BooleanVar()).get():
                 try:
                     thresh = float(self.feature_controls["zero_crossings"]["threshold"].get())
-                except ValueError:
+                except (KeyError, ValueError):
                     thresh = 0.01
                 zc = np.sum((np.diff(np.sign(ch_data)) != 0) & (np.abs(np.diff(ch_data)) > thresh))
-                features.append(zc)
+                ch_features.append(zc)
 
-            if self.training_features["slope_sign_changes"].get():
+            # Slope Sign Changes (SSC)
+            if self.training_features.get("slope_sign_changes", tk.BooleanVar()).get():
                 try:
                     delta_thresh = float(self.feature_controls["slope_sign_changes"]["delta_threshold"].get())
-                except ValueError:
+                except (KeyError, ValueError):
                     delta_thresh = 0.01
                 diff = np.diff(ch_data)
                 ssc = np.sum((np.diff(np.sign(diff)) != 0) & (np.abs(np.diff(diff)) > delta_thresh))
-                features.append(ssc)
+                ch_features.append(ssc)
 
-            if self.training_features["waveform_length"].get():
+            # Waveform Length (WL) - supports sub-windowed WL if segment is longer than window
+            if self.training_features.get("waveform_length", tk.BooleanVar()).get():
                 try:
                     window_ms = float(self.feature_controls["waveform_length"]["window_ms"].get())
-                except ValueError:
+                except (KeyError, ValueError):
                     window_ms = 200
                 window_len = int((window_ms / 1000.0) * fs)
 
-                # Handle short segments safely
                 if len(ch_data) < window_len:
                     wl = np.sum(np.abs(np.diff(ch_data)))
                 else:
                     wl_vals = []
                     for start in range(0, len(ch_data) - window_len + 1, window_len):
-                        segment_window = ch_data[start:start + window_len]
-                        wl_vals.append(np.sum(np.abs(np.diff(segment_window))))
-                    wl = np.mean(wl_vals)  # average WL per window
-                features.append(wl)
+                        sub_window = ch_data[start:start + window_len]
+                        wl_vals.append(np.sum(np.abs(np.diff(sub_window))))
+                    wl = np.mean(wl_vals)
+                ch_features.append(wl)
+
+            # RMS (used in Jehan Yang paper)
+            if self.training_features.get("rms", tk.BooleanVar()).get():
+                rms = np.sqrt(np.mean(ch_data ** 2))
+                ch_features.append(rms)
+
+            features.extend(ch_features)
 
         return np.array(features)
+
+    def apply_training_filters(self, emg):
+        """Applies selected filters to the EMG data. Handles both 1D (single channel) and 2D arrays."""
+        fs = self.sampling_rate or 2000
+        axis = 1 if emg.ndim == 2 else -1  # axis=1 for 2D, axis=-1 (last) for 1D
+
+        if self.training_features["notch"].get():
+            b, a = iirnotch(60, Q=30, fs=fs)
+            emg = filtfilt(b, a, emg, axis=axis)
+        if self.training_features["bandpass"].get():
+            b, a = butter(4, [20, 450], btype="band", fs=fs)
+            emg = filtfilt(b, a, emg, axis=axis)
+        if self.training_features["rectify"].get():
+            emg = np.abs(emg)
+        if self.training_features["envelop_smooth"].get():
+            try:
+                envelop_f = float(self.smooth_f_entry.get())
+            except ValueError:
+                envelop_f = 5.0
+            b, a = butter(4, envelop_f, btype="low", fs=fs)
+            emg = filtfilt(b, a, emg, axis=axis)
+
+        return emg
 
     def add_scalebars(self, ax, scale_time=5, scale_voltage=10):
         ax.plot([0, scale_time], [-1000, -1000], color='gray', lw=3)
@@ -1071,89 +1097,99 @@ class EMGViewerApp:
             print("Dataset save cancelled.")
             return
 
-        X = []
-        y = []
+        X = [] # Will hold the data features
+        y = [] # Labels for the data
         fs = self.sampling_rate or 2000
         label_encoder = LabelEncoder()
 
-        # === Get window and step size ===
-        try:
-            win_size_ms = int(self.window_size_entry.get())
-            step_size_ms = int(self.step_size_entry.get())
-        except ValueError:
-            print("Invalid window/step size. Using default 200ms/50ms.")
-            win_size_ms = 200
-            step_size_ms = 50
-
-        win_size = int((win_size_ms / 1000) * fs)
-        step_size = int((step_size_ms / 1000) * fs)
-
-        def envelope_signal(signal, cutoff=5.0, order=4):
-            b, a = butter(order, cutoff / (fs / 2), btype='low')
-            return filtfilt(b, a, np.abs(signal))
-
-        def extract_td_features(segment):
-            features = []
-            for ch_data in segment:
-                if self.training_features["mean_absolute_value"].get():
-                    features.append(np.mean(np.abs(ch_data)))
-                if self.training_features["zero_crossings"].get():
-                    thresh = float(self.feature_controls["zero_crossings"]["threshold"].get())
-                    zc = np.sum((np.diff(np.sign(ch_data)) != 0) & (np.abs(np.diff(ch_data)) > thresh))
-                    features.append(zc)
-                if self.training_features["slope_sign_changes"].get():
-                    delta_thresh = float(self.feature_controls["slope_sign_changes"]["delta_threshold"].get())
-                    diff = np.diff(ch_data)
-                    ssc = np.sum((np.diff(np.sign(diff)) != 0) & (np.abs(np.diff(diff)) > delta_thresh))
-                    features.append(ssc)
-                if self.training_features["waveform_length"].get():
-                    features.append(np.sum(np.abs(np.diff(ch_data))))
-            return np.array(features)
-
         # === Loop over training_dir_table entries ===
-        for item in tqdm(self.training_dir_table.get_children(), desc="Extracting Features"):
+        training_files = self.training_dir_table.get_children()
+        for item in tqdm(training_files, desc="Extracting Features", position=0):
             file_path = self.training_dir_table.item(item)["values"][0]
             if not file_path.endswith(".npz") or not os.path.exists(file_path):
                 continue
 
-            data = np.load(file_path)
-            emg = data["emg"]
-            label = data["label"].item() if "label" in data else "unknown"
+            # === Load the EMG data ===
+            try:
+                data = np.load(file_path)
+                emg = data["emg"]
+                label = data["label"].item() if "label" in data else "unknown"
+            except Exception as e:
+                print(f"Skipped {file_path}: could not load ({e})")
+                continue
 
             # === Skip segments that are too short for filtering ===
             if emg.shape[1] < 27:
                 print(f"Skipped {file_path}: segment too short ({emg.shape[1]} samples)")
                 continue
 
-            # === Preprocessing ===
-            if self.training_filters["bandpass"].get():
-                b, a = butter(4, [20, 450], btype="band", fs=fs)
-                emg = filtfilt(b, a, emg, axis=1)
-            if self.training_filters["notch"].get():
-                b, a = iirnotch(60, 30, fs)
-                emg = filtfilt(b, a, emg, axis=1)
-            if self.training_filters["rectify"].get():
-                emg = np.abs(emg)
-            if self.training_filters["smooth_rms"].get():
-                emg = np.array([envelope_signal(ch) for ch in emg])
+            #print(f"Processing {file_path} with label: {label}")
+            # === Apply training filters ======
+            emg = self.apply_training_filters(emg)
 
-            # === Sliding Window ===
-            for start in range(0, emg.shape[1] - win_size, step_size):
-                window = emg[:, start:start + win_size]
-                X.append(extract_td_features(window))
+            #print(f"\nEMG data shape: {emg.shape}")
+
+            # === Extract features from the segment ===
+            if self.training_features["use_sliding_window"].get():
+                # Sliding window feature extraction
+                window_size = int(self.window_size_entry.get())
+                step_size = int(self.step_size_entry.get())
+
+                if window_size <= 0 or step_size <= 0:
+                    print("Error: Window and step size must be positive.")
+                    return
+
+                num_windows = (emg.shape[1] - window_size) // step_size + 1
+
+                #print(f"Sliding window selected, number of window segments: {num_windows}")
+                for i in tqdm(range(num_windows),
+                              desc=f"{os.path.basename(file_path)}",
+                              position=1, leave=False):
+                    start = i * step_size
+                    end = start + window_size
+                    if end > emg.shape[1]:
+                        break
+                    segment = emg[:, start:end]
+                    if segment.shape[1] != window_size:
+                        continue
+
+                    # Extract features from the segment
+                    X.append(self.extract_td_features(segment))
+                    y.append(label)
+
+            else:
+                # Single-segment feature extraction (entire EMG segment)
+                X.append(self.extract_td_features(emg))
                 y.append(label)
+
+            #print(f"Current data size: {len(X)} segments")
+
 
         if not X:
             print("Error: No valid segments were processed.")
             return
 
         X = np.array(X)
+        print("Shape of feature vectors:", X.shape)
         y_encoded = label_encoder.fit_transform(y)
+        # === Normalize features ===
         X = (X - X.mean(axis=0)) / X.std(axis=0)
+
+        # Shape of data
+        print(f"Data shape: {X.shape}")
+
+        if X.shape[1] == 0:
+            print("Error: Feature vectors are empty. Did you select any features?")
+            return
+
+        if not any(var.get() for var in self.training_features.values()):
+            print("Warning: No features selected in GUI.")
 
         # === Apply PCA dimensionality reduction ===
         n_components = int(self.pca_components_entry.get()) if self.pca_components_entry.get().isdigit() else 50
         pca = PCA(n_components=n_components)
+
+
         X = pca.fit_transform(X)
 
         np.savez_compressed(save_path, features=X, labels=y_encoded, label_names=label_encoder.classes_)
