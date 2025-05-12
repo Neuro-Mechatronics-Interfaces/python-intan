@@ -1,4 +1,4 @@
-from ._metrics_utils import read_config_file, get_file_paths,  load_metrics_data
+from ._metrics_utils import load_metrics_data, get_metrics_file
 from ._filters import (
     notch_filter,
     butter_bandpass,
@@ -18,3 +18,4 @@ from ._filters import (
     orthogonalize,
     normalize
 )
+from ._emg_trial_selector import EMGViewerApp, launch_emg_selector

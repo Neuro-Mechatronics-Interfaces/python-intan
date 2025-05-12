@@ -1,6 +1,6 @@
 [project]
 name = "python-intan"
-version = "0.0.2"
+version = "0.0.5.1"
 description = "Python utilities for working with Intan electrophysiology data"
 authors = [{ name = "Jonathan Shulgach", email = "jshulgac@andrew.cmu.edu" }]
 readme = "README.md"

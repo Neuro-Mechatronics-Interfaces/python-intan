@@ -13,9 +13,14 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import utilities.intan_utilities as rhd_utils
-import utilities.emg_processing as emg_proc
-import utilities.plotting_utilities as plot_utils
+#import utilities.intan_utilities as rhd_utils
+#import utilities.emg_processing as emg_proc
+#import utilities.plotting_utilities as plot_utils
+import intan.io as io
+from intan.processing import notch_filter, filter_emg, common_average_reference, compute_grid_average, window_rms
+from intan.plotting import waterfall
+
+
 
 
 class PreProcess:
@@ -220,6 +225,9 @@ class PreProcess:
 
         # Function to update the position of the lines
         def update_lines(event):
+            if self.fig is None or not plt.fignum_exists(self.fig.number):
+                return  # Exit early if the figure has been closed
+
             if event.inaxes == self.ax:
                 # Update horizontal and vertical line position
                 self.hline.set_ydata([event.ydata, event.ydata])  # Fix: Set ydata as a sequence with two points
@@ -242,7 +250,7 @@ class PreProcess:
         self.fig.canvas.draw()  # Update the plot with the new channel's data
         plt.show(block=False)
 
-        print("Waiting for user interaction (left-click or spacebar)...")
+        print("Waiting for user interaction (left-click to select, right-click for next)...")
         plt.waitforbuttonpress()  # Wait for user input
 
     def save_start_times(self, file_name='file_metrics.csv'):
@@ -284,13 +292,13 @@ class PreProcess:
 
         """
         # Step 1: Get all .rhd file paths in the directory
-        cfg = emg_proc.read_config_file(self.cfg)
-        file_paths = rhd_utils.get_rhd_file_paths(rhd_utils.adjust_path(cfg['root_directory']), True)
+        cfg = io.read_config_file(self.cfg)
+        file_paths = io.get_rhd_file_paths(io.adjust_path(cfg['root_directory']), True)
 
         # Step 1.5, load the metrics file if it exists
         file_names = None
-        metrics_filepath = rhd_utils.adjust_path(os.path.join(cfg['root_directory'], cfg['metrics_filename']))
-        metrics_file = emg_proc.get_metrics_file(metrics_filepath, verbose=True)
+        metrics_filepath = io.adjust_path(os.path.join(cfg['root_directory'], cfg['metrics_filename']))
+        metrics_file = io.get_metrics_file(metrics_filepath, verbose=True)
         if metrics_file is not None:
             file_names = metrics_file['File Name'].tolist()
 
@@ -306,7 +314,7 @@ class PreProcess:
                 continue
 
             # Load the data from the file
-            result, data_present = rhd_utils.load_file(file)
+            result, data_present = io.load_rhd_file(file)
             if not data_present:
                 print(f"No data found in {file}. Skipping...")
                 continue
@@ -320,12 +328,12 @@ class PreProcess:
 
             # Step 3: Apply processing to EMG data (filtering, CAR, RMS, etc.)
             print(f"Processing file: {filename}")
-            emg_data = emg_proc.notch_filter(emg_data, sampling_rate, 60)
-            filt_data = emg_proc.filter_emg(emg_data, filter_type='bandpass', lowcut=30, highcut=500, fs=sampling_rate, verbose=True)
-            car_data = emg_proc.common_average_reference(filt_data, True)
-            grid_data = emg_proc.compute_grid_average(car_data, 8, 0)
+            emg_data = notch_filter(emg_data, sampling_rate, 60)
+            filt_data = filter_emg(emg_data, filter_type='bandpass', lowcut=30, highcut=500, fs=sampling_rate, verbose=True)
+            car_data = common_average_reference(filt_data, True)
+            grid_data = compute_grid_average(car_data, 8, 0)
             grid_ch = list(range(grid_data.shape[0]))
-            rms_data = emg_proc.window_rms(car_data, window_size=800, verbose=True)
+            rms_data = window_rms(car_data, window_size=800, verbose=True)
 
             if self.trigger_channel is not None:
                 if 'board_dig_in_data' not in result:
@@ -363,7 +371,7 @@ class PreProcess:
                     edges = np.arange(data['start_time'], data['start_time'] + N_trials * trial_interval, trial_interval)
 
             # Plot the waterfall plot with the trial indices plotted as vertical red lines
-            plot_utils.waterfall_plot_old(car_data, emg_data.shape[0], time_vector, edges=edges, plot_title=filename, line_width=0.4, colormap='hsv')
+            waterfall(car_data, emg_data.shape[0], time_vector, edges=edges, plot_title=filename, line_width=0.4, colormap='hsv')
 
             self.save_start_times(metrics_filepath) # Save the data
             print(f"Start times for {filename} recorded. Moving to the next file...")

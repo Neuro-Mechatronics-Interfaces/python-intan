@@ -13,9 +13,9 @@ if __name__ == "__main__":
     #file_path = r'G:\Shared drives\NML_shared\DataShare\HDEMG Human Healthy\intan_HDEMG_sleeve\Jonathan\raw\2024_10_22\WristFlexion_5x_241022_142239\WristFlexion_5x_241022_142239.rhd'
     file_path = r'G:\Shared drives\NML_shared\DataShare\HDEMG Human Healthy\HD-EMG_Cuff\Jonathan\raw\2024_11_11\index2_241111_183222\index2_241111_183222.rhd'
     #file_path = r'G:\Shared drives\NML_shared\DataShare\HDEMG Human Healthy\intan_HDEMG_sleeve\Jonathan\raw\2024_10_22\IndexFlexion_5x_241022_143429\IndexFlexion_5x_241022_143429.rhd'
-    result = load_rhd_file(file_path)  # Load a specific file by path
+    #result = load_rhd_file(file_path)  # Load a specific file by path
     # result, _ = rhd_utils.load_file('C:/absolute/path/to/emg/file.rhd') # Specify the file path...
-    #result, _ = rhd_utils.load_file()  # ...or use the file dialog to select the file
+    result = load_rhd_file()  # ...or use the file dialog to select the file
 
     # === If we have multiple files (for example, Intan saves separate files in 60 second increments) we can load and concatenate them ===
     #result, _ = rhd_utils.load_files_from_path(concatenate=True) # Specify folder or use file dialog

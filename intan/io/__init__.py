@@ -1,7 +1,22 @@
 from ._channel_utils import print_all_channel_names, find_channel_in_header, find_channel_in_group, print_names_in_group
-from ._file_utils import adjust_path, check_file_present, get_rhd_file_paths, print_progress
-from ._metadata_utils import plural, get_bytes_per_data_block, calculate_data_size, bytes_per_signal_type, calculate_num_samples, print_record_time_summary
 from ._exceptions import UnrecognizedFileError, UnknownChannelTypeError, FileSizeError, QStringError, ChannelNotFoundError
+from ._file_utils import (
+    adjust_path,
+    check_file_present,
+    check_end_of_file,
+    print_progress,
+    read_config_file,
+    get_file_paths,
+    load_labeled_file,
+)
+from ._metadata_utils import (
+    plural,
+    get_bytes_per_data_block,
+    calculate_data_size,
+    bytes_per_signal_type,
+    calculate_num_samples,
+    print_record_time_summary
+)
 
 from ._block_parser import (
     get_timestamp_signed,

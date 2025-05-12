@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def waterfall(data, channel_indices, time_vector, edges=[], plot_title="", line_width=0.2, colormap='rainbow', downsampling_factor=1, verbose=False):
+def waterfall(ax=None, data=None, channel_indices=None, time_vector=None, offset_increment=200, edges=[], plot_title="", line_width=0.2, colormap='rainbow', downsampling_factor=1, verbose=False):
     """
     Creates a waterfall plot for the specified channels with a user-defined title,
     custom color styling, and scale bars for time and voltage.
@@ -12,10 +12,10 @@ def waterfall(data, channel_indices, time_vector, edges=[], plot_title="", line_
         time_vector: The time vector for the x-axis
         plot_title: (Optional) Title for the plot provided by the user.
     """
-    fig, ax = plt.subplots(figsize=(10, 12))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(10, 12))
 
     offset = 0  # Start with no offset
-    offset_increment = 200  # Increment for each row (adjust this based on data scale)
     cmap = plt.get_cmap(colormap)  # You can also experiment with other color maps like 'jet', 'viridis', etc.
     num_channels = len(channel_indices)
 

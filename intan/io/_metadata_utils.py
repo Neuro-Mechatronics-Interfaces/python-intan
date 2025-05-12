@@ -1,3 +1,5 @@
+import os
+from intan.io._exceptions import FileSizeError
 
 def plural(number_of_items):
     """Utility function to pluralize words based on the number of items.

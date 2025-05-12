@@ -6,7 +6,7 @@ import numpy as np
 from intan.io._header_parsing import read_header, header_to_result, data_to_result
 from intan.io._metadata_utils import calculate_data_size
 from intan.io._block_parser import read_all_data_blocks
-from intan.io._file_utils import check_end_of_file, print_progress, get_rhd_file_paths
+from intan.io._file_utils import check_end_of_file, print_progress, get_file_paths
 from intan.io._data_processing import parse_data, apply_notch_filter
 
 def load_rhd_file(filepath=None, verbose=True):
@@ -60,6 +60,10 @@ def load_rhd_file(filepath=None, verbose=True):
     else:
         data = []
 
+    # Save filename to result
+    result['file_name'] = os.path.basename(filepath)
+    result['file_path'] = filepath
+
     # Report how long read took.
     print('Done!  Elapsed time: {0:0.1f} seconds'.format(time.time() - tic))
 
@@ -68,12 +72,18 @@ def load_rhd_file(filepath=None, verbose=True):
 
 def read_time_file(path):
     """Reads int32 timestamp values from a time.dat file."""
+    if not os.path.exists(path):
+        print(f"File {path} does not exist.")
+        return None
     with open(path, 'rb') as f:
         time_data = np.fromfile(f, dtype=np.int32)
     return time_data
 
 def read_amplifier_file(path, num_channels):
     """Reads amplifier data from a .dat file (int16 format) and reshapes it."""
+    if not os.path.exists(path):
+        print(f"File {path} does not exist.")
+        return None
     with open(path, 'rb') as f:
         data = np.fromfile(f, dtype=np.int16)
     reshaped = data.reshape((-1, num_channels)).T
@@ -81,6 +91,10 @@ def read_amplifier_file(path, num_channels):
 
 def read_auxiliary_file(path, num_channels, scale=0.0000374):
     """Reads auxiliary channel data (uint16) and applies scaling."""
+    # First check if the file exists
+    if not os.path.exists(path):
+        print(f"File {path} does not exist.")
+        return None
     with open(path, 'rb') as f:
         data = np.fromfile(f, dtype=np.uint16)
     reshaped = data.reshape((-1, num_channels)).T
@@ -88,12 +102,24 @@ def read_auxiliary_file(path, num_channels, scale=0.0000374):
 
 def read_adc_file(path, num_channels, scale=0.000050354):
     """Reads board ADC data (uint16) and applies default scaling."""
+    if not os.path.exists(path):
+        print(f"File {path} does not exist.")
+        return None
     with open(path, 'rb') as f:
         data = np.fromfile(f, dtype=np.uint16)
     reshaped = data.reshape((-1, num_channels)).T
     return reshaped * scale
 
-def load_dat_file(root_dir):
+def load_dat_file(root_dir=None):
+
+    if root_dir is None:
+        root = tk.Tk()
+        root.withdraw()  # Hide the main window
+        filepath = filedialog.askdirectory()
+        if not filepath:
+            print("No path selected, returning.")
+            return None, False
+
     # Read the header information from the .rhd file
     file_name = os.path.join(root_dir, 'info.rhd')
 
@@ -169,7 +195,7 @@ def load_files_from_path(folder_path=None, concatenate=False):
             return None
 
     # Get the absolute paths of all files locates in the directory
-    file_list = get_rhd_file_paths(folder_path)
+    file_list = get_file_paths(folder_path)
     all_results = None
     for file in file_list:
         result = load_rhd_file(file, verbose=False)
