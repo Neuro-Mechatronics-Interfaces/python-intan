@@ -1173,7 +1173,10 @@ class EMGViewerApp:
         print("Shape of feature vectors:", X.shape)
         y_encoded = label_encoder.fit_transform(y)
         # === Normalize features ===
-        X = (X - X.mean(axis=0)) / X.std(axis=0)
+        mean = X.mean(axis=0)
+        std = X.std(axis=0)
+        std[std == 0] = 1  # Avoid division by zero for constant features
+        X = (X - mean) / std
 
         # Shape of data
         print(f"Data shape: {X.shape}")
