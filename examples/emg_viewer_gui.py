@@ -1,16 +1,73 @@
-import os
+# -- Import visualization libraries first --
 import tkinter as tk
-from tkinter import filedialog, ttk
+from tkinter import filedialog, ttk, Toplevel
+from PIL import Image, ImageTk
+
+# === Show Splash ASAP ===
+def show_splash_screen(root):
+    splash_root = Toplevel(root)
+    splash_root.overrideredirect(True)
+    splash_root.configure(bg="white")
+
+    # Load logo image
+    try:
+        from intan.samples import findFile
+        logo_path = findFile("nml-logo.jpg")
+        img = Image.open(logo_path)
+        img = img.resize((300, 300), Image.Resampling.LANCZOS)
+        photo = ImageTk.PhotoImage(img)
+
+        # Display logo
+        logo_label = tk.Label(splash_root, image=photo, bg="white")
+        logo_label.image = photo
+        logo_label.pack(padx=20, pady=(20, 5))
+
+    except Exception as e:
+        print(f"Error loading logo image: {e}")
+        logo_label = tk.Label(splash_root, text="Loading...", font=("Arial", 14), bg="white")
+        logo_label.pack(padx=20, pady=(20, 5))
+
+
+    # Center the window
+    splash_root.update_idletasks()
+    w, h = splash_root.winfo_screenwidth(), splash_root.winfo_screenheight()
+    sw, sh = splash_root.winfo_width(), splash_root.winfo_height()
+    x, y = (w - sw) // 2, (h - sh) // 2
+    splash_root.geometry(f"+{x}+{y}")
+
+    return splash_root
+
+
+# === Show Splash and continue importing ===
+root = tk.Tk()
+root.withdraw()
+
+# Show splash before heavy imports
+splash = show_splash_screen(root)
+root.update()
+
+import os
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from intan.io import load_rhd_file, load_labeled_file
 from scipy.signal import spectrogram, butter, filtfilt, iirnotch
 from tqdm import tqdm
-from sklearn.decomposition import PCA
 
+# Visualization libraries
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+
+# Intan specific libraries
+from intan.io import load_rhd_file, load_labeled_file
+
+# TO-DO: implement this into a separate intan module
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import LabelEncoder
+
+#TO-DO: implement this into a separate intan module
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import to_categorical
 
 
 class EMGViewerApp:
@@ -48,14 +105,14 @@ class EMGViewerApp:
         self.tab_acquisition = ttk.Frame(self.tabs)
         self.tab_filtering = ttk.Frame(self.tabs)
         self.tab_trials = ttk.Frame(self.tabs)
-        self.tab_features = ttk.Frame(self.tabs)
         self.tab_training = ttk.Frame(self.tabs)
+        self.tab_model_training = ttk.Frame(self.tabs)
 
         self.tabs.add(self.tab_acquisition, text="Data Acquisition")
         self.tabs.add(self.tab_filtering, text="Filtering")
         self.tabs.add(self.tab_trials, text="Trial Utilities")
-        self.tabs.add(self.tab_training, text="Training")
-        self.tabs.add(self.tab_features, text="Features")
+        self.tabs.add(self.tab_training, text="Feature Dataset")
+        self.tabs.add(self.tab_model_training, text="Model Training")
 
         # === Plotting Area ===
         bottom_frame = ttk.Frame(self.root)
@@ -98,7 +155,7 @@ class EMGViewerApp:
         self.build_filtering_tab()
         self.build_trials_tab()
         self.build_training_tab()
-        self.build_features_tab()
+        self.build_model_training_tab()
 
     def build_acquisition_tab(self):
         frame = ttk.Frame(self.tab_acquisition)
@@ -415,18 +472,70 @@ class EMGViewerApp:
 
         ttk.Button(right_panel, text="Build Training Set", command=self.build_training_dataset).pack(pady=15)
 
-    def build_features_tab(self):
-        # Main horizontal container
-        main_frame = ttk.Frame(self.tab_features)
-        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+    # def build_features_tab(self):
+    #     # Main horizontal container
+    #     main_frame = ttk.Frame(self.tab_features)
+    #     main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+    #
+    #     # === Left: Directory & File List ===
+    #     left_panel = ttk.Frame(main_frame)
+    #     left_panel.pack(side="left", fill="y", padx=(0, 10))
+    #
+    #     # PCA Visualization Button
+    #     ttk.Label(left_panel, text="PCA Visualization:").pack(anchor="w", pady=(10, 0))
+    #     ttk.Button(left_panel, text="Run PCA Visualization", command=self.run_pca_visualization).pack(fill="x")
 
-        # === Left: Directory & File List ===
-        left_panel = ttk.Frame(main_frame)
-        left_panel.pack(side="left", fill="y", padx=(0, 10))
+    def build_model_training_tab(self):
+        # Dataset loading
+        ttk.Button(self.tab_model_training, text="Load Training Dataset", command=self.load_training_dataset).pack(pady=5)
+        self.dataset_shape_label = ttk.Label(self.tab_model_training, text="Dataset shape: N/A")
+        self.dataset_shape_label.pack(pady=2)
 
-        # PCA Visualization Button
-        ttk.Label(left_panel, text="PCA Visualization:").pack(anchor="w", pady=(10, 0))
-        ttk.Button(left_panel, text="Run PCA Visualization", command=self.run_pca_visualization).pack(fill="x")
+        # Model config
+        config_frame = ttk.LabelFrame(self.tab_model_training, text="Model Configuration")
+        config_frame.pack(fill="x", padx=10, pady=10)
+
+        # === Left: Layer controls ===
+        layer_input_frame = ttk.Frame(config_frame)
+        layer_input_frame.pack(side="left", fill="y")
+
+        ttk.Label(layer_input_frame, text="Layer sizes (comma separated):").pack(anchor="w")
+        self.layer_sizes_entry = ttk.Entry(layer_input_frame, width=30)
+        self.layer_sizes_entry.insert(0, "512,256,128")
+        self.layer_sizes_entry.pack(anchor="w", pady=5)
+        self.layer_sizes_entry.bind("<KeyRelease>", lambda e: self.update_network_diagram())
+
+        ttk.Label(layer_input_frame, text="Dropout rate:").pack(anchor="w")
+        self.dropout_entry = ttk.Entry(layer_input_frame, width=30)
+        self.dropout_entry.insert(0, "0.5,0.5,0.5")
+        self.dropout_entry.pack(anchor="w", pady=5)
+        self.layer_sizes_entry.bind("<KeyRelease>", lambda e: self.update_network_diagram())
+
+        # === Right: Neural network diagram ===
+        self.network_canvas = tk.Canvas(config_frame, width=200, height=300, bg="white", highlightthickness=1,
+                                   relief="solid")
+        self.network_canvas.pack(side="left", padx=20, pady=10)
+
+        # Training config
+        training_frame = ttk.LabelFrame(self.tab_model_training, text="Training Configuration")
+        training_frame.pack(fill="x", padx=10, pady=10)
+
+        ttk.Label(training_frame, text="Learning rate:").pack(anchor="w")
+        self.lr_entry = ttk.Entry(training_frame, width=10)
+        self.lr_entry.insert(0, "0.001")
+        self.lr_entry.pack(anchor="w")
+
+        ttk.Label(training_frame, text="Batch size:").pack(anchor="w")
+        self.batch_entry = ttk.Entry(training_frame, width=10)
+        self.batch_entry.insert(0, "32")
+        self.batch_entry.pack(anchor="w")
+
+        ttk.Label(training_frame, text="Epochs:").pack(anchor="w")
+        self.epochs_entry = ttk.Entry(training_frame, width=10)
+        self.epochs_entry.insert(0, "20")
+        self.epochs_entry.pack(anchor="w")
+
+        ttk.Button(self.tab_model_training, text="Train Model", command=self.train_model).pack(pady=15)
 
     def add_feature_directory(self):
         path = filedialog.askdirectory(title="Select EMG Segment Directory")
@@ -443,6 +552,108 @@ class EMGViewerApp:
                 full_path = os.path.join(folder_path, fname)
                 self.training_dir_table.insert("", "end", values=[full_path])
                 self.update_training_labels_from_filename(fname)
+
+    def load_training_dataset(self):
+        path = filedialog.askopenfilename(filetypes=[("NumPy Compressed", "*.npz")])
+        if not path:
+            return
+        data = np.load(path, allow_pickle=True)
+        self.X_train = data["features"]
+        self.y_train = to_categorical(data["labels"])
+        self.dataset_shape_label.config(text=f"Dataset shape: {self.X_train.shape}")
+
+    def load_feature_segments(self):
+        self.features_segment_listbox.delete(0, "end")
+        for i in range(self.features_dir_listbox.size()):
+            dir_path = self.features_dir_listbox.get(i)
+            if os.path.exists(dir_path):
+                for fname in sorted(os.listdir(dir_path)):
+                    if fname.endswith(".npz"):
+                        full_path = os.path.join(dir_path, fname)
+                        self.features_segment_listbox.insert("end", full_path)
+
+    def load_segment_and_visualize(self):
+        selection = self.training_dir_table.selection()
+        if not selection:
+            print("No segment file selected.")
+            return
+
+        path = self.training_dir_table.item(selection[0])["values"][0]
+        if not os.path.exists(path):
+            print(f"Segment file not found: {path}")
+            return
+
+        # Load EMG data
+        data = np.load(path, allow_pickle=True)
+        emg = data["emg"]
+        fs = float(data.get("fs", self.sampling_rate or 2000))
+
+        # Store for later plotting
+        self.segment_data = emg
+        self.segment_fs = fs
+
+        # Update channel selector to reflect segment shape
+        self.channel_selector["values"] = [f"Ch {i}" for i in range(emg.shape[0])]
+        self.channel_selector.current(0)
+        self.current_channel = 0
+
+        # Force plot update
+        self.domain_mode.set("Features")
+        self.plot_channel()
+        print("Segment loaded and visualized.")
+
+    def load_file(self):
+        """ Load a .rhd file and plot the first channel."""
+        path = filedialog.askopenfilename(filetypes=[("RHD files", "*.rhd")])
+        if not path:
+            return
+
+        self.data_viewer_file_path = path
+        result = load_rhd_file(path)
+        self.emg_data = result["amplifier_data"]
+        self.time_vector = result["t_amplifier"]
+        self.sampling_rate = result["frequency_parameters"]["amplifier_sample_rate"]
+
+
+        self.channel_selector["values"] = [f"Ch {i}" for i in range(self.emg_data.shape[0])]
+        self.channel_selector.current(0)
+        self.current_channel = 0
+        self.plot_channel()
+
+    def train_model(self):
+        if self.X_train is None or self.y_train is None:
+            print("No dataset loaded.")
+            return
+
+        try:
+            layer_sizes = [int(s.strip()) for s in self.layer_sizes_entry.get().split(",")]
+            dropout = float(self.dropout_entry.get())
+            lr = float(self.lr_entry.get())
+            batch_size = int(self.batch_entry.get())
+            epochs = int(self.epochs_entry.get())
+        except ValueError:
+            print("Invalid model or training parameters.")
+            return
+
+        save_path = filedialog.asksaveasfilename(defaultextension=".h5",
+                                                 filetypes=[("HDF5", "*.h5")],
+                                                 title="Save Trained Model As")
+        if not save_path:
+            return
+
+        model = Sequential()
+        input_shape = self.X_train.shape[1]
+        model.add(Dense(layer_sizes[0], activation="relu", input_shape=(input_shape,)))
+        for size in layer_sizes[1:]:
+            model.add(Dense(size, activation="relu"))
+            if dropout > 0:
+                model.add(Dropout(dropout))
+        model.add(Dense(self.y_train.shape[1], activation="softmax"))
+        model.compile(optimizer=Adam(learning_rate=lr), loss="categorical_crossentropy", metrics=["accuracy"])
+
+        model.fit(self.X_train, self.y_train, batch_size=batch_size, epochs=epochs, verbose=1)
+        model.save(save_path)
+        print(f"Model saved to: {save_path}")
 
     def update_training_labels_from_directory(self):
         """ Helper function to refresh the training labels listbox with all the labels detected from the current directories"""
@@ -467,16 +678,6 @@ class EMGViewerApp:
             self.training_labels_listbox.delete(selection[0])
         else:
             print("Please select a label to remove.")
-
-    def load_feature_segments(self):
-        self.features_segment_listbox.delete(0, "end")
-        for i in range(self.features_dir_listbox.size()):
-            dir_path = self.features_dir_listbox.get(i)
-            if os.path.exists(dir_path):
-                for fname in sorted(os.listdir(dir_path)):
-                    if fname.endswith(".npz"):
-                        full_path = os.path.join(dir_path, fname)
-                        self.features_segment_listbox.insert("end", full_path)
 
     def visualize_selected_segment(self):
         selection = self.features_segment_listbox.curselection()
@@ -555,36 +756,6 @@ class EMGViewerApp:
         self.ax.legend()
         self.canvas.draw()
 
-    def load_segment_and_visualize(self):
-        selection = self.training_dir_table.selection()
-        if not selection:
-            print("No segment file selected.")
-            return
-
-        path = self.training_dir_table.item(selection[0])["values"][0]
-        if not os.path.exists(path):
-            print(f"Segment file not found: {path}")
-            return
-
-        # Load EMG data
-        data = np.load(path, allow_pickle=True)
-        emg = data["emg"]
-        fs = float(data.get("fs", self.sampling_rate or 2000))
-
-        # Store for later plotting
-        self.segment_data = emg
-        self.segment_fs = fs
-
-        # Update channel selector to reflect segment shape
-        self.channel_selector["values"] = [f"Ch {i}" for i in range(emg.shape[0])]
-        self.channel_selector.current(0)
-        self.current_channel = 0
-
-        # Force plot update
-        self.domain_mode.set("Features")
-        self.plot_channel()
-        print("Segment loaded and visualized.")
-
     def refresh_labels_list(self):
         """
         Clear and rebuild the labels list from all currently listed directories.
@@ -605,23 +776,74 @@ class EMGViewerApp:
             if label and label not in self.training_labels_listbox.get(0, "end"):
                 self.training_labels_listbox.insert("end", label)
 
-    def load_file(self):
-        """ Load a .rhd file and plot the first channel."""
-        path = filedialog.askopenfilename(filetypes=[("RHD files", "*.rhd")])
-        if not path:
-            return
+    def update_network_diagram(self):
+        self.network_canvas.delete("all")
 
-        self.data_viewer_file_path = path
-        result = load_rhd_file(path)
-        self.emg_data = result["amplifier_data"]
-        self.time_vector = result["t_amplifier"]
-        self.sampling_rate = result["frequency_parameters"]["amplifier_sample_rate"]
+        layer_text = self.layer_sizes_entry.get()  # e.g., "512,256,128,10"
+        dropout_text = self.dropout_entry.get()  # e.g., "0.5,0.3,0.1"
+        #try:
+        layer_sizes = [int(x.strip()) for x in layer_text.split(",")]
+        dropout_rates = [float(x.strip()) for x in dropout_text.split(",")]
+        # Example usage inside the GUI method:
+        # self.draw_neural_network(self.network_canvas, [512, 256, 128, 10], dropout_rates="0.5,0.3,0.1")
 
+        self.draw_neural_network(self.network_canvas, layer_sizes, dropout_rates)
+        #except Exception as e:
+        #    print(f"Could not render network: {e}")
 
-        self.channel_selector["values"] = [f"Ch {i}" for i in range(self.emg_data.shape[0])]
-        self.channel_selector.current(0)
-        self.current_channel = 0
-        self.plot_channel()
+    def draw_neural_network(self, canvas, layers, dropout_rates=None):
+        import random
+        canvas.delete("all")
+        width = int(canvas["width"])
+        height = int(canvas["height"])
+
+        if dropout_rates is None:
+            dropout_rates = [0.0] * len(layers)
+        elif isinstance(dropout_rates, (float, int)):
+            dropout_rates = [float(dropout_rates)] * len(layers)
+
+        if len(dropout_rates) < len(layers):
+            dropout_rates += [0.0] * (len(layers) - len(dropout_rates))
+
+        vertical_spacing = 80
+        start_y = (height - (len(layers) * vertical_spacing)) // 2 + 20
+        box_size = 12
+        spacing = 6
+        layer_positions = []
+
+        for idx, layer_size in enumerate(layers):
+            num_boxes = min((layer_size + 99) // 100, 5)
+            total_width = num_boxes * (box_size + spacing) - spacing
+            x_start = (width - total_width) // 2
+            y = start_y + idx * vertical_spacing
+
+            positions = []
+            num_dropped = int(num_boxes * dropout_rates[idx])
+            dropped_indices = set(random.sample(range(num_boxes), num_dropped)) if num_dropped > 0 else set()
+
+            for i in range(num_boxes):
+                x0 = x_start + i * (box_size + spacing)
+                y0 = y
+                x1 = x0 + box_size
+                y1 = y0 + box_size
+                fill_color = "gray" if i in dropped_indices else "green"
+                canvas.create_rectangle(x0, y0, x1, y1, fill=fill_color, outline="black")
+                center = ((x0 + x1) // 2, (y0 + y1) // 2)
+                positions.append(center if i not in dropped_indices else None)  # preserve index even if dropped
+
+            layer_positions.append(positions)
+
+        # === Draw arrows ===
+        for i in range(len(layer_positions) - 1):
+            layer_from = layer_positions[i]
+            layer_to = layer_positions[i + 1]
+            for from_node in layer_from:
+                if from_node is None:
+                    continue
+                for to_node in layer_to:
+                    if to_node is None:
+                        continue
+                    canvas.create_line(from_node[0], from_node[1], to_node[0], to_node[1], arrow=tk.LAST, width=1)
 
     def run_trial_segmentation(self):
         """
@@ -1195,6 +1417,8 @@ class EMGViewerApp:
 
         X = pca.fit_transform(X)
 
+        print(f"New shape of feature vectors after PCA: {X.shape}")
+
         np.savez_compressed(save_path, features=X, labels=y_encoded, label_names=label_encoder.classes_)
         print(f"Training dataset saved to: {save_path}")
 
@@ -1233,10 +1457,12 @@ class EMGViewerApp:
     def on_closing(self):
         self.root.quit()
 
-def launch_emg_gui():
-    root = tk.Tk()
+
+def launch_main_app():
+    splash.destroy()
+    root.deiconify()
     app = EMGViewerApp(root)
     root.mainloop()
 
-if __name__ == "__main__":
-    launch_emg_gui()
+root.after(500, launch_main_app)  # slight delay to allow splash to show
+root.mainloop()

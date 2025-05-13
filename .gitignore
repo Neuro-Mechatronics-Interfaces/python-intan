@@ -25,3 +25,8 @@ gesture_classifier/*.pth
 # Temporary files used for debugging 
 /temp/
 temp/*
+
+# build files
+dist/
+build/
+python_intan.egg-info

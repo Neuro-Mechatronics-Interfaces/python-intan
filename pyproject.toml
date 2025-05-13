@@ -1,6 +1,6 @@
 [project]
 name = "python-intan"
-version = "0.0.5.3"
+version = "0.0.5.4"
 description = "Python utilities for working with Intan electrophysiology data"
 authors = [{ name = "Jonathan Shulgach", email = "jshulgac@andrew.cmu.edu" }]
 readme = "README.md"
@@ -14,7 +14,11 @@ dependencies = [
     "pandas",
     "PySerial",
     "scikit-learn",
-    "tqdm"
+    "tqdm",
+    # "nvidia-cuda-toolkit", # This is not a Python package, but a system package
+    "tensorflow==2.19.0",
+    "PIL",
+    "seaborn",
 ]
 
 [project.urls]
