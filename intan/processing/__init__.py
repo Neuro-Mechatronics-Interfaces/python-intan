@@ -19,3 +19,5 @@ from ._filters import (
     normalize
 )
 from ._emg_trial_selector import EMGViewerApp, launch_emg_selector
+from ._emg_viewer_gui import show_splash_screen, EMGViewer, launch_emg_viewer
+

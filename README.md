@@ -34,12 +34,36 @@ Whether you're analyzing offline data or streaming real-time EMG from the RHX sy
 
 ## Installation
 
-Using `pip`:
-```shell script
+Create a virtual environment using conda or venv:
+
+```bash
+conda create -n intan python=3.10
+conda activate intan
+```
+or
+
+```bash
+python -m venv intan
+source intan/bin/activate  # On Windows use: intan\Scripts\activate
+```
+(Optional) Enable CUDA support for GPU acceleration (if available):
+
+```bash
+conda install cudatoolkit cudnn=11
+```
+or 
+```bash
+sudo apt-get install cuda
+pip install tensorflow[and-cuda] nvidia-cudnn-cu12 # CUDA 12.5 latest pip option as of 5/13/25
+```
+
+This repo can be installed from PyPi using `pip`:
+
+```bash
 pip install python-intan
 ```
 
-or clone the repository from GitHub for the latest features:
+or clone & install the repository from GitHub for the latest features:
 
 ```bash
 git clone https://github.com/Neuro-Mechatronics-Interfaces/python-intan.git

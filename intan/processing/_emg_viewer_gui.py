@@ -60,8 +60,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from intan.io import load_rhd_file, load_labeled_file
 
 # TO-DO: implement this into a separate intan module
+import joblib
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 
 #TO-DO: implement this into a separate intan module
 from tensorflow.keras.models import Sequential
@@ -70,7 +72,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import to_categorical
 
 
-class EMGViewerApp:
+class EMGViewer:
     def __init__(self, root):
         self.root = root
         self.root.title("EMG Data Viewer")
@@ -516,26 +518,51 @@ class EMGViewerApp:
                                    relief="solid")
         self.network_canvas.pack(side="left", padx=20, pady=10)
 
-        # Training config
+        # === Training Configuration Section ===
         training_frame = ttk.LabelFrame(self.tab_model_training, text="Training Configuration")
         training_frame.pack(fill="x", padx=10, pady=10)
 
-        ttk.Label(training_frame, text="Learning rate:").pack(anchor="w")
-        self.lr_entry = ttk.Entry(training_frame, width=10)
+        config_inputs = ttk.Frame(training_frame)
+        config_inputs.pack(fill="x", padx=5)
+
+        ttk.Label(config_inputs, text="Learning rate:").grid(row=0, column=0, sticky="w", padx=5)
+        self.lr_entry = ttk.Entry(config_inputs, width=10)
         self.lr_entry.insert(0, "0.001")
-        self.lr_entry.pack(anchor="w")
+        self.lr_entry.grid(row=0, column=1, padx=5)
 
-        ttk.Label(training_frame, text="Batch size:").pack(anchor="w")
-        self.batch_entry = ttk.Entry(training_frame, width=10)
+        ttk.Label(config_inputs, text="Batch size:").grid(row=0, column=2, sticky="w", padx=5)
+        self.batch_entry = ttk.Entry(config_inputs, width=10)
         self.batch_entry.insert(0, "32")
-        self.batch_entry.pack(anchor="w")
+        self.batch_entry.grid(row=0, column=3, padx=5)
 
-        ttk.Label(training_frame, text="Epochs:").pack(anchor="w")
-        self.epochs_entry = ttk.Entry(training_frame, width=10)
-        self.epochs_entry.insert(0, "20")
-        self.epochs_entry.pack(anchor="w")
+        ttk.Label(config_inputs, text="Epochs:").grid(row=1, column=0, sticky="w", padx=5)
+        self.epochs_entry = ttk.Entry(config_inputs, width=10)
+        self.epochs_entry.insert(0, "30")
+        self.epochs_entry.grid(row=1, column=1, padx=5)
 
-        ttk.Button(self.tab_model_training, text="Train Model", command=self.train_model).pack(pady=15)
+        ttk.Label(config_inputs, text="Train/Test Split:").grid(row=1, column=2, sticky="w", padx=5)
+        self.train_test_split_entry = ttk.Entry(config_inputs, width=10)
+        self.train_test_split_entry.insert(0, "0.8")
+        self.train_test_split_entry.grid(row=1, column=3, padx=5)
+        self.train_test_split_entry.bind("<Return>", lambda e: self.update_network_diagram())
+        self.train_test_split_entry.bind("<FocusOut>", lambda e: self.update_network_diagram())
+
+        # === Accuracy and Train Button Section ===
+        accuracy_frame = ttk.Frame(self.tab_model_training)
+        accuracy_frame.pack(fill="x", padx=10, pady=10)
+
+        # Training button
+        ttk.Button(accuracy_frame, text="Train Model", command=self.train_model).grid(row=0, column=0, padx=5, pady=5,
+                                                                                      sticky="w")
+
+        # Accuracy labels
+        ttk.Label(accuracy_frame, text="Training Accuracy:").grid(row=0, column=1, sticky="w", padx=5)
+        self.train_acc_label = ttk.Label(accuracy_frame, text="N/A")
+        self.train_acc_label.grid(row=0, column=2, sticky="w", padx=5)
+
+        ttk.Label(accuracy_frame, text="Testing Accuracy:").grid(row=0, column=3, sticky="w", padx=5)
+        self.test_acc_label = ttk.Label(accuracy_frame, text="N/A")
+        self.test_acc_label.grid(row=0, column=4, sticky="w", padx=5)
 
     def add_feature_directory(self):
         path = filedialog.askdirectory(title="Select EMG Segment Directory")
@@ -627,7 +654,7 @@ class EMGViewerApp:
 
         try:
             layer_sizes = [int(s.strip()) for s in self.layer_sizes_entry.get().split(",")]
-            dropout = float(self.dropout_entry.get())
+            dropout = [float(s.strip()) for s in self.dropout_entry.get().split(",")]
             lr = float(self.lr_entry.get())
             batch_size = int(self.batch_entry.get())
             epochs = int(self.epochs_entry.get())
@@ -635,23 +662,47 @@ class EMGViewerApp:
             print("Invalid model or training parameters.")
             return
 
-        save_path = filedialog.asksaveasfilename(defaultextension=".h5",
-                                                 filetypes=[("HDF5", "*.h5")],
+        save_path = filedialog.asksaveasfilename(defaultextension=".keras",
+                                                 filetypes=[("keras", "*.keras")],
                                                  title="Save Trained Model As")
         if not save_path:
             return
 
+
+        # Pad dropout if needed
+        if len(dropout) < len(layer_sizes):
+            dropout += [0.0] * (len(layer_sizes) - len(dropout))
+
+        # Split the dataset
+        X_train_split, X_test_split, y_train_split, y_test_split = train_test_split(
+            self.X_train, self.y_train, test_size=0.2, random_state=42
+        )
+
+        # Build model
         model = Sequential()
         input_shape = self.X_train.shape[1]
         model.add(Dense(layer_sizes[0], activation="relu", input_shape=(input_shape,)))
-        for size in layer_sizes[1:]:
+
+        for i, size in enumerate(layer_sizes[1:], start=1):
             model.add(Dense(size, activation="relu"))
-            if dropout > 0:
-                model.add(Dropout(dropout))
+            if i < len(dropout) and dropout[i] > 0:
+                model.add(Dropout(dropout[i]))
+
         model.add(Dense(self.y_train.shape[1], activation="softmax"))
         model.compile(optimizer=Adam(learning_rate=lr), loss="categorical_crossentropy", metrics=["accuracy"])
 
-        model.fit(self.X_train, self.y_train, batch_size=batch_size, epochs=epochs, verbose=1)
+        # Train and evaluate
+        model.fit(X_train_split, y_train_split, batch_size=batch_size, epochs=epochs, verbose=1)
+
+        train_loss, train_acc = model.evaluate(X_train_split, y_train_split, verbose=0)
+        test_loss, test_acc = model.evaluate(X_test_split, y_test_split, verbose=0)
+
+        # Display accuracy
+        if hasattr(self, "train_acc_label") and hasattr(self, "test_acc_label"):
+            self.train_acc_label.config(text=f"{train_acc:.3f}")
+            self.test_acc_label.config(text=f"{test_acc:.3f}")
+
+        # Save model
         model.save(save_path)
         print(f"Model saved to: {save_path}")
 
@@ -1318,9 +1369,11 @@ class EMGViewerApp:
         if not save_path:
             print("Dataset save cancelled.")
             return
+        # Automatically derive PCA save path from dataset path
+        pca_save_path = save_path.replace(".npz", "_pca.pkl")
 
-        X = [] # Will hold the data features
-        y = [] # Labels for the data
+        X = []  # Will hold the data features
+        y = []  # Labels for the data
         fs = self.sampling_rate or 2000
         label_encoder = LabelEncoder()
 
@@ -1414,8 +1467,10 @@ class EMGViewerApp:
         n_components = int(self.pca_components_entry.get()) if self.pca_components_entry.get().isdigit() else 50
         pca = PCA(n_components=n_components)
 
-
-        X = pca.fit_transform(X)
+        pca.fit(X)
+        joblib.dump(pca, pca_save_path)
+        print(f"PCA model saved to: {pca_save_path}")
+        X = pca.transform(X)  # now transform with saved-fit PCA
 
         print(f"New shape of feature vectors after PCA: {X.shape}")
 
@@ -1458,11 +1513,11 @@ class EMGViewerApp:
         self.root.quit()
 
 
-def launch_main_app():
+def launch_emg_viewer():
     splash.destroy()
     root.deiconify()
-    app = EMGViewerApp(root)
+    app = EMGViewer(root)
     root.mainloop()
 
-root.after(500, launch_main_app)  # slight delay to allow splash to show
+root.after(500, launch_emg_viewer)  # slight delay to allow splash to show
 root.mainloop()

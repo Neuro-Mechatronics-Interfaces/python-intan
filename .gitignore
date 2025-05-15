@@ -1,5 +1,6 @@
 # Virtual environments
 .venv
+.intan
 .idea
 .ipynb_checkpoints/
 
