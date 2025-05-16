@@ -56,7 +56,7 @@ class IntanRHXClient:
         """ Sends a message to the RHX system."""
         try:
             self.command_socket.sendall(message.encode('utf-8'))
-            time.sleep(0.01)  # Small delay to ensure the message is sent
+            time.sleep(0.005)  # Small delay to ensure the message is sent
         except socket.error as e:
             print(f"[COMMAND] Send error: {e}")
 

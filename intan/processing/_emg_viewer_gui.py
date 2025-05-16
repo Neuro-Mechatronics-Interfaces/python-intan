@@ -1447,14 +1447,14 @@ class EMGViewer:
         X = np.array(X)
         print("Shape of feature vectors:", X.shape)
         y_encoded = label_encoder.fit_transform(y)
+
         # === Normalize features ===
         mean = X.mean(axis=0)
         std = X.std(axis=0)
         std[std == 0] = 1  # Avoid division by zero for constant features
         X = (X - mean) / std
-
-        # Shape of data
-        print(f"Data shape: {X.shape}")
+        norm_save_path = save_path.replace(".npz", "_norm.npz")
+        np.savez(norm_save_path, mean=mean, std=std)
 
         if X.shape[1] == 0:
             print("Error: Feature vectors are empty. Did you select any features?")
