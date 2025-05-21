@@ -22,7 +22,8 @@ jobs:
               sphinx \
               sphinx-autodoc-typehints \
               myst-parser \
-              sphinx-copybutton
+              sphinx-copybutton \
+              m2r2 
           pip install -r requirements.txt || true
       - name: Build docs
         run: |
