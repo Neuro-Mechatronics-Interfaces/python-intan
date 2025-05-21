@@ -1,11 +1,11 @@
+![Logo](https://raw.githubusercontent.com/neuro-mechatronics-interfaces/python-intan/main/docs/figs/logo.png)
+
 # Python Intan
 
+[![Docs](https://img.shields.io/badge/docs-online-blue.svg)](https://neuro-mechatronics-interfaces.github.io/python-intan/)
 [![Python](https://img.shields.io/badge/python-3.10-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/Neuro-Mechatronics-Interfaces/python-intan/test.yml?branch=main)](https://github.com/Neuro-Mechatronics-Interfaces/python-intan/actions)
 [![PyPI version](https://badge.fury.io/py/python-intan.svg)](https://badge.fury.io/py/python-intan)
-
-![python-intan logo](../figs/logo.png)
 
 
 
