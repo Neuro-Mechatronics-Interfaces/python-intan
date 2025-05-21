@@ -1,30 +1,42 @@
+"""
+intan.io._header_parsing
+
+Low-level parser for extracting metadata and channel structure from `.rhd`
+files recorded by Intan Technologies hardware.
+
+This module reads:
+- File version and magic number
+- Signal groups and their channel maps
+- Amplifier settings and frequency parameters
+- Qt-style strings and notes
+- Impedance settings, board configuration, and reference info
+
+Primary function:
+    - `read_header(fid)`: returns a fully populated header dictionary
+
+Used internally by `intan.io._rhd_loader` to build a unified `result` dictionary
+for EMG/LFP signal analysis.
+"""
 import os
 import struct
 from intan.io._exceptions import UnknownChannelTypeError, QStringError, UnrecognizedFileError
 from intan.io._block_parser import plural
 
-def check_magic_number(fid):
-    """Checks magic number at beginning of file to verify this is an Intan
-    Technologies RHD data file.
-    """
-    magic_number, = struct.unpack('<I', fid.read(4))
-    if magic_number != int('c6912702', 16):
-        raise UnrecognizedFileError('Unrecognized file type.')
 
-def read_notch_filter_frequency(header, freq, fid):
-    """Reads notch filter mode from fid, and stores frequency (in Hz) in
-    'header' and 'freq' dicts.
-    """
-    notch_filter_mode, = struct.unpack('<h', fid.read(2))
-    header['notch_filter_frequency'] = 0
-    if notch_filter_mode == 1:
-        header['notch_filter_frequency'] = 50
-    elif notch_filter_mode == 2:
-        header['notch_filter_frequency'] = 60
-    freq['notch_filter_frequency'] = header['notch_filter_frequency']
+# === Public API ===
 
 def read_header(fid):
-    """Reads the Intan File Format header from the given file.
+    """"
+    Parse the binary file header from an Intan `.rhd` data file.
+
+    This function checks the magic number, reads the file version, evaluates
+    signal settings, channel layouts, impedance settings, and any embedded notes.
+
+    Parameters:
+        fid (file): Opened file object positioned at the start of the file.
+
+    Returns:
+        dict: Parsed header metadata.
     """
     check_magic_number(fid)
 
@@ -49,23 +61,76 @@ def read_header(fid):
 
     initialize_channels(header)
 
-    read_signal_summary(header, fid)
+    read_channel_structure(header, fid)
 
     return header
 
-def read_num_temp_sensor_channels(header, fid):
-    """Stores number of temp sensor channels in
-    header['num_temp_sensor_channels']. Temp sensor data may be saved from
-    versions 1.1 and later.
+
+# === Low-Level Binary Readers ===
+
+def read_qstring(fid):
     """
-    header['num_temp_sensor_channels'] = 0
-    if ((header['version']['major'] == 1 and header['version']['minor'] >= 1)
-            or (header['version']['major'] > 1)):
-        header['num_temp_sensor_channels'], = struct.unpack('<h', fid.read(2))
+    Read a QString (Unicode) from a Qt-generated binary file.
+
+    Format:
+    - First 4 bytes: length in bytes (uint32)
+    - If 0xFFFFFFFF, return empty string
+    - Content is 16-bit unicode characters
+
+    Parameters:
+        fid (file): File object positioned at the string start.
+
+    Returns:
+        str: Decoded unicode string.
+
+    Raises:
+        QStringError: If the declared length exceeds file size.
+    """
+    length, = struct.unpack('<I', fid.read(4))
+    if length == int('ffffffff', 16):
+        return ""
+
+    if length > (os.fstat(fid.fileno()).st_size - fid.tell() + 1):
+        print(length)
+        raise QStringError('Length too long.')
+
+    # convert length from bytes to 16-bit Unicode words
+    length = int(length / 2)
+
+    data = []
+    for _ in range(0, length):
+        c, = struct.unpack('<H', fid.read(2))
+        data.append(c)
+
+    return ''.join([chr(c) for c in data])
+
+
+def read_notes(header, fid):
+    """Reads notes as QStrings from fid, and stores them as strings in
+    header['notes'] dict.
+
+    Parameters:
+        header (dict): Header dictionary to store notes.
+        fid (file): Opened file object positioned at the start of the file.
+    """
+    header['notes'] = {'note1': read_qstring(fid),
+                       'note2': read_qstring(fid),
+                       'note3': read_qstring(fid)}
+
+
+# === File Formet Decoding ===
 
 def read_version_number(header, fid, verbose=True):
     """Reads version number (major and minor) from fid. Stores them into
     header['version']['major'] and header['version']['minor'].
+
+    Parameters:
+        header (dict): Header dictionary to store version information.
+        fid (file): Opened file object positioned at the start of the file.
+        verbose (bool): If True, print version information to console.
+
+    Raises:
+        UnrecognizedFileError: If the magic number does not match the expected
     """
     version = {}
     (version['major'], version['minor']) = struct.unpack('<hh', fid.read(4))
@@ -73,24 +138,97 @@ def read_version_number(header, fid, verbose=True):
 
     if verbose:
         print('\nReading Intan Technologies RHD Data File, Version {}.{}\n'
-          .format(version['major'], version['minor']))
+              .format(version['major'], version['minor']))
 
-def set_num_samples_per_data_block(header):
-    """Determines how many samples are present per data block (60 or 128),
-    depending on version. Data files v2.0 or later have 128 samples per block,
-    otherwise 60.
+
+def check_magic_number(fid):
+    """Checks magic number at beginning of file to verify this is an Intan
+    Technologies RHD data file.
+
+    Parameters:
+        fid (file): Opened file object positioned at the start of the file.
+
+    Raises:
+        UnrecognizedFileError: If the magic number does not match the expected
     """
-    header['num_samples_per_data_block'] = 60
-    if header['version']['major'] > 1:
-        header['num_samples_per_data_block'] = 128
+    magic_number, = struct.unpack('<I', fid.read(4))
+    if magic_number != int('c6912702', 16):
+        raise UnrecognizedFileError('Unrecognized file type.')
+
+
+# === Channel Map Readers ===
+
+def read_notch_filter_frequency(header, freq, fid):
+    """
+    Reads notch filter mode from fid, and stores frequency (in Hz) in
+    'header' and 'freq' dicts.
+
+    Parameters:
+        header (dict): Header dictionary to store notch filter frequency.
+        freq (dict): Dictionary to store notch filter frequency.
+        fid (file): Opened file object positioned at the start of the file.
+    """
+    notch_filter_mode, = struct.unpack('<h', fid.read(2))
+    header['notch_filter_frequency'] = 0
+    if notch_filter_mode == 1:
+        header['notch_filter_frequency'] = 50
+    elif notch_filter_mode == 2:
+        header['notch_filter_frequency'] = 60
+    freq['notch_filter_frequency'] = header['notch_filter_frequency']
+
+
+def read_channel_structure(header, fid, verbose=False):
+    """
+    Reads signal summary from data file header and stores information for
+    all signal groups and their channels in 'header' dict.
+
+    Parameters:
+        header (dict): Header dictionary to store channel information.
+        fid (file): Opened file object positioned at the start of the file.
+        verbose (bool): If True, print header summary to console.
+    """
+    number_of_signal_groups, = struct.unpack('<h', fid.read(2))
+    for signal_group in range(1, number_of_signal_groups + 1):
+        add_signal_group_information(header, fid, signal_group)
+    add_num_channels(header)
+    if verbose:
+        print_header_summary(header)
+
+
+def read_num_temp_sensor_channels(header, fid):
+    """
+    Stores number of temp sensor channels in
+    header['num_temp_sensor_channels']. Temp sensor data may be saved from
+    versions 1.1 and later.
+
+    Parameters:
+        header (dict): Header dictionary to store temp sensor channel count.
+        fid (file): Opened file object positioned at the start of the file.
+    """
+    header['num_temp_sensor_channels'] = 0
+    if ((header['version']['major'] == 1 and header['version']['minor'] >= 1)
+            or (header['version']['major'] > 1)):
+        header['num_temp_sensor_channels'], = struct.unpack('<h', fid.read(2))
+
 
 def read_sample_rate(header, fid):
-    """Reads sample rate from fid. Stores it into header['sample_rate'].
+    """
+    Reads sample rate from fid. Stores it into header['sample_rate'].
+
+    Parameters:
+        header (dict): Header dictionary to store sample rate.
+        fid (file): Opened file object positioned at the start of the file.
     """
     header['sample_rate'], = struct.unpack('<f', fid.read(4))
 
+
 def read_freq_settings(freq, fid):
-    """Reads amplifier frequency settings from fid. Stores them in 'freq' dict.
+    """
+    Reads amplifier frequency settings from fid. Stores them in 'freq' dict.
+
+    Parameters:
+        freq (dict): Dictionary to store frequency settings.
+        fid (file): Opened file object positioned at the start of the file.
     """
     (freq['dsp_enabled'],
      freq['actual_dsp_cutoff_frequency'],
@@ -100,107 +238,67 @@ def read_freq_settings(freq, fid):
      freq['desired_lower_bandwidth'],
      freq['desired_upper_bandwidth']) = struct.unpack('<hffffff', fid.read(26))
 
+
 def read_impedance_test_frequencies(freq, fid):
-    """Reads desired and actual impedance test frequencies from fid, and stores
+    """
+    Reads desired and actual impedance test frequencies from fid, and stores
     them (in Hz) in 'freq' dicts.
+
+    Parameters:
+        freq (dict): Dictionary to store impedance test frequencies.
+        fid (file): Opened file object positioned at the start of the file.
     """
     (freq['desired_impedance_test_frequency'],
      freq['actual_impedance_test_frequency']) = (
-         struct.unpack('<ff', fid.read(8)))
+        struct.unpack('<ff', fid.read(8)))
 
-def read_notes(header, fid):
-    """Reads notes as QStrings from fid, and stores them as strings in
-    header['notes'] dict.
-    """
-    header['notes'] = {'note1': read_qstring(fid),
-                       'note2': read_qstring(fid),
-                       'note3': read_qstring(fid)}
 
 def read_eval_board_mode(header, fid):
-    """Stores eval board mode in header['eval_board_mode']. Board mode is saved
+    """
+    Stores eval board mode in header['eval_board_mode']. Board mode is saved
     from versions 1.3 and later.
+
+    Parameters:
+        header (dict): Header dictionary to store eval board mode.
+        fid (file): Opened file object positioned at the start of the file.
     """
     header['eval_board_mode'] = 0
     if ((header['version']['major'] == 1 and header['version']['minor'] >= 3)
             or (header['version']['major'] > 1)):
         header['eval_board_mode'], = struct.unpack('<h', fid.read(2))
 
+
 def read_reference_channel(header, fid):
-    """Reads name of reference channel as QString from fid, and stores it as
+    """
+    Reads name of reference channel as QString from fid, and stores it as
     a string in header['reference_channel']. Data files v2.0 or later include
     reference channel.
+
+    Parameters:
+        header (dict): Header dictionary to store reference channel name.
+        fid (file): Opened file object positioned at the start of the file.
     """
     if header['version']['major'] > 1:
         header['reference_channel'] = read_qstring(fid)
 
-def set_sample_rates(header, freq):
-    """Determines what the sample rates are for various signal types, and
-    stores them in 'freq' dict.
-    """
-    freq['amplifier_sample_rate'] = header['sample_rate']
-    freq['aux_input_sample_rate'] = header['sample_rate'] / 4
-    freq['supply_voltage_sample_rate'] = (header['sample_rate'] /
-                                          header['num_samples_per_data_block'])
-    freq['board_adc_sample_rate'] = header['sample_rate']
-    freq['board_dig_in_sample_rate'] = header['sample_rate']
-
-def set_frequency_parameters(header, freq):
-    """Stores frequency parameters (set in other functions) in
-    header['frequency_parameters']
-    """
-    header['frequency_parameters'] = freq
-
-def initialize_channels(header):
-    """Creates empty lists for each type of data channel and stores them in
-    'header' dict.
-    """
-    header['spike_triggers'] = []
-    header['amplifier_channels'] = []
-    header['aux_input_channels'] = []
-    header['supply_voltage_channels'] = []
-    header['board_adc_channels'] = []
-    header['board_dig_in_channels'] = []
-    header['board_dig_out_channels'] = []
-
-def read_signal_summary(header, fid, verbose=False):
-    """Reads signal summary from data file header and stores information for
-    all signal groups and their channels in 'header' dict.
-    """
-    number_of_signal_groups, = struct.unpack('<h', fid.read(2))
-    for signal_group in range(1, number_of_signal_groups + 1):
-        add_signal_group_information(header, fid, signal_group)
-    add_num_channels(header)
-    if verbose:
-        print_header_summary(header)
-
-def add_signal_group_information(header, fid, signal_group):
-    """Adds information for a signal group and all its channels to 'header'
-    dict.
-    """
-    signal_group_name = read_qstring(fid)
-    signal_group_prefix = read_qstring(fid)
-    (signal_group_enabled, signal_group_num_channels, _) = struct.unpack(
-        '<hhh', fid.read(6))
-
-    if signal_group_num_channels > 0 and signal_group_enabled > 0:
-        for _ in range(0, signal_group_num_channels):
-            add_channel_information(header, fid, signal_group_name,
-                                    signal_group_prefix, signal_group)
-
-def add_channel_information(header, fid, signal_group_name,
-                            signal_group_prefix, signal_group):
-    """Reads a new channel's information from fid and appends it to 'header'
-    dict.
-    """
-    (new_channel, new_trigger_channel, channel_enabled,
-     signal_type) = read_new_channel(
-         fid, signal_group_name, signal_group_prefix, signal_group)
-    append_new_channel(header, new_channel, new_trigger_channel,
-                       channel_enabled, signal_type)
 
 def read_new_channel(fid, signal_group_name, signal_group_prefix,
                      signal_group):
-    """Reads a new channel's information from fid.
+    """
+    Reads a new channel's information from fid and returns it as a dict.
+    The channel is identified by its signal group name, prefix, and number.
+
+    Parameters:
+        fid (file): Opened file object positioned at the start of the channel.
+        signal_group_name (str): Name of the signal group.
+        signal_group_prefix (str): Prefix of the signal group.
+        signal_group (int): Number of the signal group.
+
+    Returns:
+       new_channel (dict): Dictionary with channel information.
+       new_trigger_channel (dict): Dictionary with trigger channel info.
+       channel_enabled (bool): Indicates if the channel is enabled.
+       signal_type (int): Type of signal for the channel.
     """
     new_channel = {'port_name': signal_group_name,
                    'port_prefix': signal_group_prefix,
@@ -212,23 +310,35 @@ def read_new_channel(fid, signal_group_name, signal_group_prefix,
      signal_type, channel_enabled,
      new_channel['chip_channel'],
      new_channel['board_stream']) = (
-         struct.unpack('<hhhhhh', fid.read(12)))
+        struct.unpack('<hhhhhh', fid.read(12)))
     new_trigger_channel = {}
     (new_trigger_channel['voltage_trigger_mode'],
      new_trigger_channel['voltage_threshold'],
      new_trigger_channel['digital_trigger_channel'],
      new_trigger_channel['digital_edge_polarity']) = (
-         struct.unpack('<hhhh', fid.read(8)))
+        struct.unpack('<hhhh', fid.read(8)))
     (new_channel['electrode_impedance_magnitude'],
      new_channel['electrode_impedance_phase']) = (
-         struct.unpack('<ff', fid.read(8)))
+        struct.unpack('<ff', fid.read(8)))
 
     return new_channel, new_trigger_channel, channel_enabled, signal_type
 
+
 def append_new_channel(header, new_channel, new_trigger_channel,
                        channel_enabled, signal_type):
-    """"Appends 'new_channel' to 'header' dict depending on if channel is
+    """
+    Appends 'new_channel' to 'header' dict depending on if channel is
     enabled and the signal type.
+
+    Parameters:
+        header (dict): Header dictionary to store channel information.
+        new_channel (dict): Dictionary with new channel information.
+        new_trigger_channel (dict): Dictionary with trigger channel info.
+        channel_enabled (bool): Indicates if the channel is enabled.
+        signal_type (int): Type of signal for the channel.
+
+    Raises:
+        UnknownChannelTypeError: If the signal type is unrecognized.
     """
     if not channel_enabled:
         return
@@ -249,8 +359,13 @@ def append_new_channel(header, new_channel, new_trigger_channel,
     else:
         raise UnknownChannelTypeError('Unknown channel type.')
 
+
 def add_num_channels(header):
     """Adds channel numbers for all signal types to 'header' dict.
+
+    Parameters:
+        header (dict): Header dictionary to store channel counts.
+
     """
     header['num_amplifier_channels'] = len(header['amplifier_channels'])
     header['num_aux_input_channels'] = len(header['aux_input_channels'])
@@ -261,10 +376,117 @@ def add_num_channels(header):
     header['num_board_dig_out_channels'] = len(
         header['board_dig_out_channels'])
 
+
+def set_num_samples_per_data_block(header):
+    """
+    Determines how many samples are present per data block (60 or 128),
+    depending on version. Data files v2.0 or later have 128 samples per block,
+    otherwise 60.
+
+    Parameters:
+        header (dict): Header dictionary to store number of samples per block.
+    """
+    header['num_samples_per_data_block'] = 60
+    if header['version']['major'] > 1:
+        header['num_samples_per_data_block'] = 128
+
+
+def set_sample_rates(header, freq):
+    """Determines what the sample rates are for various signal types, and
+    stores them in 'freq' dict.
+
+    Parameters:
+        header (dict): Header dictionary to store sample rates.
+        freq (dict): Dictionary to store frequency parameters.
+    """
+    freq['amplifier_sample_rate'] = header['sample_rate']
+    freq['aux_input_sample_rate'] = header['sample_rate'] / 4
+    freq['supply_voltage_sample_rate'] = (header['sample_rate'] /
+                                          header['num_samples_per_data_block'])
+    freq['board_adc_sample_rate'] = header['sample_rate']
+    freq['board_dig_in_sample_rate'] = header['sample_rate']
+
+
+def set_frequency_parameters(header, freq):
+    """Stores frequency parameters (set in other functions) in
+    header['frequency_parameters']
+
+    Parameters:
+        header (dict): Header dictionary to store frequency parameters.
+        freq (dict): Dictionary to store frequency parameters.
+    """
+    header['frequency_parameters'] = freq
+
+
+def initialize_channels(header):
+    """Creates empty lists for each type of data channel and stores them in
+    'header' dict.
+
+    Parameters:
+        header (dict): Header dictionary to initialize channel lists.
+
+    """
+    header['spike_triggers'] = []
+    header['amplifier_channels'] = []
+    header['aux_input_channels'] = []
+    header['supply_voltage_channels'] = []
+    header['board_adc_channels'] = []
+    header['board_dig_in_channels'] = []
+    header['board_dig_out_channels'] = []
+
+
+def add_signal_group_information(header, fid, signal_group):
+    """Adds information for a signal group and all its channels to 'header'
+    dict.
+
+    Parameters:
+        header (dict): Header dictionary to store signal group information.
+        fid (file): Opened file object positioned at the start of the signal
+                    group.
+        signal_group (int): Number of the signal group.
+    """
+    signal_group_name = read_qstring(fid)
+    signal_group_prefix = read_qstring(fid)
+    (signal_group_enabled, signal_group_num_channels, _) = struct.unpack(
+        '<hhh', fid.read(6))
+
+    if signal_group_num_channels > 0 and signal_group_enabled > 0:
+        for _ in range(0, signal_group_num_channels):
+            add_channel_information(header, fid, signal_group_name,
+                                    signal_group_prefix, signal_group)
+
+
+def add_channel_information(header, fid, signal_group_name,
+                            signal_group_prefix, signal_group):
+    """Reads a new channel's information from fid and appends it to 'header'
+    dict.
+
+    Parameters:
+        header (dict): Header dictionary to store channel information.
+        fid (file): Opened file object positioned at the start of the channel.
+        signal_group_name (str): Name of the signal group.
+        signal_group_prefix (str): Prefix of the signal group.
+        signal_group (int): Number of the signal group.
+    """
+    (new_channel, new_trigger_channel, channel_enabled,
+     signal_type) = read_new_channel(
+        fid, signal_group_name, signal_group_prefix, signal_group)
+    append_new_channel(header, new_channel, new_trigger_channel,
+                       channel_enabled, signal_type)
+
+
+# === Data Post-Processing ===
+
 def header_to_result(header, result):
-    """Merges header information from .rhd file into a common 'result' dict.
-    If any fields have been allocated but aren't relevant (for example, no
-    channels of this type exist), does not copy those entries into 'result'.
+    """
+    Merge parsed header fields into the global `result` dictionary.
+
+    Parameters:
+        header (dict): Parsed header metadata from `read_header`.
+        result (dict): Destination dictionary to be populated.
+
+    Returns:
+        dict: Updated result dictionary with signal channel mappings.
     """
     if header['num_amplifier_channels'] > 0:
         result['spike_triggers'] = header['spike_triggers']
@@ -293,8 +515,13 @@ def header_to_result(header, result):
 
     return result
 
+
 def print_header_summary(header):
-    """Prints summary of contents of RHD header to console.
+    """
+    Prints summary of contents of RHD header to console.
+
+    Parameters:
+        header (dict): Header dictionary containing parsed metadata.
     """
     print('Found {} amplifier channel{}.'.format(
         header['num_amplifier_channels'],
@@ -319,37 +546,20 @@ def print_header_summary(header):
         plural(header['num_temp_sensor_channels'])))
     print('')
 
-def read_qstring(fid):
-    """Reads Qt style QString.
-
-    The first 32-bit unsigned number indicates the length of the string
-    (in bytes). If this number equals 0xFFFFFFFF, the string is null.
-
-    Strings are stored as unicode.
-    """
-
-    length, = struct.unpack('<I', fid.read(4))
-    if length == int('ffffffff', 16):
-        return ""
-
-    if length > (os.fstat(fid.fileno()).st_size - fid.tell() + 1):
-        print(length)
-        raise QStringError('Length too long.')
-
-    # convert length from bytes to 16-bit Unicode words
-    length = int(length / 2)
-
-    data = []
-    for _ in range(0, length):
-        c, = struct.unpack('<H', fid.read(2))
-        data.append(c)
-
-    return ''.join([chr(c) for c in data])
 
 def data_to_result(header, data, result):
-    """Merges data from all present signals into a common 'result' dict. If
+    """
+    Merges data from all present signals into a common 'result' dict. If
     any signal types have been allocated but aren't relevant (for example,
     no channels of this type exist), does not copy those entries into 'result'.
+
+    Parameters:
+        header (dict): Parsed header metadata from `read_header`.
+        data (dict): Dictionary containing signal data.
+        result (dict): Destination dictionary to be populated.
+
+    Returns:
+        dict: Updated result dictionary with signal data.
     """
     if len(header['amplifier_channels']) > 0:
         result['t_amplifier'] = data['t_amplifier']

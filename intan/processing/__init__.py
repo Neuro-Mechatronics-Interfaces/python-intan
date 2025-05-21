@@ -1,10 +1,8 @@
 from ._metrics_utils import load_metrics_data, get_metrics_file
 from ._filters import (
     notch_filter,
-    butter_bandpass,
-    butter_lowpass,
-    butter_lowpass_filter,
-    butter_bandpass_filter,
+    bandpass_filter,
+    lowpass_filter,
     filter_emg,
     rectify,
     window_rms,
@@ -18,6 +16,12 @@ from ._filters import (
     orthogonalize,
     normalize
 )
-from ._emg_trial_selector import EMGViewerApp, launch_emg_selector
-from ._emg_viewer_gui import show_splash_screen, EMGViewer, launch_emg_viewer
-
+from ._features import (
+    mean_absolute_value,
+    zero_crossings,
+    slope_sign_changes,
+    waveform_length,
+    root_mean_square,
+    extract_features,
+    FEATURE_REGISTRY
+)

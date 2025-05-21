@@ -1,16 +1,28 @@
+"""
+Waterfall Plotting Module
+"""
 import matplotlib.pyplot as plt
 import numpy as np
 
-def waterfall(ax=None, data=None, channel_indices=None, time_vector=None, offset_increment=200, edges=[], plot_title="", line_width=0.2, colormap='rainbow', downsampling_factor=1, verbose=False):
+
+def waterfall(ax=None, data=None, channel_indices=None, time_vector=None, offset_increment=200, edges=[], plot_title="",
+              line_width=0.2, colormap='rainbow', downsampling_factor=1, verbose=False):
     """
     Creates a waterfall plot for the specified channels with a user-defined title,
     custom color styling, and scale bars for time and voltage.
 
-    Args:
-        data: The numpy array containing the EMG data.
-        channel_indices: The indices of the channels to be plotted.
-        time_vector: The time vector for the x-axis
-        plot_title: (Optional) Title for the plot provided by the user.
+    Parameters:
+        ax (matplotlib.axes.Axes): The axes to plot on. If None, a new figure and axes are created.
+        data (numpy.ndarray): 2D array of shape (num_channels, num_samples).
+        channel_indices (list): List of channel indices to plot.
+        time_vector (numpy.ndarray): 1D array of time values corresponding to the samples.
+        offset_increment (float): Increment for offsetting each channel's plot vertically.
+        edges (list): List of edges to plot as vertical lines.
+        plot_title (str): Title for the plot.
+        line_width (float): Width of the lines in the plot.
+        colormap (str): Colormap for the plot.
+        downsampling_factor (int): Factor by which to downsample the data for plotting.
+        verbose (bool): If True, prints additional information.
     """
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 12))
@@ -35,8 +47,8 @@ def waterfall(ax=None, data=None, channel_indices=None, time_vector=None, offset
         ax.axvline(x=edge, color='red', linestyle='--', linewidth=1)
 
     # Labeling and visualization
-    #ax.set_xlabel('Time (s)')
-    #ax.set_ylabel('Amplitude + Offset')
+    # ax.set_xlabel('Time (s)')
+    # ax.set_ylabel('Amplitude + Offset')
     ax.set_title(plot_title, fontsize=14, fontweight='bold')
 
     # Custom scale bar
@@ -58,9 +70,16 @@ def waterfall(ax=None, data=None, channel_indices=None, time_vector=None, offset
 
     plt.show()
 
+
 def add_scalebars(ax, scale_time=5, scale_voltage=10):
     """
     Adds time and voltage scale bars to the plot in the lower left corner.
+
+    Parameters:
+        ax (matplotlib.axes.Axes): The axes to add the scale bars to.
+        scale_time (float): Length of the timescale bar in seconds.
+        scale_voltage (float): Length of the voltage scale bar in mV.
+
     """
     # Add horizontal time scale bar (5 sec)
     ax.plot([0, scale_time], [-1000, -1000], color='gray', lw=3)
@@ -69,7 +88,8 @@ def add_scalebars(ax, scale_time=5, scale_voltage=10):
     # Add vertical voltage scale bar (10 mV)
     ax.plot([0, 0], [-1000, -1000 + scale_voltage * 10], color='gray', lw=3)
     ax.text(-0.5, -500, '10 mV', va='center', ha='center', rotation='vertical', fontsize=12, color='gray')
-    #ax.text(-0.5, voltage_scale_length / 2 - 1000, '10 mV', va='center', ha='center', rotation='vertical', fontsize=12, color='gray')
+    # ax.text(-0.5, voltage_scale_length / 2 - 1000, '10 mV', va='center', ha='center', rotation='vertical', fontsize=12, color='gray')
+
 
 # def insert_channel_labels(ax, time_vector, num_channels):
 #     """
@@ -89,9 +109,9 @@ def add_scalebars(ax, scale_time=5, scale_voltage=10):
 
 def insert_channel_labels(ax, time_vector, num_channels, num_labels=2, label_color='black', font_size=8):
     """
-    Inserts evenly spaced text labels on a multi-channel plot to indicate selected channels.
+    Inserts evenly spaced text labels on a multichannel plot to indicate selected channels.
 
-    Args:
+    Parameters:
         ax: Matplotlib Axes object.
         time_vector: Time vector (used for x position of labels).
         num_channels: Total number of channels plotted vertically.
@@ -118,8 +138,8 @@ def insert_vertical_labels(ax):
     """
     Inserts vertical labels "Extensor" and "Flexor" for the two groups of channels.
 
-    Args:
-        ax: The plot axes to add the text to.
+    Parameters:
+        ax (matplotlib.axes.Axes): The axes to plot on. If None, a new figure and axes are created.
     """
     # Insert "Extensor" label vertically for the first 64 channels (left side)
     ax.text(-1, 5000, 'Extensor', fontsize=12, va='center', ha='center', color='black', rotation='vertical',
@@ -128,5 +148,3 @@ def insert_vertical_labels(ax):
     # Insert "Flexor" label vertically for channels 65-128 (left side)
     ax.text(-1, 22000, 'Flexor', fontsize=12, va='center', ha='center', color='black', rotation='vertical',
             fontweight='bold')
-
-

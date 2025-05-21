@@ -3,10 +3,17 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
 def pca(X, n_components=15, variance_threshold=0.95, show_plot=False, verbose=False):
-    """ Implements PCA on a dataset with the number of components specified.
-    Args:
+    """
+    Implements PCA on a dataset with the number of components specified.
+
+    Parameters:
         X: Input data of shape (samples, channels)
-        n_components: Number of components to keep."""
+        n_components: Number of components to keep.
+
+    Returns:
+        X_reconstructed_k: Reconstructed data using the first k components.
+        n_pca_95: Number of components needed to reach 95% variance.
+    """
 
     pca = PCA(n_components=n_components)
     X_pca = pca.fit_transform(X)  # Shape: (samples, components)

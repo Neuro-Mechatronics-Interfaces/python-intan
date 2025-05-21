@@ -1,15 +1,26 @@
-""" Plotting functions for visualizing EMG data and features.
+"""
+intan.plotting._emg_plots.py
 
+This module provides plotting utilities for visualizing EMG (electromyography) data recorded using the Intan
+system. It supports visualization of raw signals from various channel types (e.g., amplifier, ADC, digital in/out)
+by channel name or index. Additional helper functions are included for adding annotations such as scale bars
+and channel labels.
+
+Included functions:
+- plot_channel_by_name: Plot EMG or signal data for a given channel name.
+- plot_channel_by_index: Plot EMG data for a given amplifier channel index.
+- plot_figure: General-purpose plotting function for time-series data.
+- _add_scalebars: Internal utility to add scalebars to a plot.
+- _insert_channel_labels: Internal utility to label y-axis with channel names.
+- _insert_vertical_labels: Internal utility to add labeled vertical lines for annotations.
+
+Intended for exploratory data analysis and EMG feature validation.
 """
 
-#import pywt
-#import numpy as np
-#import seaborn as sns
+
 import matplotlib.pyplot as plt
 from intan.io._exceptions import ChannelNotFoundError
 from intan.io._channel_utils import find_channel_in_header
-#from matplotlib.collections import LineCollection
-
 
 
 def plot_channel_by_name(channel_name, result):
@@ -90,6 +101,47 @@ def plot_channel_by_index(channel_index, result):
 
         print("Plotting channel: ", result['amplifier_channels'][channel_index]['custom_channel_name'])
         plt.show()
+
+
+def plot_figure(y, x, title='Example Plot', x_label='time (s)', y_label='Y-axis', legend=True, fig_size=(10, 6)):
+    """
+    """
+    # Create a figure and axis
+    fig, ax = plt.subplots(figsize=fig_size)
+
+    # Plot the data
+    ax.plot(x, y, label='Data')
+
+    # Add a title and labels
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+
+    # Add a legend
+    if legend:
+        ax.legend()
+
+    # Show the plot
+    plt.show()
+
+
+def _add_scalebars(ax, scale_time=0.1, scale_amp=10):
+    ax.annotate('', xy=(0, scale_amp), xytext=(0, 0),
+                arrowprops=dict(arrowstyle='-', lw=2))
+    ax.annotate('', xy=(scale_time, 0), xytext=(0, 0),
+                arrowprops=dict(arrowstyle='-', lw=2))
+
+
+def _insert_channel_labels(ax, channel_labels, y_offsets):
+    for label, y in zip(channel_labels, y_offsets):
+        ax.text(-0.05, y, label, va='center', ha='right')
+
+
+def _insert_vertical_labels(ax, labels, x_positions):
+    for label, x in zip(labels, x_positions):
+        ax.axvline(x, color='gray', linestyle='--')
+        ax.text(x, ax.get_ylim()[1], label, rotation=90, va='bottom', ha='center')
+
 
 
 # def plot_time_domain_features(emg_signal, sample_rate=4000, window_size=400, overlap=200):
@@ -184,62 +236,3 @@ def plot_channel_by_index(channel_index, result):
 #     sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f')
 #     plt.title('Feature Correlation Heatmap')
 #     plt.show()
-
-def plot_figure(y, x, title='Example Plot', x_label='time (s)', y_label='Y-axis', legend=True, fig_size=(10, 6)):
-    """
-    """
-    # Create a figure and axis
-    fig, ax = plt.subplots(figsize=fig_size)
-
-    # Plot the data
-    ax.plot(x, y, label='Data')
-
-    # Add a title and labels
-    ax.set_title(title)
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
-
-    # Add a legend
-    if legend:
-        ax.legend()
-
-    # Show the plot
-    plt.show()
-
-def _add_scalebars(ax, scale_time=0.1, scale_amp=10):
-    ax.annotate('', xy=(0, scale_amp), xytext=(0, 0),
-                arrowprops=dict(arrowstyle='-', lw=2))
-    ax.annotate('', xy=(scale_time, 0), xytext=(0, 0),
-                arrowprops=dict(arrowstyle='-', lw=2))
-
-def _insert_channel_labels(ax, channel_labels, y_offsets):
-    for label, y in zip(channel_labels, y_offsets):
-        ax.text(-0.05, y, label, va='center', ha='right')
-
-def _insert_vertical_labels(ax, labels, x_positions):
-    for label, x in zip(labels, x_positions):
-        ax.axvline(x, color='gray', linestyle='--')
-        ax.text(x, ax.get_ylim()[1], label, rotation=90, va='bottom', ha='center')
-
-def plot_figure(y, x, title='Example Plot', x_label='time (s)', y_label='Y-axis', legend=True, fig_size=(10, 6)):
-    """
-    """
-    # Create a figure and axis
-    fig, ax = plt.subplots(figsize=fig_size)
-
-    # Plot the data
-    ax.plot(x, y, label='Data')
-
-    # Add a title and labels
-    ax.set_title(title)
-    ax.set_xlabel(x_label)
-    ax.set_ylabel(y_label)
-
-    # Add a legend
-    if legend:
-        ax.legend()
-
-    # Show the plot
-    plt.show()
-
-

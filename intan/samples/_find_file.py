@@ -1,3 +1,13 @@
+"""
+_find_file.py
+
+Utility module for locating files within a specified directory tree. Primarily used to find example or
+test files bundled with the Intan data processing package. If no custom path is provided, the search
+defaults to the 'samples' directory adjacent to the module.
+
+Functions:
+- findFile: Search for a specific filename within a directory tree and return its absolute path.
+"""
 import os
 
 

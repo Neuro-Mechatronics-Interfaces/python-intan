@@ -1,11 +1,13 @@
 [project]
 name = "python-intan"
-version = "0.0.5.11"
-description = "Python utilities for working with Intan electrophysiology data"
-authors = [{ name = "Jonathan Shulgach", email = "jshulgac@andrew.cmu.edu" }]
+version = "0.0.3"
+description = "Python interface and utilities for working with Intan RHX devices and electrophysiology data"
+authors = [
+    { name = "Jonathan Shulgach", email = "jshulgac@andrew.cmu.edu" },
+]
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
+license = {text = "MIT"}
 keywords = ["intan", "emg", "neurotech", "signal processing", "biomedical"]
 dependencies = [
     "numpy>=1.26.0",
@@ -19,6 +21,8 @@ dependencies = [
     "tensorflow==2.19.0",
     "seaborn",
 	"pyyaml",
+    "PyQt5",
+    "pyqtgraph",
 ]
 
 [project.urls]

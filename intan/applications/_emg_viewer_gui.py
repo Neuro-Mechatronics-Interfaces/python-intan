@@ -1,50 +1,19 @@
-# -- Import visualization libraries first --
+"""
+intan.processing._emg_viewer_gui
+
+Graphical User Interface (GUI) for loading and visualizing EMG data.
+
+The EMGViewer provides an interactive interface for exploring high-density EMG signals
+from Intan `.rhd` recordings. It supports:
+- Channel selection
+- Segment visualization
+- Preprocessing
+- Trigger-based analysis (if available)
+
+Typically launched via `_emg_launcher.py`.
+"""
 import tkinter as tk
-from tkinter import filedialog, ttk, Toplevel
-from PIL import Image, ImageTk
-
-# === Show Splash ASAP ===
-def show_splash_screen(root):
-    splash_root = Toplevel(root)
-    splash_root.overrideredirect(True)
-    splash_root.configure(bg="white")
-
-    # Load logo image
-    try:
-        from intan.samples import findFile
-        logo_path = findFile("nml-logo.jpg")
-        img = Image.open(logo_path)
-        img = img.resize((300, 300), Image.Resampling.LANCZOS)
-        photo = ImageTk.PhotoImage(img)
-
-        # Display logo
-        logo_label = tk.Label(splash_root, image=photo, bg="white")
-        logo_label.image = photo
-        logo_label.pack(padx=20, pady=(20, 5))
-
-    except Exception as e:
-        print(f"Error loading logo image: {e}")
-        logo_label = tk.Label(splash_root, text="Loading...", font=("Arial", 14), bg="white")
-        logo_label.pack(padx=20, pady=(20, 5))
-
-
-    # Center the window
-    splash_root.update_idletasks()
-    w, h = splash_root.winfo_screenwidth(), splash_root.winfo_screenheight()
-    sw, sh = splash_root.winfo_width(), splash_root.winfo_height()
-    x, y = (w - sw) // 2, (h - sh) // 2
-    splash_root.geometry(f"+{x}+{y}")
-
-    return splash_root
-
-
-# === Show Splash and continue importing ===
-root = tk.Tk()
-root.withdraw()
-
-# Show splash before heavy imports
-splash = show_splash_screen(root)
-root.update()
+from tkinter import filedialog, ttk
 
 import os
 import numpy as np
@@ -55,9 +24,6 @@ from tqdm import tqdm
 # Visualization libraries
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-
-# Intan specific libraries
-from intan.io import load_rhd_file, load_labeled_file
 
 # TO-DO: implement this into a separate intan module
 import joblib
@@ -631,6 +597,9 @@ class EMGViewer:
 
     def load_file(self):
         """ Load a .rhd file and plot the first channel."""
+
+        from intan.io import load_rhd_file
+
         path = filedialog.askopenfilename(filetypes=[("RHD files", "*.rhd")])
         if not path:
             return
@@ -901,6 +870,7 @@ class EMGViewer:
         Segment the EMG data into trials based on manual indices or notes files.
         Saves each segment as a compressed .npz file (with 'emg' data and 'label') in an 'emg' subfolder.
         """
+        from intan.io import load_rhd_file, load_labeled_file
         # Determine output directory for segmented files
         if self.data_viewer_file_path:
             # If a file is currently loaded in the viewer, use its directory
@@ -1059,6 +1029,8 @@ class EMGViewer:
             return list(range(16))  # fallback
 
     def load_table(self):
+
+        from intan.io import load_labeled_file
         df_sorted = load_labeled_file()
 
         # Update the table with the loaded data
@@ -1511,13 +1483,3 @@ class EMGViewer:
 
     def on_closing(self):
         self.root.quit()
-
-
-def launch_emg_viewer():
-    splash.destroy()
-    root.deiconify()
-    app = EMGViewer(root)
-    root.mainloop()
-
-root.after(500, launch_emg_viewer)  # slight delay to allow splash to show
-root.mainloop()

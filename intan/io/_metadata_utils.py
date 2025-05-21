@@ -1,21 +1,48 @@
+"""
+intan.io._metadata_utils
+
+Utility functions for interpreting binary structure metadata in `.rhd` files.
+This module calculates byte lengths, estimates the number of signal samples,
+and prints summary information about recorded datasets.
+
+Key responsibilities:
+- Calculating bytes per data block for each signal type
+- Estimating sample counts across channels
+- Detecting file truncation or corruption based on size
+- Displaying duration and sampling summary in console
+"""
 import os
 from intan.io._exceptions import FileSizeError
 
+
+# === General Utilities ===
 def plural(number_of_items):
-    """Utility function to pluralize words based on the number of items.
     """
-    if number_of_items == 1:
-        return ''
-    return 's'
+    Return 's' if the number of items is not 1 (for pluralization).
 
+    Parameters:
+        number_of_items (int): Quantity to evaluate
+
+    Returns:
+        str: 's' if plural, '' if singular
+    """
+    return '' if number_of_items == 1 else 's'
+
+
+# === Data Size and Sample Count Estimation ===
 def get_bytes_per_data_block(header):
-    """Calculates the number of bytes in each 60 or 128 sample datablock."""
-    # Depending on the system used to acquire the data,
-    # 'num_samples_per_data_block' will be either 60 (USB Interface Board)
-    # or 128 (Recording Controller).
-    # Use this number along with numbers of channels to accrue a sum of how
-    # many bytes each data block should contain.
+    """
+    Calculate the total number of bytes in each data block of a `.rhd` file.
 
+    This is based on the number of enabled channels and the system used for recording
+    (either 60 or 128 samples per block).
+
+    Parameters:
+        header (dict): Parsed header metadata with fields like 'num_amplifier_channels'
+
+    Returns:
+        int: Number of bytes in one full data block
+    """
     # Timestamps (one channel always present): Start with 4 bytes per sample.
     bytes_per_block = bytes_per_signal_type(
         header['num_samples_per_data_block'],
@@ -81,19 +108,41 @@ def get_bytes_per_data_block(header):
 
     return bytes_per_block
 
+
 def bytes_per_signal_type(num_samples, num_channels, bytes_per_sample):
-    """Calculates the number of bytes, per data block, for a signal type
-    provided the number of samples (per data block), the number of enabled
-    channels, and the size of each sample in bytes.
+    """
+    Calculate number of bytes for a specific signal type in a data block.
+
+    Parameters:
+        num_samples (int or float): Samples per block (may be fractional)
+        num_channels (int): Number of enabled channels for this signal type
+        bytes_per_sample (int): Number of bytes per sample
+
+    Returns:
+        float: Number of bytes for this signal type
     """
     return num_samples * num_channels * bytes_per_sample
 
+
 def calculate_data_size(header, filename, fid, verbose=True):
-    """Calculates how much data is present in this file. Returns:
-    data_present: Bool, whether any data is present in file
-    filesize: Int, size (in bytes) of file
-    num_blocks: Int, number of 60 or 128-sample data blocks present
-    num_samples: Int, number of samples present in file
+    """
+    Determine the size and structure of recorded data in an `.rhd` file.
+
+    Computes how many samples exist, how many data blocks are present,
+    and whether the file appears truncated or corrupt.
+
+    Parameters:
+        header (dict): Parsed header from file
+        filename (str): Path to the `.rhd` file
+        fid (file): Open file object positioned after header
+        verbose (bool): If True, print file duration summary
+
+    Returns:
+        tuple:
+            data_present (bool): True if data exists beyond header
+            filesize (int): Full file size in bytes
+            num_blocks (int): Number of data blocks present
+            num_samples (dict): Estimated samples per signal type
     """
     bytes_per_block = get_bytes_per_data_block(header)
 
@@ -117,14 +166,22 @@ def calculate_data_size(header, filename, fid, verbose=True):
 
     if verbose:
         print_record_time_summary(num_samples['amplifier'],
-                              header['sample_rate'],
-                              data_present)
+                                  header['sample_rate'],
+                                  data_present)
 
     return data_present, filesize, num_blocks, num_samples
 
+
 def calculate_num_samples(header, num_data_blocks):
-    """Calculates number of samples for each signal type, storing the results
-    in num_samples dict for later use.
+    """
+    Estimate the number of samples for each signal type.
+
+    Parameters:
+        header (dict): Parsed header with sample structure
+        num_data_blocks (int): Total data blocks in file
+
+    Returns:
+        dict: Signal type → number of samples (e.g., 'amplifier': 25600)
     """
     samples_per_block = header['num_samples_per_data_block']
     num_samples = {}
@@ -136,9 +193,16 @@ def calculate_num_samples(header, num_data_blocks):
     num_samples['board_dig_out'] = int(samples_per_block * num_data_blocks)
     return num_samples
 
+
+# === Console Summary ===
 def print_record_time_summary(num_amp_samples, sample_rate, data_present):
-    """Prints summary of how much recorded data is present in RHD file
-    to console.
+    """
+    Print the estimated duration of the `.rhd` recording to the console.
+
+    Parameters:
+        num_amp_samples (int): Number of amplifier samples in file
+        sample_rate (float): Sampling rate in Hz
+        data_present (bool): Whether any data was detected in the file
     """
     record_time = num_amp_samples / sample_rate
 

@@ -1,13 +1,40 @@
+"""
+intan.processing._emg_trial_selector
+
+Graphical tool for interactively labeling trial events on EMG recordings.
+
+This GUI allows researchers to:
+- Load and visualize EMG signals from `.rhd` files
+- Select individual channels
+- Click to mark trial onset points
+- Assign labels to each indexed event
+- Append new recordings for multi-session review
+- Export trial events to a timestamped CSV or TXT file
+
+Clicking the signal while "Set Trial Index" is enabled will add a labeled marker.
+This tool is useful for supervised training of gesture classifiers, post-hoc annotation,
+or protocol validation in EMG experiments.
+"""
+
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk, Scrollbar, VERTICAL
 import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from intan.io import load_rhd_file
 
 
-class EMGViewerApp:
+class EMGSelector:
+    """
+    Tkinter-based application for manual EMG trial indexing.
+
+    Attributes:
+        emg_data (np.ndarray): EMG signal matrix (channels × samples)
+        time_vector (np.ndarray): Time vector aligned with EMG samples
+        sampling_rate (float): Sampling rate of amplifier
+        current_channel (int): Channel index currently displayed
+        indexing_enabled (bool): If True, allows user to click to insert marker
+    """
     def __init__(self, root):
         self.root = root
         self.root.title("EMG Trial Selector")
@@ -75,6 +102,11 @@ class EMGViewerApp:
         self.canvas.mpl_connect("button_press_event", self.on_click)
 
     def load_file(self):
+        """
+        Load EMG data from a .rhd file and initialize the GUI with the first channel.
+        """
+        from intan.io import load_rhd_file
+
         path = filedialog.askopenfilename(filetypes=[("RHD files", "*.rhd"), ("All files", "*.*")])
         if not path:
             return
@@ -90,6 +122,11 @@ class EMGViewerApp:
         self.plot_channel()
 
     def append_file(self):
+        """
+        Append EMG data from another .rhd file to the current data.
+        """
+        from intan.io import load_rhd_file
+
         path = filedialog.askopenfilename(filetypes=[("RHD files", "*.rhd"), ("All files", "*.*")])
         if not path:
             return
@@ -124,10 +161,22 @@ class EMGViewerApp:
         self.plot_channel()
 
     def sample_index_to_timestamp(self, index):
+        """
+        Convert a sample index to a timestamp string.
+
+        Parameters:
+            index (int): Sample index to convert.
+
+        Returns:
+            str: Formatted timestamp string (HH:MM:SS).
+        """
         seconds = index / self.sampling_rate
         return str(datetime.timedelta(seconds=int(seconds)))
 
     def save_table(self):
+        """
+        Save the trial markers to a text file with sample index and timestamp.
+        """
         path = filedialog.asksaveasfilename(
             defaultextension=".txt",
             filetypes=[("Text Files", "*.txt")],
@@ -155,20 +204,35 @@ class EMGViewerApp:
         messagebox.showinfo("Saved", f"Trial markers saved to:\n{path}")
 
     def delete_selected(self):
+        """
+        Delete selected rows from the table.
+        """
         selected = self.table.selection()
         for item in selected:
             self.table.delete(item)
 
     def update_channel(self, event=None):
+        """
+        Update the current channel based on the selection from the dropdown.
+        """
         if self.emg_data is None:
             return
         self.current_channel = self.channel_selector.current()
         self.plot_channel()
 
     def enable_indexing(self):
+        """
+        Enable the indexing mode to allow trial marking on the plot.
+        """
         self.indexing_enabled = True
 
     def on_click(self, event):
+        """
+        Handle mouse click events on the plot to mark trial onset points.
+
+        Parameters:
+            event (matplotlib.backend_bases.Event): The mouse event.
+        """
         if not self.indexing_enabled or event.inaxes != self.ax:
             return
 
@@ -188,6 +252,9 @@ class EMGViewerApp:
         self.indexing_enabled = False
 
     def plot_channel(self):
+        """
+        Plot the currently selected EMG channel.
+        """
         self.ax.clear()
         self.ax.plot(self.time_vector, self.emg_data[self.current_channel], label=f"Channel {self.current_channel}")
         self.ax.set_xlabel("Time (s)")
@@ -201,6 +268,9 @@ class EMGViewerApp:
 
 
 def launch_emg_selector():
+    """
+    Launch the EMG trial selector GUI.
+    """
     root = tk.Tk()
-    app = EMGViewerApp(root)
+    app = EMGSelector(root)
     root.mainloop()

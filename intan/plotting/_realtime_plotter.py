@@ -1,3 +1,8 @@
+"""
+A realtime plotter for visualizing EMG data from a client.
+
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
@@ -93,6 +98,7 @@ class RealtimePlotter:
     def run(self):
         print("Launching real-time plotter...")
         plt.show()
+
 
 def run_realtime_plot(client, channels=[0], sampling_rate=2000):
     plotter = RealtimePlotter(client, sampling_rate=sampling_rate, channels_to_plot=channels)

@@ -1,4 +1,4 @@
-from ._pca import PCA
+from ._pca import pca
 from ._cfica import (
     CFICA2,
     whitening_pca,

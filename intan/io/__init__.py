@@ -1,5 +1,19 @@
-from ._channel_utils import print_all_channel_names, find_channel_in_header, find_channel_in_group, print_names_in_group
-from ._exceptions import UnrecognizedFileError, UnknownChannelTypeError, FileSizeError, QStringError, ChannelNotFoundError
+from ._channel_utils import (
+    print_all_channel_names,
+    find_channel_in_header,
+    find_channel_in_group,
+    print_names_in_group,
+)
+from ._exceptions import (
+    UnrecognizedFileError,
+    UnknownChannelTypeError,
+    FileSizeError,
+    QStringError,
+    ChannelNotFoundError,
+    GetSampleRateFailure,
+    InvalidReceivedDataSize,
+    InvalidMagicNumber,
+)
 from ._file_utils import (
     adjust_path,
     check_file_present,
@@ -45,7 +59,7 @@ from ._header_parsing import (
     set_sample_rates,
     set_frequency_parameters,
     initialize_channels,
-    read_signal_summary,
+    read_channel_structure,
     add_signal_group_information,
     add_channel_information,
     read_new_channel,
@@ -56,16 +70,6 @@ from ._header_parsing import (
     read_qstring
 )
 
-from ._data_processing import (
-    parse_data,
-    scale_timestamps,
-    scale_analog_data,
-    extract_digital_data,
-    apply_notch_filter,
-    notch_filter,
-    calculate_iir_parameters,
-    calculate_iir
-)
 from ._rhd_loader import (
     load_rhd_file,
     read_time_file,

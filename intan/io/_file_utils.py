@@ -1,3 +1,20 @@
+"""
+intan.io._file_utils
+
+Utility functions for file and path handling in the Intan interface.
+
+This module includes helpers for:
+- Cross-platform path adjustment (Windows, WSL, Linux)
+- File presence validation
+- Reading configuration or labeled trial files
+- End-of-file checks and error handling
+- Progress bar display during file loading
+- Directory scanning for `.rhd` datasets
+
+Used throughout the `intan.io` submodule to support flexible loading and validation
+of data from local or mounted environments.
+"""
+
 import sys
 import os
 import platform
@@ -6,7 +23,20 @@ import pandas as pd
 from tkinter import filedialog
 from intan.io._exceptions import FileSizeError
 
+
 def adjust_path(path):
+    """
+    Adjusts a file path for compatibility with the host operating system.
+
+    Automatically detects WSL, Linux, or native Windows and transforms
+    file paths accordingly (e.g., `C:\\` to `/mnt/c/` on WSL).
+
+    Parameters:
+        path (str): Original file path (Windows-style or POSIX)
+
+    Returns:
+        str: Transformed path compatible with the current OS.
+    """
     system = platform.system()
 
     # Check if the system is running under WSL
@@ -36,18 +66,18 @@ def adjust_path(path):
     else:
         raise ValueError(f"Unsupported system: {system}")
 
+
 def check_file_present(file, metrics_file, verbose=False):
     """
-    Checks if the file is present in the metrics file.
+    Check whether a file is listed in a given metrics CSV.
 
-    Args:
-        file: The file to check.
-        metrics_file: The metrics file to search.
-        verbose:  (Optional) Boolean indicating if the function should print messages.
+    Parameters:
+        file (str): File path to check.
+        metrics_file (pd.DataFrame): Loaded CSV with a 'File Name' column.
+        verbose (bool): If True, print a warning when file is missing.
 
     Returns:
-        filename: The name of the file.
-        is_present: Boolean indicating if the file is present in the metrics file.
+        tuple: (filename, is_present) where `is_present` is True if the file is found.
     """
     filename = pathlib.Path(file).name
     if filename not in metrics_file['File Name'].tolist():
@@ -57,9 +87,13 @@ def check_file_present(file, metrics_file, verbose=False):
 
     return filename, True
 
+
 def check_end_of_file(filesize, fid):
-    """Checks that the end of the file was reached at the expected position.
-    If not, raise FileSizeError.
+    """
+    Validate that the file pointer has reached the end of the file.
+
+    Raises:
+        FileSizeError: If unread bytes remain in the stream.
     """
     bytes_remaining = filesize - fid.tell()
     if bytes_remaining != 0:
@@ -67,7 +101,19 @@ def check_end_of_file(filesize, fid):
 
 
 def print_progress(i, target, print_step, percent_done, bar_length=40):
-    """Prints an updating progress bar in the terminal while respecting print_step and percent_done."""
+    """
+    Print an ASCII progress bar in the terminal.
+
+    Parameters:
+        i (int): Current iteration index.
+        target (int): Total number of iterations.
+        print_step (float): Update frequency as a percentage.
+        percent_done (float): Last percentage printed (used to avoid overprinting).
+        bar_length (int): Length of the ASCII progress bar.
+
+    Returns:
+        float: Updated `percent_done` value.
+    """
     fraction_done = 100 * (1.0 * i / target)
 
     # Only update if we've crossed a new step
@@ -85,7 +131,17 @@ def print_progress(i, target, print_step, percent_done, bar_length=40):
 
     return percent_done
 
+
 def read_config_file(config_file):
+    """
+    Parse a simple key=value style configuration file (e.g. TRUECONFIG.txt).
+
+    Parameters:
+        config_file (str): Path to the config file.
+
+    Returns:
+        dict: Dictionary of key-value settings.
+    """
     # Dictionary to store the key-value pairs
     config_data = {}
 
@@ -104,19 +160,17 @@ def read_config_file(config_file):
     return config_data
 
 
-
 def get_file_paths(directory, file_type=None, verbose=False):
     """
-    Returns a list of full paths for files ending with .rhd in the given directory and its subdirectories.
+    Scan a directory for files or folders, with optional filtering by extension.
 
     Parameters:
-    ------------
-    directory:    (str) The parent directory to search within.
-    file_type:    (str) The file extension to search for (default: '.rhd').
-    verbose:      (bool) Whether to print the number of files found.
+        directory (str): Root folder to search.
+        file_type (str or None): Extension to search for (e.g. '.rhd'). If None, returns subfolders.
+        verbose (bool): If True, print the number of items found.
 
     Returns:
-        rhd_files: List of full paths to either folders or files
+        list[pathlib.Path]: List of matching files or folders.
     """
     if verbose: print("Searching in directory:", directory)
 
@@ -142,11 +196,21 @@ def get_file_paths(directory, file_type=None, verbose=False):
 
     return file_paths
 
+
 def load_labeled_file(path=None):
     """
-    Load a notes text file containing trial timing and labels.
-    If `path` is None, opens a file dialog for the user to select a .txt file.
-    Returns a DataFrame with columns ["Sample", "Time", "Label"], sorted by Sample index.
+    Load a label/notes file containing gesture timing and annotations.
+
+    This is used for supervised EMG labeling during offline training.
+
+    If no path is provided, opens a GUI file selection dialog.
+
+    Parameters:
+        path (str or None): Path to the `.txt` notes file.
+
+    Returns:
+        pd.DataFrame: Labeled samples with columns ["Sample", "Time", "Label"],
+                      cleaned and sorted by sample index.
     """
     if path is None:
         path = filedialog.askopenfilename(title="Select Notes File", filetypes=[("Text files", "*.txt")])

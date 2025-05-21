@@ -5,14 +5,11 @@
 [![Build Status](https://img.shields.io/github/actions/workflow/status/Neuro-Mechatronics-Interfaces/python-intan/test.yml?branch=main)](https://github.com/Neuro-Mechatronics-Interfaces/python-intan/actions)
 [![PyPI version](https://badge.fury.io/py/python-intan.svg)](https://badge.fury.io/py/python-intan)
 
-<p align="center">
-  <img src="./docs/figs/logo.png">
-</p>
+![python-intan logo](../figs/logo.png)
 
 
-## Overview
 
-**`python-intan`** is a Python package for working with EMG data acquired from Intan Technologies systems. It provides utilities for:
+**python-intan** is a Python package for working with RHX Controller devices and EMG data acquired from Intan Technologies systems. It provides utilities for:
 
 - Reading `.rhd` and `.dat` data files
 - Preprocessing and feature extraction
@@ -23,7 +20,7 @@ Whether you're analyzing offline data or streaming real-time EMG from the RHX sy
 ---
 
 ## Contents
-
+- [Contributions](#contributions)
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
@@ -32,8 +29,20 @@ Whether you're analyzing offline data or streaming real-time EMG from the RHX sy
 
 ---
 
-## Installation
+## Contributions
 
+We welcome contributions to the `python-intan` package! If you have ideas for new features, bug fixes, or improvements, please feel free to submit a pull request or open an issue. Have a look at our [contribution guide](CONTRIBUTING.md) for further guidance. Writing code isn't the only way you can contribute:
+* review pull requests
+* develop tutorials, presentations, and other educational materials
+* help with outreach or onboarding new contributors
+
+If you’re unsure where to start or how your skills fit in, reach out! You can ask on the forum or here, on GitHub, by leaving a comment on a relevant issue that is already open.
+
+If you are new to contributing to open source, this guide helps explain why, what, and how to get involved.
+
+---
+
+## Installation
 Create a virtual environment using conda or venv:
 
 ```bash
@@ -79,7 +88,6 @@ We can quickly load EMG signals from an Intan `.rhd` file.
 
 ```python
 import intan
-
 result = intan.io.load_rhd_file() # Opens Popup window to select file, or pass filepath
 ```
 `.dat` files are also supported
@@ -187,4 +195,4 @@ This package can be cited as follows:
 
 ## License
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [License File](LICENSE) for details.
