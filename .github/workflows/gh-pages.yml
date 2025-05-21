@@ -23,7 +23,8 @@ jobs:
               sphinx-autodoc-typehints \
               myst-parser \
               sphinx-copybutton \
-              m2r2 
+              m2r2 \
+              sphinx_rtd_theme
           pip install -r requirements.txt || true
       - name: Build docs
         run: |
