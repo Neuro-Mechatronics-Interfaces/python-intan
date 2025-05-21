@@ -1,0 +1,498 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>intan.rhx_interface._rhx_device &mdash; python-intan 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            python-intan
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intan_api/modules.html">intan</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">python-intan</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">intan.rhx_interface._rhx_device</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for intan.rhx_interface._rhx_device</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">intan.rhx_interface._rhx_device</span>
+
+<span class="sd">Stream and record EMG data from the Intan RHX system via TCP.</span>
+
+<span class="sd">This module:</span>
+<span class="sd">- Connects to the Intan TCP command and data ports</span>
+<span class="sd">- Reads, parses, and scales EMG data from the waveform stream</span>
+<span class="sd">- Manages circular buffers and saves data to disk (optionally)</span>
+<span class="sd">- Supports context-managed use (`with IntanRHXDevice(...) as dev:`)</span>
+
+<span class="sd">Inherits from `RHXConfig` for unified parameter control and data streaming configuration.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">struct</span><span class="w"> </span><span class="kn">import</span> <span class="n">unpack</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">._rhx_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">RHXConfig</span>
+
+<span class="n">FRAMES_PER_BLOCK</span> <span class="o">=</span> <span class="mi">128</span>  <span class="c1"># Software hard coded but will</span>
+<span class="n">MAGIC_NUMBER</span> <span class="o">=</span> <span class="mh">0x2ef07a08</span>
+
+
+<div class="viewcode-block" id="IntanRHXDevice">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_device.IntanRHXDevice">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IntanRHXDevice</span><span class="p">(</span><span class="n">RHXConfig</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Class for interacting with the Intan RHX system over TCP/IP.</span>
+
+<span class="sd">        Inherits:</span>
+<span class="sd">            RHXConfig: Provides configuration and command utilities.</span>
+
+<span class="sd">        Responsibilities:</span>
+<span class="sd">            - Connects to command and data ports</span>
+<span class="sd">            - Streams and parses EMG data</span>
+<span class="sd">            - Records EMG data into memory</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            host (str): IP address of the RHX server.</span>
+<span class="sd">            command_port (int): TCP port for command communication.</span>
+<span class="sd">            data_port (int): TCP port for waveform data.</span>
+<span class="sd">            num_channels (int): Number of channels to collect.</span>
+<span class="sd">            sample_rate (float): Expected EMG sample rate.</span>
+<span class="sd">            verbose (bool): Enable debug logging.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">command_port</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">data_port</span><span class="o">=</span><span class="mi">5001</span><span class="p">,</span> <span class="n">num_channels</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command_port</span> <span class="o">=</span> <span class="n">command_port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_port</span> <span class="o">=</span> <span class="n">data_port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_channels</span> <span class="o">=</span> <span class="n">num_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="n">sample_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span>
+
+        <span class="c1"># Inherit the commands from the configuration class</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">command_socket</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_sample_rate</span><span class="p">()</span>
+
+<div class="viewcode-block" id="IntanRHXDevice.connect">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_device.IntanRHXDevice.connect">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command_socket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command_socket</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_port</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_socket</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_socket</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_port</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_socket</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="IntanRHXDevice.receive_data">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_device.IntanRHXDevice.receive_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">receive_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">read_size</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_socket</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">read_size</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
+                <span class="n">buffer</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">buffer</span></div>
+
+
+<div class="viewcode-block" id="IntanRHXDevice.parse_emg_stream">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_device.IntanRHXDevice.parse_emg_stream">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse_emg_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_bytes</span><span class="p">,</span> <span class="n">return_all_timestamps</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">timestamps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">channel_data</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_channels</span><span class="p">)]</span>
+
+        <span class="n">bytes_per_sample</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_channels</span>
+        <span class="n">bytes_per_block</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">FRAMES_PER_BLOCK</span> <span class="o">*</span> <span class="n">bytes_per_sample</span>
+
+        <span class="k">while</span> <span class="n">idx</span> <span class="o">+</span> <span class="n">bytes_per_block</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_bytes</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">raw_bytes</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">4</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">MAGIC_NUMBER</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+
+            <span class="n">idx</span> <span class="o">+=</span> <span class="mi">4</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">FRAMES_PER_BLOCK</span><span class="p">):</span>
+                <span class="n">ts</span> <span class="o">=</span> <span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;i&#39;</span><span class="p">,</span> <span class="n">raw_bytes</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">4</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">return_all_timestamps</span><span class="p">:</span>
+                    <span class="n">timestamps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
+                <span class="n">last_ts</span> <span class="o">=</span> <span class="n">ts</span>
+                <span class="n">idx</span> <span class="o">+=</span> <span class="mi">4</span>
+
+                <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_channels</span><span class="p">):</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;H&#39;</span><span class="p">,</span> <span class="n">raw_bytes</span><span class="p">[</span><span class="n">idx</span><span class="p">:</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">2</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">voltage</span> <span class="o">=</span> <span class="mf">0.195</span> <span class="o">*</span> <span class="p">(</span><span class="n">val</span> <span class="o">-</span> <span class="mi">32768</span><span class="p">)</span>
+                    <span class="n">channel_data</span><span class="p">[</span><span class="n">ch</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">voltage</span><span class="p">)</span>
+                    <span class="n">idx</span> <span class="o">+=</span> <span class="mi">2</span>
+
+        <span class="n">emg_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">channel_data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">bytes_consumed</span> <span class="o">=</span> <span class="n">idx</span>
+        <span class="k">if</span> <span class="n">return_all_timestamps</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">emg_array</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">bytes_consumed</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">emg_array</span><span class="p">,</span> <span class="n">last_ts</span> <span class="k">if</span> <span class="s1">&#39;last_ts&#39;</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span> <span class="n">bytes_consumed</span></div>
+
+
+<div class="viewcode-block" id="IntanRHXDevice.record">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_device.IntanRHXDevice.record">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">duration_sec</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Record EMG data for a specified duration.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            duration_sec (int): Number of seconds to record.</span>
+<span class="sd">            verbose (bool): Whether to print stream rate.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: EMG data array of shape (channels, samples)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span> <span class="o">*</span> <span class="n">duration_sec</span><span class="p">)</span>
+        <span class="n">collected_emg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_channels</span><span class="p">,</span> <span class="n">total_samples</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">write_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">rolling_buffer</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">()</span>
+        <span class="n">buffer_size</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">+</span> <span class="n">FRAMES_PER_BLOCK</span> <span class="o">*</span> <span class="p">(</span><span class="mi">4</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_channels</span><span class="p">)</span>
+
+        <span class="n">sample_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">last_print</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_run_mode</span><span class="p">(</span><span class="s2">&quot;run&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[→] Recording </span><span class="si">{</span><span class="n">duration_sec</span><span class="si">}</span><span class="s2">s of EMG data...&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="n">write_index</span> <span class="o">&lt;</span> <span class="n">total_samples</span><span class="p">:</span>
+                <span class="n">rolling_buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">receive_data</span><span class="p">(</span><span class="n">rolling_buffer</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">)</span>
+                <span class="n">emg_data</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">consumed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_emg_stream</span><span class="p">(</span><span class="n">rolling_buffer</span><span class="p">)</span>
+                <span class="n">rolling_buffer</span> <span class="o">=</span> <span class="n">rolling_buffer</span><span class="p">[</span><span class="n">consumed</span><span class="p">:]</span>
+
+                <span class="k">if</span> <span class="n">emg_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">n</span> <span class="o">=</span> <span class="n">emg_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">store</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">total_samples</span> <span class="o">-</span> <span class="n">write_index</span><span class="p">)</span>
+                    <span class="n">collected_emg</span><span class="p">[:,</span> <span class="n">write_index</span><span class="p">:</span><span class="n">write_index</span> <span class="o">+</span> <span class="n">store</span><span class="p">]</span> <span class="o">=</span> <span class="n">emg_data</span><span class="p">[:,</span> <span class="p">:</span><span class="n">store</span><span class="p">]</span>
+                    <span class="n">write_index</span> <span class="o">+=</span> <span class="n">store</span>
+                    <span class="n">sample_counter</span> <span class="o">+=</span> <span class="n">store</span>
+
+                <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">now</span> <span class="o">-</span> <span class="n">last_print</span> <span class="o">&gt;=</span> <span class="mf">1.0</span> <span class="ow">and</span> <span class="n">verbose</span><span class="p">:</span>
+                    <span class="n">rate</span> <span class="o">=</span> <span class="n">sample_counter</span> <span class="o">/</span> <span class="p">(</span><span class="n">now</span> <span class="o">-</span> <span class="n">last_print</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[📊] Rate: </span><span class="si">{</span><span class="n">rate</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> samples/sec&quot;</span><span class="p">)</span>
+                    <span class="n">last_print</span> <span class="o">=</span> <span class="n">now</span>
+                    <span class="n">sample_counter</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_run_mode</span><span class="p">(</span><span class="s2">&quot;stop&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">collected_emg</span></div>
+
+
+<div class="viewcode-block" id="IntanRHXDevice.close">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_device.IntanRHXDevice.close">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_after_disconnect</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">stop_after_disconnect</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_run_mode</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;run&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_run_mode</span><span class="p">(</span><span class="s2">&quot;stop&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Runmode set to stop before closing.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command_socket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_socket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="IntanRHXDevice.record_to_file">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_device.IntanRHXDevice.record_to_file">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">duration_sec</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">emg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">duration_sec</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">emg</span><span class="o">=</span><span class="n">emg</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved EMG to: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_val</span><span class="p">,</span> <span class="n">exc_tb</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<span class="n">VALID_PREFIXES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;set &quot;</span><span class="p">,</span> <span class="s2">&quot;get &quot;</span><span class="p">,</span> <span class="s2">&quot;execute &quot;</span><span class="p">)</span>
+
+
+
+<span class="c1"># class OldIntanRHXDevice(DataStreamer):</span>
+<span class="c1">#     def __init__(self, host=&#39;localhost&#39;, command_port=5000, waveform_port=5001, timeout=10.0, send_delay=0.01,</span>
+<span class="c1">#                  runmode_stop_on_connect=True, runmode_stop_on_disconnect=True, clear_data_outputs=True, verbose=False):</span>
+<span class="c1">#         self.host = host</span>
+<span class="c1">#         self.command_port = command_port</span>
+<span class="c1">#         self.waveform_port = waveform_port</span>
+<span class="c1">#         self.send_delay = send_delay</span>
+<span class="c1">#         self.verbose = verbose</span>
+<span class="c1">#         self.enabled_channels = []</span>
+<span class="c1">#         self.blocks_per_write = 1</span>
+<span class="c1">#         self.connected = False</span>
+<span class="c1">#</span>
+<span class="c1">#         self.stream_thread = None</span>
+<span class="c1">#         self._stream_active = threading.Event()</span>
+<span class="c1">#</span>
+<span class="c1">#         # TCP Sockets</span>
+<span class="c1">#         self.command_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span>
+<span class="c1">#         self.command_socket.settimeout(timeout)</span>
+<span class="c1">#         self.waveform_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)</span>
+<span class="c1">#         self.waveform_socket.settimeout(timeout)</span>
+<span class="c1">#</span>
+<span class="c1">#         # Command buffer thread</span>
+<span class="c1">#         self.command_queue = queue.Queue()</span>
+<span class="c1">#         self.command_thread = threading.Thread(target=self._command_worker, daemon=True)</span>
+<span class="c1">#         self.command_thread.start()</span>
+<span class="c1">#</span>
+<span class="c1">#         try:</span>
+<span class="c1">#             self.command_socket.connect((self.host, self.command_port))</span>
+<span class="c1">#             self.waveform_socket.connect((self.host, self.waveform_port))</span>
+<span class="c1">#             self.connected = True</span>
+<span class="c1">#             if self.verbose:</span>
+<span class="c1">#                 print(f&quot;[COMMAND] Connected to {self.host}:{self.command_port}&quot;)</span>
+<span class="c1">#                 print(f&quot;[WAVEFORM] Connected to {self.host}:{self.waveform_port}&quot;)</span>
+<span class="c1">#</span>
+<span class="c1">#             self.runmode_stop_on_disconnect = runmode_stop_on_disconnect</span>
+<span class="c1">#             self.runmode_stop_on_connect = runmode_stop_on_connect</span>
+<span class="c1">#</span>
+<span class="c1">#             if self.runmode_stop_on_connect:</span>
+<span class="c1">#                 cfg.set_run_mode(self, &quot;stop&quot;)</span>
+<span class="c1">#                 cfg.wait_until_runmode(self, &quot;stop&quot;)</span>
+<span class="c1">#</span>
+<span class="c1">#             if clear_data_outputs:</span>
+<span class="c1">#                 cfg.clear_data_outputs(self)</span>
+<span class="c1">#</span>
+<span class="c1">#             self.sample_rate = cfg.get_sample_rate(self)</span>
+<span class="c1">#             self.timestep = 1.0 / self.sample_rate</span>
+<span class="c1">#</span>
+<span class="c1">#         except socket.error as e:</span>
+<span class="c1">#             print(f&quot;[ERROR] Failed to connect: {e}&quot;)</span>
+<span class="c1">#             self.connected = False</span>
+<span class="c1">#</span>
+<span class="c1">#     def send(self, message):</span>
+<span class="c1">#         &quot;&quot;&quot;Queue a command to be sent to the RHX device.&quot;&quot;&quot;</span>
+<span class="c1">#         message = message.strip()  # Remove accidental newlines or whitespace</span>
+<span class="c1">#         if not message or not message.lower().startswith(VALID_PREFIXES):</span>
+<span class="c1">#             print(f&quot;[WARN] Invalid or blank command skipped: &#39;{message}&#39;&quot;)</span>
+<span class="c1">#             return</span>
+<span class="c1">#         #message += &quot;\n&quot;</span>
+<span class="c1">#         self.command_queue.put(message)</span>
+<span class="c1">#</span>
+<span class="c1">#     def recv(self, size=1024):</span>
+<span class="c1">#         &quot;&quot;&quot;Receive response from command socket.&quot;&quot;&quot;</span>
+<span class="c1">#         try:</span>
+<span class="c1">#             return self.command_socket.recv(size)</span>
+<span class="c1">#         except socket.timeout:</span>
+<span class="c1">#             print(&quot;[COMMAND] Receive timed out.&quot;)</span>
+<span class="c1">#             return b&quot;&quot;</span>
+<span class="c1">#         except socket.error as e:</span>
+<span class="c1">#             print(f&quot;[COMMAND] Receive error: {e}&quot;)</span>
+<span class="c1">#             return b&quot;&quot;</span>
+<span class="c1">#</span>
+<span class="c1">#     def _command_worker(self):</span>
+<span class="c1">#         &quot;&quot;&quot;Background thread that sends queued commands with delays.&quot;&quot;&quot;</span>
+<span class="c1">#         while True:</span>
+<span class="c1">#             try:</span>
+<span class="c1">#                 command = self.command_queue.get()</span>
+<span class="c1">#                 if self.verbose:</span>
+<span class="c1">#                     print(f&quot;[SEND] {command.strip()}&quot;)</span>
+<span class="c1">#                 self.command_socket.sendall(command.encode(&quot;utf-8&quot;))</span>
+<span class="c1">#                 time.sleep(self.send_delay)</span>
+<span class="c1">#                 self.command_queue.task_done()</span>
+<span class="c1">#             except Exception as e:</span>
+<span class="c1">#                 print(f&quot;[COMMAND THREAD ERROR] {e}&quot;)</span>
+<span class="c1">#</span>
+<span class="c1">#     def stream_and_write(self, n_frames, file=None, buffer=None, callback=None):</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         Streams EMG data and optionally writes to file or buffer.</span>
+<span class="c1">#         :param n_frames: Number of samples to collect per channel.</span>
+<span class="c1">#         :param file: A binary file object opened in &#39;wb&#39; or &#39;ab&#39; mode.</span>
+<span class="c1">#         :param buffer: A preallocated NumPy array or list to write data into.</span>
+<span class="c1">#         :param callback: A function to call with each (timestamp, data_chunk).</span>
+<span class="c1">#         :return: tuple (timestamps, data_chunk)</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         timestamps, data = self.stream(n_frames=n_frames)</span>
+<span class="c1">#</span>
+<span class="c1">#         if file is not None:</span>
+<span class="c1">#             data.T.tofile(file)  # Write as (samples, channels)</span>
+<span class="c1">#</span>
+<span class="c1">#         if buffer is not None:</span>
+<span class="c1">#             buffer.append(data)</span>
+<span class="c1">#</span>
+<span class="c1">#         if callback is not None:</span>
+<span class="c1">#             callback(timestamps, data)</span>
+<span class="c1">#</span>
+<span class="c1">#         return timestamps, data</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     def flush_commands(self):</span>
+<span class="c1">#         &quot;&quot;&quot;Block until all queued commands are sent.&quot;&quot;&quot;</span>
+<span class="c1">#         self.command_queue.join()</span>
+<span class="c1">#</span>
+<span class="c1">#     def get_enabled_channels(self):</span>
+<span class="c1">#         return self.enabled_channels</span>
+<span class="c1">#</span>
+<span class="c1">#     def configure(self, channels, port=&#39;a&#39;, sample_rate=None, blocks_per_write=None,</span>
+<span class="c1">#                   enable_wide=True, enable_high=False, enable_low=False, enable_spike=False):</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         Bulk device configuration helper.</span>
+<span class="c1">#         Args:</span>
+<span class="c1">#             channels: list of int</span>
+<span class="c1">#             port: Port to configure (a, b, c, d)</span>
+<span class="c1">#             sample_rate: optional new rate</span>
+<span class="c1">#             blocks_per_write: how many blocks before TCP write</span>
+<span class="c1">#             enable_*: stream types</span>
+<span class="c1">#         &quot;&quot;&quot;</span>
+<span class="c1">#         if sample_rate is not None:</span>
+<span class="c1">#             cfg.set_sample_rate(self, sample_rate)</span>
+<span class="c1">#             self.sample_rate = sample_rate</span>
+<span class="c1">#             self.timestep = 1.0 / sample_rate</span>
+<span class="c1">#</span>
+<span class="c1">#         if blocks_per_write is not None:</span>
+<span class="c1">#             cfg.set_blocks_per_write(self, blocks_per_write)</span>
+<span class="c1">#             self.blocks_per_write = blocks_per_write</span>
+<span class="c1">#</span>
+<span class="c1">#         self.enabled_channels = list(channels)</span>
+<span class="c1">#         for ch in channels:</span>
+<span class="c1">#             cfg.set_channel(</span>
+<span class="c1">#                 self, port=port, channel=ch,</span>
+<span class="c1">#                 enable_wide=enable_wide,</span>
+<span class="c1">#                 enable_high=enable_high,</span>
+<span class="c1">#                 enable_low=enable_low,</span>
+<span class="c1">#                 enable_spike=enable_spike</span>
+<span class="c1">#             )</span>
+<span class="c1">#</span>
+<span class="c1">#     def close(self):</span>
+<span class="c1">#         &quot;&quot;&quot;Clean shutdown and disconnect.&quot;&quot;&quot;</span>
+<span class="c1">#         try:</span>
+<span class="c1">#             if self.runmode_stop_on_disconnect:</span>
+<span class="c1">#                 cfg.set_run_mode(self, &quot;stop&quot;)</span>
+<span class="c1">#                 cfg.wait_until_runmode(self, &quot;stop&quot;)</span>
+<span class="c1">#                 if self.verbose:</span>
+<span class="c1">#                     print(&quot;Runmode set to stop before closing.&quot;)</span>
+<span class="c1">#             self.command_socket.close()</span>
+<span class="c1">#             self.waveform_socket.close()</span>
+<span class="c1">#             print(&quot;[COMMAND] Connection closed.&quot;)</span>
+<span class="c1">#             print(&quot;[WAVEFORM] Connection closed.&quot;)</span>
+<span class="c1">#         except Exception as e:</span>
+<span class="c1">#             print(f&quot;[CLOSE ERROR] {e}&quot;)</span>
+<span class="c1">#</span>
+<span class="c1">#     def start_background_stream(self, n_frames, interval_sec=0.25, callback=None):</span>
+<span class="c1">#         def _worker():</span>
+<span class="c1">#             while self._stream_active.is_set():</span>
+<span class="c1">#                 self.stream_and_write(n_frames, callback=callback)</span>
+<span class="c1">#                 time.sleep(interval_sec)</span>
+<span class="c1">#</span>
+<span class="c1">#         self._stream_active.set()</span>
+<span class="c1">#         self.stream_thread = threading.Thread(target=_worker, daemon=True)</span>
+<span class="c1">#         self.stream_thread.start()</span>
+<span class="c1">#</span>
+<span class="c1">#</span>
+<span class="c1">#     def stop_background_stream(self):</span>
+<span class="c1">#         self._stream_active.clear()</span>
+<span class="c1">#         if self.stream_thread:</span>
+<span class="c1">#             self.stream_thread.join()</span>
+<span class="c1">#         if self.verbose:</span>
+<span class="c1">#             print(&quot;[STREAM] Background stream stopped.&quot;)</span>
+<span class="c1">#</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonathan Shulgach.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

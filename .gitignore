@@ -29,5 +29,4 @@ temp/*
 
 # build files
 dist/
-build/
 python_intan.egg-info

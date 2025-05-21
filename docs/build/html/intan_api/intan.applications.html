@@ -1,0 +1,539 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>intan.applications package &mdash; python-intan 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="intan.decomposition package" href="intan.decomposition.html" />
+    <link rel="prev" title="intan package" href="intan.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            python-intan
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">intan</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="intan.html">intan package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="intan.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">intan.applications package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.decomposition.html">intan.decomposition package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.io.html">intan.io package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.plotting.html">intan.plotting package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.processing.html">intan.processing package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.rhx_interface.html">intan.rhx_interface package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.samples.html">intan.samples package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="intan.html#module-intan">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">python-intan</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="modules.html">intan</a></li>
+          <li class="breadcrumb-item"><a href="intan.html">intan package</a></li>
+      <li class="breadcrumb-item active">intan.applications package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/intan_api/intan.applications.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intan-applications-package">
+<h1>intan.applications package<a class="headerlink" href="#intan-applications-package" title="Link to this heading"></a></h1>
+<p>GUI applications and launchers for EMG analysis and trial labeling.</p>
+<p id="module-intan.applications._emg_viewer_gui"><span id="module-intan.applications"></span>intan.processing._emg_viewer_gui</p>
+<p>Graphical User Interface (GUI) for loading and visualizing EMG data.</p>
+<p>The EMGViewer provides an interactive interface for exploring high-density EMG signals
+from Intan <cite>.rhd</cite> recordings. It supports:
+- Channel selection
+- Segment visualization
+- Preprocessing
+- Trigger-based analysis (if available)</p>
+<p>Typically launched via <cite>_emg_launcher.py</cite>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">EMGViewer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.build_layout">
+<span class="sig-name descname"><span class="pre">build_layout</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.build_layout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.build_layout" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.build_acquisition_tab">
+<span class="sig-name descname"><span class="pre">build_acquisition_tab</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.build_acquisition_tab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.build_acquisition_tab" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.build_trials_tab">
+<span class="sig-name descname"><span class="pre">build_trials_tab</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.build_trials_tab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.build_trials_tab" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.build_filtering_tab">
+<span class="sig-name descname"><span class="pre">build_filtering_tab</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.build_filtering_tab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.build_filtering_tab" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.build_training_tab">
+<span class="sig-name descname"><span class="pre">build_training_tab</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.build_training_tab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.build_training_tab" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.build_model_training_tab">
+<span class="sig-name descname"><span class="pre">build_model_training_tab</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.build_model_training_tab"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.build_model_training_tab" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.add_feature_directory">
+<span class="sig-name descname"><span class="pre">add_feature_directory</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.add_feature_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.add_feature_directory" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.add_training_directory">
+<span class="sig-name descname"><span class="pre">add_training_directory</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.add_training_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.add_training_directory" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.load_training_dataset">
+<span class="sig-name descname"><span class="pre">load_training_dataset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.load_training_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.load_training_dataset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.load_feature_segments">
+<span class="sig-name descname"><span class="pre">load_feature_segments</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.load_feature_segments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.load_feature_segments" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.load_segment_and_visualize">
+<span class="sig-name descname"><span class="pre">load_segment_and_visualize</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.load_segment_and_visualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.load_segment_and_visualize" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.load_file">
+<span class="sig-name descname"><span class="pre">load_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.load_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.load_file" title="Link to this definition"></a></dt>
+<dd><p>Load a .rhd file and plot the first channel.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.train_model">
+<span class="sig-name descname"><span class="pre">train_model</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.train_model"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.train_model" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.update_training_labels_from_directory">
+<span class="sig-name descname"><span class="pre">update_training_labels_from_directory</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.update_training_labels_from_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.update_training_labels_from_directory" title="Link to this definition"></a></dt>
+<dd><p>Helper function to refresh the training labels listbox with all the labels detected from the current directories</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.remove_training_directory">
+<span class="sig-name descname"><span class="pre">remove_training_directory</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.remove_training_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.remove_training_directory" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.remove_selected_label">
+<span class="sig-name descname"><span class="pre">remove_selected_label</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.remove_selected_label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.remove_selected_label" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.visualize_selected_segment">
+<span class="sig-name descname"><span class="pre">visualize_selected_segment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.visualize_selected_segment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.visualize_selected_segment" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.run_pca_visualization">
+<span class="sig-name descname"><span class="pre">run_pca_visualization</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.run_pca_visualization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.run_pca_visualization" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.refresh_labels_list">
+<span class="sig-name descname"><span class="pre">refresh_labels_list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.refresh_labels_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.refresh_labels_list" title="Link to this definition"></a></dt>
+<dd><p>Clear and rebuild the labels list from all currently listed directories.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.update_training_labels_from_filename">
+<span class="sig-name descname"><span class="pre">update_training_labels_from_filename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.update_training_labels_from_filename"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.update_training_labels_from_filename" title="Link to this definition"></a></dt>
+<dd><p>Extract label from filename and add to label list if not already present.
+Assumes filenames like: participant_label_0.npz</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.update_network_diagram">
+<span class="sig-name descname"><span class="pre">update_network_diagram</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.update_network_diagram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.update_network_diagram" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.draw_neural_network">
+<span class="sig-name descname"><span class="pre">draw_neural_network</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">canvas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_rates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.draw_neural_network"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.draw_neural_network" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.run_trial_segmentation">
+<span class="sig-name descname"><span class="pre">run_trial_segmentation</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.run_trial_segmentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.run_trial_segmentation" title="Link to this definition"></a></dt>
+<dd><p>Segment the EMG data into trials based on manual indices or notes files.
+Saves each segment as a compressed .npz file (with ‘emg’ data and ‘label’) in an ‘emg’ subfolder.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.enable_indexing">
+<span class="sig-name descname"><span class="pre">enable_indexing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.enable_indexing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.enable_indexing" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.scroll_plot">
+<span class="sig-name descname"><span class="pre">scroll_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.scroll_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.scroll_plot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.on_click">
+<span class="sig-name descname"><span class="pre">on_click</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.on_click"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.on_click" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.save_table">
+<span class="sig-name descname"><span class="pre">save_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.save_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.save_table" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.parse_channel_range">
+<span class="sig-name descname"><span class="pre">parse_channel_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.parse_channel_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.parse_channel_range" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.load_table">
+<span class="sig-name descname"><span class="pre">load_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.load_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.load_table" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.delete_selected">
+<span class="sig-name descname"><span class="pre">delete_selected</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.delete_selected"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.delete_selected" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.update_channel">
+<span class="sig-name descname"><span class="pre">update_channel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.update_channel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.update_channel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.plot_channel">
+<span class="sig-name descname"><span class="pre">plot_channel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.plot_channel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.plot_channel" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.extract_features_from_directories">
+<span class="sig-name descname"><span class="pre">extract_features_from_directories</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.extract_features_from_directories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.extract_features_from_directories" title="Link to this definition"></a></dt>
+<dd><p>Iterate over each selected directory of segmented trials, apply filters,
+extract features, and aggregate the results. Saves individual feature files and builds a dataset.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.extract_td_features">
+<span class="sig-name descname"><span class="pre">extract_td_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segment</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.extract_td_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.extract_td_features" title="Link to this definition"></a></dt>
+<dd><p>Computes a variety of unique features from segmented EMG data. Input shape expects (channels x samples).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.apply_training_filters">
+<span class="sig-name descname"><span class="pre">apply_training_filters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.apply_training_filters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.apply_training_filters" title="Link to this definition"></a></dt>
+<dd><p>Applies selected filters to the EMG data. Handles both 1D (single channel) and 2D arrays.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.add_scalebars">
+<span class="sig-name descname"><span class="pre">add_scalebars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale_voltage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.add_scalebars"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.add_scalebars" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.insert_channel_labels">
+<span class="sig-name descname"><span class="pre">insert_channel_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_vector</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">font_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.insert_channel_labels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.insert_channel_labels" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.insert_vertical_labels">
+<span class="sig-name descname"><span class="pre">insert_vertical_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ax</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.insert_vertical_labels"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.insert_vertical_labels" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.build_training_dataset">
+<span class="sig-name descname"><span class="pre">build_training_dataset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.build_training_dataset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.build_training_dataset" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.waterfall_gui_plot">
+<span class="sig-name descname"><span class="pre">waterfall_gui_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_indices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.waterfall_gui_plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.waterfall_gui_plot" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_viewer_gui.EMGViewer.on_closing">
+<span class="sig-name descname"><span class="pre">on_closing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_viewer_gui.html#EMGViewer.on_closing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_viewer_gui.EMGViewer.on_closing" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<p id="module-intan.applications._emg_launcher">intan.processing._emg_launcher</p>
+<p>Splash screen launcher for the EMGViewer application.</p>
+<p>This module creates a centered splash screen displaying the NML logo, waits briefly,
+and then transitions into the main EMGViewer GUI. It ensures proper Tkinter initialization
+and clean teardown of the splash before launching the main interface.</p>
+<p>Main Functions:
+- <cite>center_window</cite>: Utility to center any Tk window on screen
+- <cite>launch_main</cite>: Destroys the splash and launches EMGViewer</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.applications._emg_launcher.launch_emg_viewer">
+<span class="sig-name descname"><span class="pre">launch_emg_viewer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_launcher.html#launch_emg_viewer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_launcher.launch_emg_viewer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<p id="module-intan.applications._emg_trial_selector">intan.processing._emg_trial_selector</p>
+<p>Graphical tool for interactively labeling trial events on EMG recordings.</p>
+<p>This GUI allows researchers to:
+- Load and visualize EMG signals from <cite>.rhd</cite> files
+- Select individual channels
+- Click to mark trial onset points
+- Assign labels to each indexed event
+- Append new recordings for multi-session review
+- Export trial events to a timestamped CSV or TXT file</p>
+<p>Clicking the signal while “Set Trial Index” is enabled will add a labeled marker.
+This tool is useful for supervised training of gesture classifiers, post-hoc annotation,
+or protocol validation in EMG experiments.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">EMGSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Tkinter-based application for manual EMG trial indexing.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.emg_data">
+<span class="sig-name descname"><span class="pre">emg_data</span></span><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.emg_data" title="Link to this definition"></a></dt>
+<dd><p>EMG signal matrix (channels × samples)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.time_vector">
+<span class="sig-name descname"><span class="pre">time_vector</span></span><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.time_vector" title="Link to this definition"></a></dt>
+<dd><p>Time vector aligned with EMG samples</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.sampling_rate">
+<span class="sig-name descname"><span class="pre">sampling_rate</span></span><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.sampling_rate" title="Link to this definition"></a></dt>
+<dd><p>Sampling rate of amplifier</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.current_channel">
+<span class="sig-name descname"><span class="pre">current_channel</span></span><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.current_channel" title="Link to this definition"></a></dt>
+<dd><p>Channel index currently displayed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.indexing_enabled">
+<span class="sig-name descname"><span class="pre">indexing_enabled</span></span><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.indexing_enabled" title="Link to this definition"></a></dt>
+<dd><p>If True, allows user to click to insert marker</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.load_file">
+<span class="sig-name descname"><span class="pre">load_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector.load_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.load_file" title="Link to this definition"></a></dt>
+<dd><p>Load EMG data from a .rhd file and initialize the GUI with the first channel.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.append_file">
+<span class="sig-name descname"><span class="pre">append_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector.append_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.append_file" title="Link to this definition"></a></dt>
+<dd><p>Append EMG data from another .rhd file to the current data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.sample_index_to_timestamp">
+<span class="sig-name descname"><span class="pre">sample_index_to_timestamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector.sample_index_to_timestamp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.sample_index_to_timestamp" title="Link to this definition"></a></dt>
+<dd><p>Convert a sample index to a timestamp string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>index</strong> (<em>int</em>) – Sample index to convert.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Formatted timestamp string (HH:MM:SS).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.save_table">
+<span class="sig-name descname"><span class="pre">save_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector.save_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.save_table" title="Link to this definition"></a></dt>
+<dd><p>Save the trial markers to a text file with sample index and timestamp.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.delete_selected">
+<span class="sig-name descname"><span class="pre">delete_selected</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector.delete_selected"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.delete_selected" title="Link to this definition"></a></dt>
+<dd><p>Delete selected rows from the table.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.update_channel">
+<span class="sig-name descname"><span class="pre">update_channel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector.update_channel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.update_channel" title="Link to this definition"></a></dt>
+<dd><p>Update the current channel based on the selection from the dropdown.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.enable_indexing">
+<span class="sig-name descname"><span class="pre">enable_indexing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector.enable_indexing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.enable_indexing" title="Link to this definition"></a></dt>
+<dd><p>Enable the indexing mode to allow trial marking on the plot.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.on_click">
+<span class="sig-name descname"><span class="pre">on_click</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">event</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector.on_click"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.on_click" title="Link to this definition"></a></dt>
+<dd><p>Handle mouse click events on the plot to mark trial onset points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>event</strong> (<em>matplotlib.backend_bases.Event</em>) – The mouse event.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.plot_channel">
+<span class="sig-name descname"><span class="pre">plot_channel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector.plot_channel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.plot_channel" title="Link to this definition"></a></dt>
+<dd><p>Plot the currently selected EMG channel.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.EMGSelector.on_closing">
+<span class="sig-name descname"><span class="pre">on_closing</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#EMGSelector.on_closing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.EMGSelector.on_closing" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.applications._emg_trial_selector.launch_emg_selector">
+<span class="sig-name descname"><span class="pre">launch_emg_selector</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/applications/_emg_trial_selector.html#launch_emg_selector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.applications._emg_trial_selector.launch_emg_selector" title="Link to this definition"></a></dt>
+<dd><p>Launch the EMG trial selector GUI.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="intan.html" class="btn btn-neutral float-left" title="intan package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="intan.decomposition.html" class="btn btn-neutral float-right" title="intan.decomposition package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonathan Shulgach.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,532 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>intan.rhx_interface._rhx_config &mdash; python-intan 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            python-intan
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intan_api/modules.html">intan</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">python-intan</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">intan.rhx_interface._rhx_config</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for intan.rhx_interface._rhx_config</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">intan.rhx_interface._rhx_config</span>
+
+<span class="sd">Low-level TCP configuration interface for the Intan RHX system.</span>
+
+<span class="sd">This class wraps `set` and `get` TCP commands to configure:</span>
+<span class="sd">- Analog channel streaming (wide, highpass, lowpass, spike)</span>
+<span class="sd">- Sample rate and block size</span>
+<span class="sd">- Digital inputs and trigger behavior</span>
+<span class="sd">- Disk recording parameters and filename handling</span>
+<span class="sd">- Filter settings (DSP, notch, bandwidth)</span>
+
+<span class="sd">This module is inherited by `IntanRHXDevice`, which handles data streaming.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">GetSampleRateFailure</span>
+
+
+<div class="viewcode-block" id="RHXConfig">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RHXConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stream and record EMG data from the Intan RHX system.</span>
+
+<span class="sd">    Inherits:</span>
+<span class="sd">        RHXConfig: Command/control interface for RHX configuration</span>
+
+<span class="sd">    Responsibilities:</span>
+<span class="sd">        - Establish TCP connections to RHX server</span>
+<span class="sd">        - Parse incoming EMG waveform blocks</span>
+<span class="sd">        - Buffer, store, or visualize real-time EMG data</span>
+<span class="sd">        - Record sessions of configurable duration</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        host (str): IP address of the RHX system.</span>
+<span class="sd">        command_port (int): Port for command/control TCP socket.</span>
+<span class="sd">        data_port (int): Port for binary waveform data.</span>
+<span class="sd">        num_channels (int): Number of EMG channels enabled.</span>
+<span class="sd">        sample_rate (float): Sampling rate in Hz.</span>
+<span class="sd">        verbose (bool): Debug logging toggle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command_socket</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command_socket</span> <span class="o">=</span> <span class="n">command_socket</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+
+    <span class="c1"># === Core Functions ===</span>
+<div class="viewcode-block" id="RHXConfig.set_parameter">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_parameter">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">send_delay</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set a parameter on the RHX system.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            param (str): Parameter to set.</span>
+<span class="sd">            value (str): Value to set the parameter to.</span>
+<span class="sd">            send_delay (float): Delay after sending the command.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the parameter is not recognized.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command_socket</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;set </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">send_delay</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.get_parameter">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.get_parameter">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get a parameter from the RHX system.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            param (str): Parameter to get.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Value of the parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;get </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command_socket</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">command_socket</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span></div>
+
+
+    <span class="c1"># === Data Output Options ===</span>
+
+<div class="viewcode-block" id="RHXConfig.enable_wide_channel">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.enable_wide_channel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enable_wide_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enable or disable wide channel data output.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            channels (int, range, or iterable): Channel numbers to enable/disable.</span>
+<span class="sd">            status (bool): True to enable, False to disable.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If channels is not an int, range, or iterable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="n">channels</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Channels must be an int, range, or iterable list.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_all_data_outputs</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">channels</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;a-</span><span class="si">{</span><span class="n">ch</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tcpdataoutputenabled&quot;</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span> <span class="k">if</span> <span class="n">status</span> <span class="k">else</span> <span class="s1">&#39;false&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.enable_high_channel">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.enable_high_channel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enable_high_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enable or disable high channel data output.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            channels (int, range, or iterable): Channel numbers to enable/disable.</span>
+<span class="sd">            status (bool): True to enable, False to disable.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If channels is not an int, range, or iterable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="n">channels</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Channels must be an int, range, or iterable list.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_all_data_outputs</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">channels</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;a-</span><span class="si">{</span><span class="n">ch</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tcpdataoutputenabledhigh&quot;</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span> <span class="k">if</span> <span class="n">status</span> <span class="k">else</span> <span class="s1">&#39;false&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.enable_low_channel">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.enable_low_channel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enable_low_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enable or disable low channel data output.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            channels (int, range, or iterable): Channel numbers to enable/disable.</span>
+<span class="sd">            status (bool): True to enable, False to disable.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If channels is not an int, range, or iterable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="n">channels</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Channels must be an int, range, or iterable list.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_all_data_outputs</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">channels</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;a-</span><span class="si">{</span><span class="n">ch</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tcpdataoutputenabledlow&quot;</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span> <span class="k">if</span> <span class="n">status</span> <span class="k">else</span> <span class="s1">&#39;false&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.enable_spike_channel">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.enable_spike_channel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">enable_spike_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enable or disable spike channel data output.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            channels (int, range, or iterable): Channel numbers to enable/disable.</span>
+<span class="sd">            status (bool): True to enable, False to disable.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            TypeError: If channels is not an int, range, or iterable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="n">channels</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channels</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Channels must be an int, range, or iterable list.&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_all_data_outputs</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">channels</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;a-</span><span class="si">{</span><span class="n">ch</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.tcpdataoutputenabledspike&quot;</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span> <span class="k">if</span> <span class="n">status</span> <span class="k">else</span> <span class="s1">&#39;false&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.clear_all_data_outputs">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.clear_all_data_outputs">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_all_data_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">send_delay</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clear all data output settings.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            send_delay (float): Delay after sending the command.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command_socket</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;execute clearalldataoutputs</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">send_delay</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.get_run_mode">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.get_run_mode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_run_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the current run mode of the RHX system.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Current run mode, either &quot;run&quot; or &quot;stop&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s2">&quot;runmode&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_run_mode">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_run_mode">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_run_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the run mode of the RHX system.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            mode (str): Run mode to set, either &quot;run&quot; or &quot;stop&quot;.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            AssertionError: If the mode is not &quot;run&quot; or &quot;stop&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;run&quot;</span><span class="p">,</span> <span class="s2">&quot;stop&quot;</span><span class="p">],</span> <span class="s2">&quot;Mode must be &#39;run&#39; or &#39;stop&#39;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;runmode&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.get_sample_rate">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.get_sample_rate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_sample_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the sample rate of the RHX system.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: Sample rate in Hz.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            GetSampleRateFailure: If unable to get sample rate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Look for &quot;Return: SampleRateHertz N&quot; where N is the sample rate.</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s2">&quot;sampleratehertz&quot;</span><span class="p">)</span>
+        <span class="n">expected_return_string</span> <span class="o">=</span> <span class="s2">&quot;Return: SampleRateHertz &quot;</span>
+        <span class="k">if</span> <span class="n">resp</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">expected_return_string</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">GetSampleRateFailure</span><span class="p">(</span>
+                <span class="s1">&#39;Unable to get sample rate from server.&#39;</span>
+            <span class="p">)</span>
+        <span class="c1"># Extract the sample rate value</span>
+        <span class="k">if</span> <span class="n">expected_return_string</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="n">sample_rate</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">resp</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">expected_return_string</span><span class="p">):])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to get sample rate from server: </span><span class="si">{</span><span class="n">resp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sample_rate</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_sample_rate">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_sample_rate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_sample_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rate_hz</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the sample rate of the RHX system.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            rate_hz (int): Sample rate in Hz.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the sample rate cannot be changed or is mismatched.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;sampleratehertz&quot;</span><span class="p">,</span> <span class="n">rate_hz</span><span class="p">)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_parameter</span><span class="p">(</span><span class="s2">&quot;sampleratehertz&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="c1"># Check if the rate is already set</span>
+        <span class="k">if</span> <span class="s2">&quot;SampleRateHertz cannot be changed&quot;</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">:</span>
+            <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;SampleRateHertz </span><span class="si">{</span><span class="n">rate_hz</span><span class="si">}</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[CONFIG] Sample rate already set to </span><span class="si">{</span><span class="n">rate_hz</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample rate mismatch: </span><span class="si">{</span><span class="n">resp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[CONFIG] Set sample rate response: </span><span class="si">{</span><span class="n">resp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    <span class="c1"># === Save Options ===</span>
+
+<div class="viewcode-block" id="RHXConfig.set_file_format">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_file_format">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_file_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the file format for saving data.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            fmt (str): File format to set. Options include &#39;intan&#39;, &#39;matlab&#39;, &#39;binary&#39;, etc.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;fileformat&quot;</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_filename_base">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_filename_base">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_filename_base</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the base filename for saving data.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            name (str): Base filename to set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;filename.basefilename&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_filename_path">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_filename_path">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_filename_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the path for saving data files.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            path (str): Path to set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;filename.path&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_create_new_directory">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_create_new_directory">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_create_new_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enable</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set whether to create a new directory for saving data files.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            enable (bool): True to create a new directory, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;createnewdirectory&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">enable</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_write_to_disk_latency">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_write_to_disk_latency">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_write_to_disk_latency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the write-to-disk latency level.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            level (str): Latency level to set. Options include &#39;low&#39;, &#39;medium&#39;, &#39;high&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;writetodisklatency&quot;</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span></div>
+
+
+    <span class="c1"># === Triggering ===</span>
+
+<div class="viewcode-block" id="RHXConfig.set_trigger_source">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_trigger_source">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_trigger_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;triggersource&quot;</span><span class="p">,</span> <span class="n">src</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_trigger_polarity">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_trigger_polarity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_trigger_polarity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">polarity</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;triggerpolarity&quot;</span><span class="p">,</span> <span class="n">polarity</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_pre_trigger_buffer">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_pre_trigger_buffer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_pre_trigger_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;pretriggerbufferseconds&quot;</span><span class="p">,</span> <span class="n">seconds</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_post_trigger_buffer">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_post_trigger_buffer">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_post_trigger_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;posttriggerbufferseconds&quot;</span><span class="p">,</span> <span class="n">seconds</span><span class="p">)</span></div>
+
+
+    <span class="c1"># === Filtering ===</span>
+
+<div class="viewcode-block" id="RHXConfig.set_dsp_enabled">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_dsp_enabled">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_dsp_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">enable</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;dspenabled&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">enable</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_notch_filter">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_notch_filter">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_notch_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;notchfilterfreqhertz&quot;</span><span class="p">,</span> <span class="n">freq</span> <span class="k">if</span> <span class="n">freq</span> <span class="k">else</span> <span class="s2">&quot;None&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_desired_dsp_cutoff">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_desired_dsp_cutoff">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_desired_dsp_cutoff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq_hz</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;desireddspcutofffreqhertz&quot;</span><span class="p">,</span> <span class="n">freq_hz</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_desired_lower_bandwidth">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_desired_lower_bandwidth">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_desired_lower_bandwidth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq_hz</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;desiredlowerbandwidthhertz&quot;</span><span class="p">,</span> <span class="n">freq_hz</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RHXConfig.set_desired_upper_bandwidth">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_desired_upper_bandwidth">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_desired_upper_bandwidth</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq_hz</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;desiredupperbandwidthhertz&quot;</span><span class="p">,</span> <span class="n">freq_hz</span><span class="p">)</span></div>
+
+
+    <span class="c1"># === Digital Inputs ===</span>
+<div class="viewcode-block" id="RHXConfig.set_digital_input_enabled">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_digital_input_enabled">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_digital_input_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dig_input</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">enable</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DIGITAL-IN-</span><span class="si">{</span><span class="n">dig_input</span><span class="si">}</span><span class="s2">.enabled&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">enable</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;DIGITAL-IN-</span><span class="si">{</span><span class="n">dig_input</span><span class="si">}</span><span class="s2">.recordingenabled&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">enable</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span></div>
+
+
+    <span class="c1"># === Block Settings ===</span>
+<div class="viewcode-block" id="RHXConfig.set_blocks_per_write">
+<a class="viewcode-back" href="../../../intan_api/intan.rhx_interface.html#intan.rhx_interface._rhx_config.RHXConfig.set_blocks_per_write">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_blocks_per_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_blocks</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the number of blocks to write to the TCP client</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">            num_blocks (int): NUmber of blocks to write</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_parameter</span><span class="p">(</span><span class="s2">&quot;TCPNumberDataBlocksPerWrite&quot;</span><span class="p">,</span> <span class="n">num_blocks</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonathan Shulgach.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

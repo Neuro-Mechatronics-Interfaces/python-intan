@@ -1,0 +1,182 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>File Loading and Visualization Example &mdash; python-intan 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Live Plotting of Multiple EMG Channels" href="live_plotting.html" />
+    <link rel="prev" title="Examples" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            python-intan
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">File Loading and Visualization Example</a></li>
+<li class="toctree-l2"><a class="reference internal" href="live_plotting.html">Live Plotting of Multiple EMG Channels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stream_vs_file.html">Comparing RHD File Data to Live TCP Stream</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intan_api/modules.html">intan</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">python-intan</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Examples</a></li>
+      <li class="breadcrumb-item active">File Loading and Visualization Example</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/file_loading.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="file-loading-and-visualization-example">
+<h1>File Loading and Visualization Example<a class="headerlink" href="#file-loading-and-visualization-example" title="Link to this heading"></a></h1>
+<p>This example demonstrates how to load EMG data from an Intan <cite>.rhd</cite> file and visualize it using the plotting utilities in the <cite>intan</cite> package.</p>
+<p><strong>Requirements:</strong>
+- An Intan <cite>.rhd</cite> data file (can be selected via file dialog)
+- <cite>matplotlib</cite> for plotting</p>
+<p>You’ll see how to:
+- Load a file interactively
+- Print available channel names
+- Plot a multi-channel “waterfall” EMG visualization
+- Plot individual channels by name and index
+- Plot analog input channels</p>
+<hr class="docutils" />
+<p><strong>Example code:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Example: Loading and visualizing EMG data from an Intan .rhd file.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rhd_file</span><span class="p">,</span> <span class="n">print_all_channel_names</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">waterfall</span><span class="p">,</span> <span class="n">plot_channel_by_index</span><span class="p">,</span> <span class="n">plot_channel_by_name</span><span class="p">,</span> <span class="n">plot_figure</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># ==== Load the data (file dialog opens) ====</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">()</span>
+
+    <span class="c1"># ==== Get some data from the file ====</span>
+    <span class="n">emg_data</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">)</span>           <span class="c1"># Shape: (num_channels, num_samples)</span>
+    <span class="n">fs</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;frequency_parameters&#39;</span><span class="p">][</span><span class="s1">&#39;amplifier_sample_rate&#39;</span><span class="p">]</span>
+    <span class="n">t_s</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;t_amplifier&#39;</span><span class="p">)</span>                   <span class="c1"># Time vector</span>
+    <span class="n">analog_data</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;board_adc_data&#39;</span><span class="p">)</span>        <span class="c1"># Analog inputs (if present)</span>
+
+    <span class="c1"># ==== Print all available channel names ====</span>
+    <span class="n">print_all_channel_names</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+    <span class="c1"># ==== Multi-channel visualization: Waterfall plot ====</span>
+    <span class="n">waterfall</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">t_s</span><span class="p">,</span> <span class="n">plot_title</span><span class="o">=</span><span class="s1">&#39;Intan EMG data (Channels 64-127)&#39;</span><span class="p">)</span>
+
+    <span class="c1"># ==== Single channel visualization ====</span>
+    <span class="n">ch_info</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;amplifier_channels&#39;</span><span class="p">)</span>
+    <span class="n">ch_name</span> <span class="o">=</span> <span class="n">ch_info</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;native_channel_name&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">ch_info</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">ch_name</span><span class="p">:</span>
+        <span class="n">plot_channel_by_name</span><span class="p">(</span><span class="n">ch_name</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>       <span class="c1"># By name</span>
+    <span class="n">plot_channel_by_index</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>                <span class="c1"># By index</span>
+
+    <span class="c1"># ==== Plot the first analog channel, if available ====</span>
+    <span class="k">if</span> <span class="n">analog_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plot_figure</span><span class="p">(</span><span class="n">analog_data</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:],</span> <span class="n">t_s</span><span class="p">,</span> <span class="s1">&#39;Analog data (Channel 0)&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<hr class="docutils" />
+<p><strong>Expected outcome:</strong></p>
+<ul class="simple">
+<li><p>A window will open to select your <cite>.rhd</cite> data file.</p></li>
+<li><p>Channel names are printed in the terminal.</p></li>
+<li><p>Plots of EMG and analog signals will be displayed for visual inspection.</p></li>
+</ul>
+<p><strong>Tip:</strong> You can modify the code to load specific files or to plot different channels. See the API Reference for all available plotting utilities.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="live_plotting.html" class="btn btn-neutral float-right" title="Live Plotting of Multiple EMG Channels" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonathan Shulgach.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

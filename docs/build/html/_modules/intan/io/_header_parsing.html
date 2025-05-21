@@ -1,0 +1,781 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>intan.io._header_parsing &mdash; python-intan 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            python-intan
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intan_api/modules.html">intan</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">python-intan</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">intan.io._header_parsing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for intan.io._header_parsing</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">intan.io._header_parsing</span>
+
+<span class="sd">Low-level parser for extracting metadata and channel structure from `.rhd`</span>
+<span class="sd">files recorded by Intan Technologies hardware.</span>
+
+<span class="sd">This module reads:</span>
+<span class="sd">- File version and magic number</span>
+<span class="sd">- Signal groups and their channel maps</span>
+<span class="sd">- Amplifier settings and frequency parameters</span>
+<span class="sd">- Qt-style strings and notes</span>
+<span class="sd">- Impedance settings, board configuration, and reference info</span>
+
+<span class="sd">Primary function:</span>
+<span class="sd">    - `read_header(fid)`: returns a fully populated header dictionary</span>
+
+<span class="sd">Used internally by `intan.io._rhd_loader` to build a unified `result` dictionary</span>
+<span class="sd">for EMG/LFP signal analysis.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">struct</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.io._exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnknownChannelTypeError</span><span class="p">,</span> <span class="n">QStringError</span><span class="p">,</span> <span class="n">UnrecognizedFileError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.io._block_parser</span><span class="w"> </span><span class="kn">import</span> <span class="n">plural</span>
+
+
+<span class="c1"># === Public API ===</span>
+
+<div class="viewcode-block" id="read_header">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_header">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_header</span><span class="p">(</span><span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="sd">    Parse the binary file header from an Intan `.rhd` data file.</span>
+
+<span class="sd">    This function checks the magic number, reads the file version, evaluates</span>
+<span class="sd">    signal settings, channel layouts, impedance settings, and any embedded notes.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Parsed header metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">check_magic_number</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+
+    <span class="n">header</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">read_version_number</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">)</span>
+    <span class="n">set_num_samples_per_data_block</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+
+    <span class="n">freq</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">read_sample_rate</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">)</span>
+    <span class="n">read_freq_settings</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">fid</span><span class="p">)</span>
+    <span class="n">read_notch_filter_frequency</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">fid</span><span class="p">)</span>
+    <span class="n">read_impedance_test_frequencies</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">fid</span><span class="p">)</span>
+    <span class="n">read_notes</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">)</span>
+    <span class="n">read_num_temp_sensor_channels</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">)</span>
+    <span class="n">read_eval_board_mode</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">)</span>
+    <span class="n">read_reference_channel</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">)</span>
+
+    <span class="n">set_sample_rates</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">freq</span><span class="p">)</span>
+    <span class="n">set_frequency_parameters</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">freq</span><span class="p">)</span>
+
+    <span class="n">initialize_channels</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+
+    <span class="n">read_channel_structure</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">header</span></div>
+
+
+
+<span class="c1"># === Low-Level Binary Readers ===</span>
+
+<div class="viewcode-block" id="read_qstring">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_qstring">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_qstring</span><span class="p">(</span><span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read a QString (Unicode) from a Qt-generated binary file.</span>
+
+<span class="sd">    Format:</span>
+<span class="sd">    - First 4 bytes: length in bytes (uint32)</span>
+<span class="sd">    - If 0xFFFFFFFF, return empty string</span>
+<span class="sd">    - Content is 16-bit unicode characters</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        fid (file): File object positioned at the string start.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Decoded unicode string.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        QStringError: If the declared length exceeds file size.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">length</span><span class="p">,</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="s1">&#39;ffffffff&#39;</span><span class="p">,</span> <span class="mi">16</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">length</span> <span class="o">&gt;</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">fstat</span><span class="p">(</span><span class="n">fid</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span><span class="o">.</span><span class="n">st_size</span> <span class="o">-</span> <span class="n">fid</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">QStringError</span><span class="p">(</span><span class="s1">&#39;Length too long.&#39;</span><span class="p">)</span>
+
+    <span class="c1"># convert length from bytes to 16-bit Unicode words</span>
+    <span class="n">length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">length</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">length</span><span class="p">):</span>
+        <span class="n">c</span><span class="p">,</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;H&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">chr</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="read_notes">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_notes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_notes</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reads notes as QStrings from fid, and stores them as strings in</span>
+<span class="sd">    header[&#39;notes&#39;] dict.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store notes.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;notes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;note1&#39;</span><span class="p">:</span> <span class="n">read_qstring</span><span class="p">(</span><span class="n">fid</span><span class="p">),</span>
+                       <span class="s1">&#39;note2&#39;</span><span class="p">:</span> <span class="n">read_qstring</span><span class="p">(</span><span class="n">fid</span><span class="p">),</span>
+                       <span class="s1">&#39;note3&#39;</span><span class="p">:</span> <span class="n">read_qstring</span><span class="p">(</span><span class="n">fid</span><span class="p">)}</span></div>
+
+
+
+<span class="c1"># === File Formet Decoding ===</span>
+
+<div class="viewcode-block" id="read_version_number">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_version_number">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_version_number</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reads version number (major and minor) from fid. Stores them into</span>
+<span class="sd">    header[&#39;version&#39;][&#39;major&#39;] and header[&#39;version&#39;][&#39;minor&#39;].</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store version information.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+<span class="sd">        verbose (bool): If True, print version information to console.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        UnrecognizedFileError: If the magic number does not match the expected</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">(</span><span class="n">version</span><span class="p">[</span><span class="s1">&#39;major&#39;</span><span class="p">],</span> <span class="n">version</span><span class="p">[</span><span class="s1">&#39;minor&#39;</span><span class="p">])</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;hh&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">version</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Reading Intan Technologies RHD Data File, Version </span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">version</span><span class="p">[</span><span class="s1">&#39;major&#39;</span><span class="p">],</span> <span class="n">version</span><span class="p">[</span><span class="s1">&#39;minor&#39;</span><span class="p">]))</span></div>
+
+
+
+<div class="viewcode-block" id="check_magic_number">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.check_magic_number">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_magic_number</span><span class="p">(</span><span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks magic number at beginning of file to verify this is an Intan</span>
+<span class="sd">    Technologies RHD data file.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        UnrecognizedFileError: If the magic number does not match the expected</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">magic_number</span><span class="p">,</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;I&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">magic_number</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">(</span><span class="s1">&#39;c6912702&#39;</span><span class="p">,</span> <span class="mi">16</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">UnrecognizedFileError</span><span class="p">(</span><span class="s1">&#39;Unrecognized file type.&#39;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># === Channel Map Readers ===</span>
+
+<div class="viewcode-block" id="read_notch_filter_frequency">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_notch_filter_frequency">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_notch_filter_frequency</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads notch filter mode from fid, and stores frequency (in Hz) in</span>
+<span class="sd">    &#39;header&#39; and &#39;freq&#39; dicts.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store notch filter frequency.</span>
+<span class="sd">        freq (dict): Dictionary to store notch filter frequency.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">notch_filter_mode</span><span class="p">,</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;h&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;notch_filter_frequency&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">notch_filter_mode</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;notch_filter_frequency&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="k">elif</span> <span class="n">notch_filter_mode</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;notch_filter_frequency&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;notch_filter_frequency&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;notch_filter_frequency&#39;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="read_channel_structure">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_channel_structure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_channel_structure</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads signal summary from data file header and stores information for</span>
+<span class="sd">    all signal groups and their channels in &#39;header&#39; dict.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store channel information.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+<span class="sd">        verbose (bool): If True, print header summary to console.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">number_of_signal_groups</span><span class="p">,</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;h&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">signal_group</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">number_of_signal_groups</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">add_signal_group_information</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">signal_group</span><span class="p">)</span>
+    <span class="n">add_num_channels</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">print_header_summary</span><span class="p">(</span><span class="n">header</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="read_num_temp_sensor_channels">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_num_temp_sensor_channels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_num_temp_sensor_channels</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores number of temp sensor channels in</span>
+<span class="sd">    header[&#39;num_temp_sensor_channels&#39;]. Temp sensor data may be saved from</span>
+<span class="sd">    versions 1.1 and later.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store temp sensor channel count.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_temp_sensor_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">][</span><span class="s1">&#39;major&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">][</span><span class="s1">&#39;minor&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">][</span><span class="s1">&#39;major&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)):</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_temp_sensor_channels&#39;</span><span class="p">],</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;h&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="read_sample_rate">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_sample_rate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_sample_rate</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads sample rate from fid. Stores it into header[&#39;sample_rate&#39;].</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store sample rate.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;sample_rate&#39;</span><span class="p">],</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;f&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="read_freq_settings">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_freq_settings">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_freq_settings</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads amplifier frequency settings from fid. Stores them in &#39;freq&#39; dict.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        freq (dict): Dictionary to store frequency settings.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="s1">&#39;dsp_enabled&#39;</span><span class="p">],</span>
+     <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;actual_dsp_cutoff_frequency&#39;</span><span class="p">],</span>
+     <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;actual_lower_bandwidth&#39;</span><span class="p">],</span>
+     <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;actual_upper_bandwidth&#39;</span><span class="p">],</span>
+     <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;desired_dsp_cutoff_frequency&#39;</span><span class="p">],</span>
+     <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;desired_lower_bandwidth&#39;</span><span class="p">],</span>
+     <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;desired_upper_bandwidth&#39;</span><span class="p">])</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;hffffff&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">26</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="read_impedance_test_frequencies">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_impedance_test_frequencies">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_impedance_test_frequencies</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads desired and actual impedance test frequencies from fid, and stores</span>
+<span class="sd">    them (in Hz) in &#39;freq&#39; dicts.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        freq (dict): Dictionary to store impedance test frequencies.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="p">(</span><span class="n">freq</span><span class="p">[</span><span class="s1">&#39;desired_impedance_test_frequency&#39;</span><span class="p">],</span>
+     <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;actual_impedance_test_frequency&#39;</span><span class="p">])</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;ff&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">8</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="read_eval_board_mode">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_eval_board_mode">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_eval_board_mode</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores eval board mode in header[&#39;eval_board_mode&#39;]. Board mode is saved</span>
+<span class="sd">    from versions 1.3 and later.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store eval board mode.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;eval_board_mode&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">][</span><span class="s1">&#39;major&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">][</span><span class="s1">&#39;minor&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">][</span><span class="s1">&#39;major&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)):</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;eval_board_mode&#39;</span><span class="p">],</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;h&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="read_reference_channel">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_reference_channel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_reference_channel</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads name of reference channel as QString from fid, and stores it as</span>
+<span class="sd">    a string in header[&#39;reference_channel&#39;]. Data files v2.0 or later include</span>
+<span class="sd">    reference channel.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store reference channel name.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">][</span><span class="s1">&#39;major&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;reference_channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">read_qstring</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="read_new_channel">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.read_new_channel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_new_channel</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="n">signal_group_name</span><span class="p">,</span> <span class="n">signal_group_prefix</span><span class="p">,</span>
+                     <span class="n">signal_group</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Reads a new channel&#39;s information from fid and returns it as a dict.</span>
+<span class="sd">    The channel is identified by its signal group name, prefix, and number.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the channel.</span>
+<span class="sd">        signal_group_name (str): Name of the signal group.</span>
+<span class="sd">        signal_group_prefix (str): Prefix of the signal group.</span>
+<span class="sd">        signal_group (int): Number of the signal group.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">       new_channel (dict): Dictionary with channel information.</span>
+<span class="sd">       new_trigger_channel (dict): Dictionary with trigger channel info.</span>
+<span class="sd">       channel_enabled (bool): Indicates if the channel is enabled.</span>
+<span class="sd">       signal_type (int): Type of signal for the channel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_channel</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;port_name&#39;</span><span class="p">:</span> <span class="n">signal_group_name</span><span class="p">,</span>
+                   <span class="s1">&#39;port_prefix&#39;</span><span class="p">:</span> <span class="n">signal_group_prefix</span><span class="p">,</span>
+                   <span class="s1">&#39;port_number&#39;</span><span class="p">:</span> <span class="n">signal_group</span><span class="p">}</span>
+    <span class="n">new_channel</span><span class="p">[</span><span class="s1">&#39;native_channel_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">read_qstring</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+    <span class="n">new_channel</span><span class="p">[</span><span class="s1">&#39;custom_channel_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">read_qstring</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">new_channel</span><span class="p">[</span><span class="s1">&#39;native_order&#39;</span><span class="p">],</span>
+     <span class="n">new_channel</span><span class="p">[</span><span class="s1">&#39;custom_order&#39;</span><span class="p">],</span>
+     <span class="n">signal_type</span><span class="p">,</span> <span class="n">channel_enabled</span><span class="p">,</span>
+     <span class="n">new_channel</span><span class="p">[</span><span class="s1">&#39;chip_channel&#39;</span><span class="p">],</span>
+     <span class="n">new_channel</span><span class="p">[</span><span class="s1">&#39;board_stream&#39;</span><span class="p">])</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;hhhhhh&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">12</span><span class="p">)))</span>
+    <span class="n">new_trigger_channel</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="p">(</span><span class="n">new_trigger_channel</span><span class="p">[</span><span class="s1">&#39;voltage_trigger_mode&#39;</span><span class="p">],</span>
+     <span class="n">new_trigger_channel</span><span class="p">[</span><span class="s1">&#39;voltage_threshold&#39;</span><span class="p">],</span>
+     <span class="n">new_trigger_channel</span><span class="p">[</span><span class="s1">&#39;digital_trigger_channel&#39;</span><span class="p">],</span>
+     <span class="n">new_trigger_channel</span><span class="p">[</span><span class="s1">&#39;digital_edge_polarity&#39;</span><span class="p">])</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;hhhh&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">8</span><span class="p">)))</span>
+    <span class="p">(</span><span class="n">new_channel</span><span class="p">[</span><span class="s1">&#39;electrode_impedance_magnitude&#39;</span><span class="p">],</span>
+     <span class="n">new_channel</span><span class="p">[</span><span class="s1">&#39;electrode_impedance_phase&#39;</span><span class="p">])</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;&lt;ff&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">8</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">new_channel</span><span class="p">,</span> <span class="n">new_trigger_channel</span><span class="p">,</span> <span class="n">channel_enabled</span><span class="p">,</span> <span class="n">signal_type</span></div>
+
+
+
+<div class="viewcode-block" id="append_new_channel">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.append_new_channel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">append_new_channel</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">new_channel</span><span class="p">,</span> <span class="n">new_trigger_channel</span><span class="p">,</span>
+                       <span class="n">channel_enabled</span><span class="p">,</span> <span class="n">signal_type</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Appends &#39;new_channel&#39; to &#39;header&#39; dict depending on if channel is</span>
+<span class="sd">    enabled and the signal type.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store channel information.</span>
+<span class="sd">        new_channel (dict): Dictionary with new channel information.</span>
+<span class="sd">        new_trigger_channel (dict): Dictionary with trigger channel info.</span>
+<span class="sd">        channel_enabled (bool): Indicates if the channel is enabled.</span>
+<span class="sd">        signal_type (int): Type of signal for the channel.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        UnknownChannelTypeError: If the signal type is unrecognized.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">channel_enabled</span><span class="p">:</span>
+        <span class="k">return</span>
+
+    <span class="k">if</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;amplifier_channels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_channel</span><span class="p">)</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;spike_triggers&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_trigger_channel</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;aux_input_channels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_channel</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;supply_voltage_channels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_channel</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_adc_channels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_channel</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_dig_in_channels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_channel</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">signal_type</span> <span class="o">==</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_dig_out_channels&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_channel</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UnknownChannelTypeError</span><span class="p">(</span><span class="s1">&#39;Unknown channel type.&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="add_num_channels">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.add_num_channels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_num_channels</span><span class="p">(</span><span class="n">header</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds channel numbers for all signal types to &#39;header&#39; dict.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store channel counts.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_amplifier_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;amplifier_channels&#39;</span><span class="p">])</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_aux_input_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;aux_input_channels&#39;</span><span class="p">])</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_supply_voltage_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;supply_voltage_channels&#39;</span><span class="p">])</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_adc_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_adc_channels&#39;</span><span class="p">])</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_in_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_dig_in_channels&#39;</span><span class="p">])</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_out_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_dig_out_channels&#39;</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="set_num_samples_per_data_block">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.set_num_samples_per_data_block">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_num_samples_per_data_block</span><span class="p">(</span><span class="n">header</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determines how many samples are present per data block (60 or 128),</span>
+<span class="sd">    depending on version. Data files v2.0 or later have 128 samples per block,</span>
+<span class="sd">    otherwise 60.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store number of samples per block.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_samples_per_data_block&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">60</span>
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">][</span><span class="s1">&#39;major&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_samples_per_data_block&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">128</span></div>
+
+
+
+<div class="viewcode-block" id="set_sample_rates">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.set_sample_rates">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_sample_rates</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">freq</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Determines what the sample rates are for various signal types, and</span>
+<span class="sd">    stores them in &#39;freq&#39; dict.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store sample rates.</span>
+<span class="sd">        freq (dict): Dictionary to store frequency parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;amplifier_sample_rate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;sample_rate&#39;</span><span class="p">]</span>
+    <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;aux_input_sample_rate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;sample_rate&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mi">4</span>
+    <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;supply_voltage_sample_rate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;sample_rate&#39;</span><span class="p">]</span> <span class="o">/</span>
+                                          <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_samples_per_data_block&#39;</span><span class="p">])</span>
+    <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;board_adc_sample_rate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;sample_rate&#39;</span><span class="p">]</span>
+    <span class="n">freq</span><span class="p">[</span><span class="s1">&#39;board_dig_in_sample_rate&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;sample_rate&#39;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="set_frequency_parameters">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.set_frequency_parameters">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_frequency_parameters</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">freq</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Stores frequency parameters (set in other functions) in</span>
+<span class="sd">    header[&#39;frequency_parameters&#39;]</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store frequency parameters.</span>
+<span class="sd">        freq (dict): Dictionary to store frequency parameters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;frequency_parameters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">freq</span></div>
+
+
+
+<div class="viewcode-block" id="initialize_channels">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.initialize_channels">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">initialize_channels</span><span class="p">(</span><span class="n">header</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates empty lists for each type of data channel and stores them in</span>
+<span class="sd">    &#39;header&#39; dict.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to initialize channel lists.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;spike_triggers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;amplifier_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;aux_input_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;supply_voltage_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_adc_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_dig_in_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_dig_out_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+
+<div class="viewcode-block" id="add_signal_group_information">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.add_signal_group_information">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_signal_group_information</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">signal_group</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adds information for a signal group and all its channels to &#39;header&#39;</span>
+<span class="sd">    dict.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store signal group information.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the signal</span>
+<span class="sd">                    group.</span>
+<span class="sd">        signal_group (int): Number of the signal group.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">signal_group_name</span> <span class="o">=</span> <span class="n">read_qstring</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+    <span class="n">signal_group_prefix</span> <span class="o">=</span> <span class="n">read_qstring</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">signal_group_enabled</span><span class="p">,</span> <span class="n">signal_group_num_channels</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span>
+        <span class="s1">&#39;&lt;hhh&#39;</span><span class="p">,</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">6</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">signal_group_num_channels</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">signal_group_enabled</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">signal_group_num_channels</span><span class="p">):</span>
+            <span class="n">add_channel_information</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">signal_group_name</span><span class="p">,</span>
+                                    <span class="n">signal_group_prefix</span><span class="p">,</span> <span class="n">signal_group</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="add_channel_information">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.add_channel_information">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_channel_information</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">signal_group_name</span><span class="p">,</span>
+                            <span class="n">signal_group_prefix</span><span class="p">,</span> <span class="n">signal_group</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reads a new channel&#39;s information from fid and appends it to &#39;header&#39;</span>
+<span class="sd">    dict.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary to store channel information.</span>
+<span class="sd">        fid (file): Opened file object positioned at the start of the channel.</span>
+<span class="sd">        signal_group_name (str): Name of the signal group.</span>
+<span class="sd">        signal_group_prefix (str): Prefix of the signal group.</span>
+<span class="sd">        signal_group (int): Number of the signal group.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="p">(</span><span class="n">new_channel</span><span class="p">,</span> <span class="n">new_trigger_channel</span><span class="p">,</span> <span class="n">channel_enabled</span><span class="p">,</span>
+     <span class="n">signal_type</span><span class="p">)</span> <span class="o">=</span> <span class="n">read_new_channel</span><span class="p">(</span>
+        <span class="n">fid</span><span class="p">,</span> <span class="n">signal_group_name</span><span class="p">,</span> <span class="n">signal_group_prefix</span><span class="p">,</span> <span class="n">signal_group</span><span class="p">)</span>
+    <span class="n">append_new_channel</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">new_channel</span><span class="p">,</span> <span class="n">new_trigger_channel</span><span class="p">,</span>
+                       <span class="n">channel_enabled</span><span class="p">,</span> <span class="n">signal_type</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># === Data Post-Processing ===</span>
+
+<div class="viewcode-block" id="header_to_result">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.header_to_result">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">header_to_result</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Merge parsed header fields into the global `result` dictionary.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Parsed header metadata from `read_header`.</span>
+<span class="sd">        result (dict): Destination dictionary to be populated.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Updated result dictionary with signal channel mappings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_amplifier_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;spike_triggers&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;spike_triggers&#39;</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;amplifier_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;amplifier_channels&#39;</span><span class="p">]</span>
+
+    <span class="n">result</span><span class="p">[</span><span class="s1">&#39;notes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;notes&#39;</span><span class="p">]</span>
+    <span class="n">result</span><span class="p">[</span><span class="s1">&#39;frequency_parameters&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;frequency_parameters&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;version&#39;</span><span class="p">][</span><span class="s1">&#39;major&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;reference_channel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;reference_channel&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_aux_input_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;aux_input_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;aux_input_channels&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_supply_voltage_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;supply_voltage_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;supply_voltage_channels&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_adc_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;board_adc_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_adc_channels&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_in_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;board_dig_in_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_dig_in_channels&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_out_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;board_dig_out_channels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;board_dig_out_channels&#39;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="print_header_summary">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.print_header_summary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_header_summary</span><span class="p">(</span><span class="n">header</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prints summary of contents of RHD header to console.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Header dictionary containing parsed metadata.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">{}</span><span class="s1"> amplifier channel</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_amplifier_channels&#39;</span><span class="p">],</span>
+        <span class="n">plural</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_amplifier_channels&#39;</span><span class="p">])))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">{}</span><span class="s1"> auxiliary input channel</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_aux_input_channels&#39;</span><span class="p">],</span>
+        <span class="n">plural</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_aux_input_channels&#39;</span><span class="p">])))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">{}</span><span class="s1"> supply voltage channel</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_supply_voltage_channels&#39;</span><span class="p">],</span>
+        <span class="n">plural</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_supply_voltage_channels&#39;</span><span class="p">])))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">{}</span><span class="s1"> board ADC channel</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_adc_channels&#39;</span><span class="p">],</span>
+        <span class="n">plural</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_adc_channels&#39;</span><span class="p">])))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">{}</span><span class="s1"> board digital input channel</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_in_channels&#39;</span><span class="p">],</span>
+        <span class="n">plural</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_in_channels&#39;</span><span class="p">])))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">{}</span><span class="s1"> board digital output channel</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_out_channels&#39;</span><span class="p">],</span>
+        <span class="n">plural</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_out_channels&#39;</span><span class="p">])))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">{}</span><span class="s1"> temperature sensors channel</span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_temp_sensor_channels&#39;</span><span class="p">],</span>
+        <span class="n">plural</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_temp_sensor_channels&#39;</span><span class="p">])))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="data_to_result">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._header_parsing.data_to_result">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">data_to_result</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Merges data from all present signals into a common &#39;result&#39; dict. If</span>
+<span class="sd">    any signal types have been allocated but aren&#39;t relevant (for example,</span>
+<span class="sd">    no channels of this type exist), does not copy those entries into &#39;result&#39;.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        header (dict): Parsed header metadata from `read_header`.</span>
+<span class="sd">        data (dict): Dictionary containing signal data.</span>
+<span class="sd">        result (dict): Destination dictionary to be populated.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Updated result dictionary with signal data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;amplifier_channels&#39;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;t_amplifier&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t_amplifier&#39;</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_aux_input_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;t_aux_input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t_aux_input&#39;</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;aux_input_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;aux_input_data&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_supply_voltage_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;t_supply_voltage&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t_supply_voltage&#39;</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;supply_voltage_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;supply_voltage_data&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_temp_sensor_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;t_temp_sensor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t_temp_sensor&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_adc_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;t_board_adc&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t_board_adc&#39;</span><span class="p">]</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;board_adc_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;board_adc_data&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_in_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="ow">or</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_out_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;t_dig&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;t_dig&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_in_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;board_dig_in_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;board_dig_in_data&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">header</span><span class="p">[</span><span class="s1">&#39;num_board_dig_out_channels&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s1">&#39;board_dig_out_data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;board_dig_out_data&#39;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonathan Shulgach.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

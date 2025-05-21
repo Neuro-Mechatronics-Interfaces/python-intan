@@ -1,0 +1,373 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>intan.io._file_utils &mdash; python-intan 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            python-intan
+              <img src="../../../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../tutorials/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/index.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intan_api/modules.html">intan</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">python-intan</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">intan.io._file_utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for intan.io._file_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">intan.io._file_utils</span>
+
+<span class="sd">Utility functions for file and path handling in the Intan interface.</span>
+
+<span class="sd">This module includes helpers for:</span>
+<span class="sd">- Cross-platform path adjustment (Windows, WSL, Linux)</span>
+<span class="sd">- File presence validation</span>
+<span class="sd">- Reading configuration or labeled trial files</span>
+<span class="sd">- End-of-file checks and error handling</span>
+<span class="sd">- Progress bar display during file loading</span>
+<span class="sd">- Directory scanning for `.rhd` datasets</span>
+
+<span class="sd">Used throughout the `intan.io` submodule to support flexible loading and validation</span>
+<span class="sd">of data from local or mounted environments.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="kn">import</span> <span class="n">filedialog</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.io._exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileSizeError</span>
+
+
+<div class="viewcode-block" id="adjust_path">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.adjust_path">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adjust_path</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adjusts a file path for compatibility with the host operating system.</span>
+
+<span class="sd">    Automatically detects WSL, Linux, or native Windows and transforms</span>
+<span class="sd">    file paths accordingly (e.g., `C:\\` to `/mnt/c/` on WSL).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        path (str): Original file path (Windows-style or POSIX)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Transformed path compatible with the current OS.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span>
+
+    <span class="c1"># Check if the system is running under WSL</span>
+    <span class="k">if</span> <span class="s2">&quot;microsoft&quot;</span> <span class="ow">in</span> <span class="n">platform</span><span class="o">.</span><span class="n">uname</span><span class="p">()</span><span class="o">.</span><span class="n">release</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="s2">&quot;WSL&quot;</span>
+
+    <span class="c1"># Modify the path based on the system type</span>
+    <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="s2">&quot;Windows&quot;</span><span class="p">:</span>
+        <span class="c1"># If running on native Windows, return the path as is</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+
+    <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s2">&quot;WSL&quot;</span><span class="p">:</span>
+        <span class="c1"># If running on WSL, convert &quot;C:/&quot; to &quot;/mnt/c/&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;:&quot;</span><span class="p">:</span>
+            <span class="n">drive_letter</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="c1"># Properly replace backslashes without using them in f-string</span>
+            <span class="n">linux_path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;/mnt/</span><span class="si">{</span><span class="n">drive_letter</span><span class="si">}{</span><span class="n">linux_path</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s2">&quot;Linux&quot;</span><span class="p">:</span>
+        <span class="c1"># If running on native Linux, assume Linux paths are provided correctly</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported system: </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="check_file_present">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.check_file_present">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_file_present</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">metrics_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check whether a file is listed in a given metrics CSV.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        file (str): File path to check.</span>
+<span class="sd">        metrics_file (pd.DataFrame): Loaded CSV with a &#39;File Name&#39; column.</span>
+<span class="sd">        verbose (bool): If True, print a warning when file is missing.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: (filename, is_present) where `is_present` is True if the file is found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">if</span> <span class="n">filename</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metrics_file</span><span class="p">[</span><span class="s1">&#39;File Name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> not found in metrics file&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filename</span><span class="p">,</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="n">filename</span><span class="p">,</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="check_end_of_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.check_end_of_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_end_of_file</span><span class="p">(</span><span class="n">filesize</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Validate that the file pointer has reached the end of the file.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        FileSizeError: If unread bytes remain in the stream.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bytes_remaining</span> <span class="o">=</span> <span class="n">filesize</span> <span class="o">-</span> <span class="n">fid</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">bytes_remaining</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">FileSizeError</span><span class="p">(</span><span class="s1">&#39;Error: End of file not reached.&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="print_progress">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.print_progress">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_progress</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">print_step</span><span class="p">,</span> <span class="n">percent_done</span><span class="p">,</span> <span class="n">bar_length</span><span class="o">=</span><span class="mi">40</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print an ASCII progress bar in the terminal.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        i (int): Current iteration index.</span>
+<span class="sd">        target (int): Total number of iterations.</span>
+<span class="sd">        print_step (float): Update frequency as a percentage.</span>
+<span class="sd">        percent_done (float): Last percentage printed (used to avoid overprinting).</span>
+<span class="sd">        bar_length (int): Length of the ASCII progress bar.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Updated `percent_done` value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fraction_done</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">i</span> <span class="o">/</span> <span class="n">target</span><span class="p">)</span>
+
+    <span class="c1"># Only update if we&#39;ve crossed a new step</span>
+    <span class="k">if</span> <span class="n">fraction_done</span> <span class="o">&gt;=</span> <span class="n">percent_done</span><span class="p">:</span>
+        <span class="n">fraction_bar</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="n">target</span>
+        <span class="n">arrow</span> <span class="o">=</span> <span class="s1">&#39;=&#39;</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">fraction_bar</span> <span class="o">*</span> <span class="n">bar_length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&gt;&#39;</span> <span class="k">if</span> <span class="n">fraction_bar</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">bar_length</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">arrow</span><span class="p">))</span>
+
+        <span class="n">ending</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">target</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&#39;</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Progress: [</span><span class="si">{</span><span class="n">arrow</span><span class="si">}{</span><span class="n">padding</span><span class="si">}</span><span class="s1">] </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">fraction_bar</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">ending</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+        <span class="n">percent_done</span> <span class="o">+=</span> <span class="n">print_step</span>
+
+    <span class="k">return</span> <span class="n">percent_done</span></div>
+
+
+
+<div class="viewcode-block" id="read_config_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.read_config_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_config_file</span><span class="p">(</span><span class="n">config_file</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse a simple key=value style configuration file (e.g. TRUECONFIG.txt).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        config_file (str): Path to the config file.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Dictionary of key-value settings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Dictionary to store the key-value pairs</span>
+    <span class="n">config_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Open the TRUECONFIG.txt file and read its contents</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+            <span class="c1"># Strip whitespace and ignore empty lines or comments</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Split the line into key and value at the first &#39;=&#39;</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">config_data</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">config_data</span></div>
+
+
+
+<div class="viewcode-block" id="get_file_paths">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.get_file_paths">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_file_paths</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Scan a directory for files or folders, with optional filtering by extension.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        directory (str): Root folder to search.</span>
+<span class="sd">        file_type (str or None): Extension to search for (e.g. &#39;.rhd&#39;). If None, returns subfolders.</span>
+<span class="sd">        verbose (bool): If True, print the number of items found.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[pathlib.Path]: List of matching files or folders.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Searching in directory:&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+
+    <span class="c1"># Convert the directory to an absolute path and a Path object for compatibility</span>
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">directory</span><span class="p">))</span>
+
+    <span class="c1"># Check if the directory exists</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">directory</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">directory</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Directory &#39;</span><span class="si">{</span><span class="n">directory</span><span class="si">}</span><span class="s2">&#39; not found or is not a valid directory.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="c1"># If file_type is left None, we just need to return the folders within the current directory</span>
+    <span class="n">file_paths</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">file_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">file_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">directory</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">file_paths</span><span class="p">)</span><span class="si">}</span><span class="s2"> folders&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s1">&#39;.rhd&#39;</span><span class="p">:</span>
+        <span class="c1"># Recursively find all .rhd files</span>
+        <span class="n">file_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">directory</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s1">&#39;*.rhd&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">file_paths</span><span class="p">)</span><span class="si">}</span><span class="s2"> .rhd files&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unsupported file type. Please specify &#39;.rhd&#39; or None.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">file_paths</span></div>
+
+
+
+<div class="viewcode-block" id="load_labeled_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.load_labeled_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_labeled_file</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a label/notes file containing gesture timing and annotations.</span>
+
+<span class="sd">    This is used for supervised EMG labeling during offline training.</span>
+
+<span class="sd">    If no path is provided, opens a GUI file selection dialog.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        path (str or None): Path to the `.txt` notes file.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: Labeled samples with columns [&quot;Sample&quot;, &quot;Time&quot;, &quot;Label&quot;],</span>
+<span class="sd">                      cleaned and sorted by sample index.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">filedialog</span><span class="o">.</span><span class="n">askopenfilename</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select Notes File&quot;</span><span class="p">,</span> <span class="n">filetypes</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Text files&quot;</span><span class="p">,</span> <span class="s2">&quot;*.txt&quot;</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Sample&quot;</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">,</span> <span class="s2">&quot;Label&quot;</span><span class="p">])</span>  <span class="c1"># return empty if cancelled</span>
+
+    <span class="c1"># Read the notes file (no header expected)</span>
+    <span class="n">df_raw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="c1"># If the first row contains column names (text), drop it</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;sample&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">df_raw</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">df_raw</span> <span class="o">=</span> <span class="n">df_raw</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="c1"># Assign column names</span>
+    <span class="n">df_raw</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Sample&quot;</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">,</span> <span class="s2">&quot;Label&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Remove any rows that contain &#39;threshold&#39; (or other irrelevant markers) in the label</span>
+    <span class="n">df_raw</span> <span class="o">=</span> <span class="n">df_raw</span><span class="p">[</span><span class="o">~</span><span class="n">df_raw</span><span class="p">[</span><span class="s2">&quot;Label&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;threshold&quot;</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span>
+
+    <span class="c1"># Clean up label text (e.g., remove the word &quot; cue&quot; if present)</span>
+    <span class="n">df_raw</span><span class="p">[</span><span class="s2">&quot;Label&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_raw</span><span class="p">[</span><span class="s2">&quot;Label&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; cue&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># Convert sample indices to int and sort by time</span>
+    <span class="n">df_raw</span><span class="p">[</span><span class="s2">&quot;Sample&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_raw</span><span class="p">[</span><span class="s2">&quot;Sample&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">df_sorted</span> <span class="o">=</span> <span class="n">df_raw</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;Sample&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df_sorted</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonathan Shulgach.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
