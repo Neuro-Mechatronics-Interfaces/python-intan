@@ -31,3 +31,10 @@ Homepage = "https://github.com/Neuro-Mechatronics-Interfaces/python-intan"
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project.optional-dependencies]
+docs = [
+    "sphinx",
+    "sphinx-autodoc-typehints",
+    "myst-parser",
+]
