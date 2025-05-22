@@ -1,10 +1,13 @@
 import os
+import time
 import numpy as np
 import joblib
 import tensorflow as tf
 from intan.io import load_rhd_file, load_labeled_file
 from intan.rhx_interface import IntanRHXDevice
 from intan.processing import extract_features, notch_filter, bandpass_filter, lowpass_filter, rectify
+import matplotlib.pyplot as plt
+
 
 def apply_filters(emg, fs):
     # These should match the training data
@@ -86,9 +89,9 @@ LABEL_PATH = os.path.join(DATA_PATH, "training_data.npz")
 NOTES_PATH = os.path.join(os.path.dirname(FILE_PATH), "notes.txt")
 
 WINDOW_MS = 250  # Make sure this matches what was used to create the training data
-STEP_MS = 50  # Make sure this matches what was used to create the training data
+STEP_MS = 1000  # This can match what was used to create the training data, or try a different step
 
-TCP_DURATION_SEC = 10  # Configurable
+TCP_DURATION_SEC = 40  # Configurable
 
 
 # === Load model, PCA and normalization ===
@@ -103,27 +106,33 @@ std[std == 0] = 1  # Avoid division by zero
 cue_df = load_labeled_file(NOTES_PATH)
 
 # 1) ========= Load and predict RHD file ============
-#rhd = load_rhd_file(FILE_PATH)
-#rhd_fs = rhd["frequency_parameters"]["amplifier_sample_rate"]
-#rhd_emg = rhd["amplifier_data"][:, :int(rhd_fs * TCP_DURATION_SEC)]
-#print(f"Shape of loaded data: {rhd_emg.shape}")
-#run_windowed_predictions(rhd_emg, rhd_fs, label_names, source="RHD")
+rhd = load_rhd_file(FILE_PATH)
+rhd_fs = rhd["frequency_parameters"]["amplifier_sample_rate"]
+rhd_emg = rhd["amplifier_data"][:, :int(rhd_fs * TCP_DURATION_SEC)]
+print(f"Shape of loaded data: {rhd_emg.shape}")
+run_windowed_predictions(rhd_emg, rhd_fs, label_names, source="RHD")
 
-# 2) ======= Stream and predict from RHX device =======
-device = IntanRHXDevice()
-if not device.connected:
-    raise RuntimeError("❌ Could not connect to RHX TCP server. Please start the Control GUI server.")
+# 2a) ======= Record and predict from RHX device =======
+device = IntanRHXDevice(num_channels=128)
+device.enable_wide_channel(range(128))
+tcp_emg = device.record(duration_sec=TCP_DURATION_SEC)
+print(f"Shape of recorded data: {tcp_emg.shape}")
 
-device.configure(channels=list(range(128)), blocks_per_write=1, enable_wide=True)
-device.flush_commands()
-tcp_fs = device.get_sample_rate()
-ts, tcp_emg = device.stream(duration_sec=TCP_DURATION_SEC)  #n_frames=int(tcp_fs * TCP_DURATION_SEC))
+# 2b) ======= Stream and predict from RHX device =======
+#device = IntanRHXDevice(num_channels=128, buffer_duration_sec=12)
+#device.enable_wide_channel(range(128))
+#device.start_streaming()
+#print(f"Waiting {TCP_DURATION_SEC} seconds to fill buffer...")
+#time.sleep(11)
+#device.stop_streaming()
+#tcp_emg = device.get_latest_window(TCP_DURATION_SEC * 1000)
+
 print(f"Shape of streamed data: {tcp_emg.shape}")
 device.close()
 
 # Plot the 10 seconds of data from channel 5
-import matplotlib.pyplot as plt
 plt.figure(figsize=(12, 4))
+ts = np.arange(tcp_emg.shape[1]) / device.sample_rate
 plt.plot(ts, tcp_emg[5], label="TCP Stream", linewidth=1)
 plt.title(f"Channel 5 — First {TCP_DURATION_SEC} Seconds")
 plt.xlabel("Time (s)")
@@ -133,6 +142,6 @@ plt.grid(True)
 plt.tight_layout()
 plt.show()
 
-run_windowed_predictions(tcp_emg, tcp_fs, label_names, source="TCP")
+run_windowed_predictions(tcp_emg, device.sample_rate, label_names, source="TCP")
 
 # These 2 methods produce the exact same output, meaning the data is identical and the prediction performs as expected

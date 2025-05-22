@@ -39,12 +39,13 @@ class RHXConfig:
         sample_rate (float): Sampling rate in Hz.
         verbose (bool): Debug logging toggle.
     """
-    def __init__(self, command_socket, verbose=False):
+    def __init__(self, command_socket, send_delay=0.05, verbose=False):
         self.command_socket = command_socket
+        self.send_delay = send_delay
         self.verbose = verbose
 
     # === Core Functions ===
-    def set_parameter(self, param, value, send_delay=0.01):
+    def set_parameter(self, param, value):
         """
         Set a parameter on the RHX system.
 
@@ -57,7 +58,7 @@ class RHXConfig:
             ValueError: If the parameter is not recognized.
         """
         self.command_socket.sendall(f"set {param} {value}\n".encode())
-        time.sleep(send_delay)
+        time.sleep(self.send_delay)
 
     def get_parameter(self, param):
         """
@@ -159,15 +160,12 @@ class RHXConfig:
             name = f"a-{ch:03d}"
             self.set_parameter(f"{name}.tcpdataoutputenabledspike", 'true' if status else 'false')
 
-    def clear_all_data_outputs(self, send_delay=0.01):
+    def clear_all_data_outputs(self):
         """
         Clear all data output settings.
-
-        Parameters:
-            send_delay (float): Delay after sending the command.
         """
         self.command_socket.sendall(b"execute clearalldataoutputs\n")
-        time.sleep(send_delay)
+        time.sleep(self.send_delay)
 
     def get_run_mode(self):
         """

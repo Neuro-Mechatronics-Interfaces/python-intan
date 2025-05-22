@@ -1,6 +1,6 @@
 [project]
 name = "python-intan"
-version = "0.0.3"
+version = "0.0.4"
 description = "Python interface and utilities for working with Intan RHX devices and electrophysiology data"
 authors = [
     { name = "Jonathan Shulgach", email = "jshulgac@andrew.cmu.edu" },

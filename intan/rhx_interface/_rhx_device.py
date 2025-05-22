@@ -16,6 +16,8 @@ import time
 import socket
 import numpy as np
 from struct import unpack
+from collections import deque
+import threading
 
 from ._rhx_config import RHXConfig
 
@@ -44,7 +46,7 @@ class IntanRHXDevice(RHXConfig):
             verbose (bool): Enable debug logging.
         """
     def __init__(self, host="127.0.0.1", command_port=5000, data_port=5001, num_channels=128, sample_rate=None,
-                 verbose=False):
+                 buffer_duration_sec=5, verbose=False):
         self.host = host
         self.command_port = command_port
         self.data_port = data_port
@@ -53,7 +55,22 @@ class IntanRHXDevice(RHXConfig):
         self.verbose = verbose
         self.connected = False
 
+        # ---- Streaming buffer for real-time access ----
+        self.buffer_duration_sec = buffer_duration_sec  # Seconds of history to keep, adjust as needed
+        self.circular_buffer = None
+        self.circular_idx = 0
+        self.buffer_lock = threading.Lock()
+        self.streaming_thread = None
+        self.streaming = False
+
+        # Attempt connection to device
         self.connect()
+
+        # Initialize buffer after sample_rate is known
+        if self.sample_rate is None:
+            self.sample_rate = self.get_sample_rate()
+        self.init_circular_buffer()
+
 
         # Inherit the commands from the configuration class
         super().__init__(self.command_socket, verbose=verbose)
@@ -77,6 +94,12 @@ class IntanRHXDevice(RHXConfig):
         except socket.timeout:
             pass
         return buffer
+
+    def init_circular_buffer(self):
+        buffer_length = int(self.sample_rate * self.buffer_duration_sec)
+        self.circular_buffer = np.zeros((self.num_channels, buffer_length), dtype=np.float32)
+        self.circular_idx = 0
+
 
     def parse_emg_stream(self, raw_bytes, return_all_timestamps=True):
         idx = 0
@@ -111,6 +134,68 @@ class IntanRHXDevice(RHXConfig):
             return emg_array, np.array(timestamps, dtype=np.int64), bytes_consumed
         else:
             return emg_array, last_ts if 'last_ts' in locals() else None, bytes_consumed
+
+    def _streaming_worker(self):
+        rolling_buffer = bytearray()
+        buffer_size = 4 + FRAMES_PER_BLOCK * (4 + 2 * self.num_channels)
+        self.set_run_mode("run")
+
+        try:
+            while self.streaming:
+                rolling_buffer = self.receive_data(rolling_buffer, buffer_size)
+                emg_data, _, consumed = self.parse_emg_stream(rolling_buffer)
+                rolling_buffer = rolling_buffer[consumed:]
+
+                if emg_data is not None:
+                    n = emg_data.shape[1]
+                    with self.buffer_lock:
+                        idx = self.circular_idx
+                        buf_len = self.circular_buffer.shape[1]
+                        if n >= buf_len:
+                            self.circular_buffer[...] = emg_data[:, -buf_len:]
+                            self.circular_idx = 0
+                        else:
+                            end_idx = idx + n
+                            if end_idx < buf_len:
+                                self.circular_buffer[:, idx:end_idx] = emg_data
+                            else:
+                                part1 = buf_len - idx
+                                self.circular_buffer[:, idx:] = emg_data[:, :part1]
+                                self.circular_buffer[:, :n - part1] = emg_data[:, part1:]
+                            self.circular_idx = (idx + n) % buf_len
+                # Optional: Sleep a tiny bit if you want to reduce CPU usage
+                # time.sleep(0.001)
+        finally:
+            self.set_run_mode("stop")
+
+    def start_streaming(self):
+        if self.streaming:
+            print("Already streaming")
+            return
+        self.streaming = True
+        self.streaming_thread = threading.Thread(target=self._streaming_worker, daemon=True)
+        self.streaming_thread.start()
+
+    def stop_streaming(self):
+        self.streaming = False
+        if self.streaming_thread is not None:
+            self.streaming_thread.join()
+
+    def get_latest_window(self, duration_ms):
+        num_samples = int(self.sample_rate * duration_ms / 1000)
+        buf_len = self.circular_buffer.shape[1]
+        with self.buffer_lock:
+            idx = self.circular_idx
+            if num_samples > buf_len:
+                raise ValueError("Requested window exceeds buffer size")
+            start_idx = (idx - num_samples) % buf_len
+            if start_idx < idx:
+                window = self.circular_buffer[:, start_idx:idx]
+            else:
+                # Wrap-around
+                window = np.hstack([self.circular_buffer[:, start_idx:], self.circular_buffer[:, :idx]])
+        return window
+
 
     def record(self, duration_sec=10, verbose=True):
         """
