@@ -10,3 +10,4 @@ Each example includes a full script, usage notes, and expected outcomes.
    file_loading
    live_plotting
    stream_vs_file
+   realtime_predict
