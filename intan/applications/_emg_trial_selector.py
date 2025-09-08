@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
-class EMGSelector:
+class EMGTrialSelector:
     """
     Tkinter-based application for manual EMG trial indexing.
 
@@ -107,14 +107,32 @@ class EMGSelector:
         """
         from intan.io import load_rhd_file
 
-        path = filedialog.askopenfilename(filetypes=[("RHD files", "*.rhd"), ("All files", "*.*")])
+        path = filedialog.askopenfilename(filetypes=[
+            ("RHD files", "*.rhd"),
+            ("CSV Files", "*.csv"),
+            ("All files", "*.*")])
         if not path:
             return
 
-        result = load_rhd_file(path)
-        self.emg_data = result["amplifier_data"]
-        self.time_vector = result["t_amplifier"]
-        self.sampling_rate = result["frequency_parameters"]["amplifier_sample_rate"]
+        if path.endswith('.csv'):
+            # Load CSV file. first column has timestamp data in milliseconds elapsed, the rest are EMG channels if
+            # they have "EMG" in the name. The first row has only header information
+            data = np.loadtxt(path, delimiter=',', skiprows=1)
+            self.time_vector = data[:, 0] / 1000.0
+
+            # Find the columns that contain "EMG" in their header
+            with open(path, 'r') as f:
+                header = f.readline().strip().split(',')
+            emg_columns = [i for i, col in enumerate(header) if "EMG" in col]
+            self.emg_data = data[:, emg_columns].T
+
+            self.sampling_rate = 1000.0 / (self.time_vector[1] - self.time_vector[0])  # Assuming uniform sampling
+        else:
+            # Load RHD file. Should have dedicated structure
+            result = load_rhd_file(path)
+            self.emg_data = result["amplifier_data"]
+            self.time_vector = result["t_amplifier"]
+            self.sampling_rate = result["frequency_parameters"]["amplifier_sample_rate"]
 
         self.channel_selector['values'] = [f"Channel {i}" for i in range(self.emg_data.shape[0])]
         self.channel_selector.current(0)
@@ -266,11 +284,3 @@ class EMGSelector:
     def on_closing(self):
         self.root.quit()
 
-
-def launch_emg_selector():
-    """
-    Launch the EMG trial selector GUI.
-    """
-    root = tk.Tk()
-    app = EMGSelector(root)
-    root.mainloop()

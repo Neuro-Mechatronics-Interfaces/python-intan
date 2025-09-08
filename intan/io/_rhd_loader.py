@@ -16,87 +16,337 @@ Key Functions:
 """
 
 import os
+import re
 import time
 import tkinter as tk
 from tkinter import filedialog
 import numpy as np
-from intan.io._header_parsing import read_header, header_to_result, data_to_result
-from intan.io._metadata_utils import calculate_data_size
-from intan.io._block_parser import read_all_data_blocks
-from intan.io._file_utils import check_end_of_file, print_progress, get_file_paths
-#from intan.processing._filters import notch_filter
+from datetime import datetime
+from ._rhd_header_parsing import read_header, header_to_result, data_to_result, calculate_data_size
+from ._rhd_block_parser import read_all_data_blocks
+from ._file_utils import check_end_of_file, print_progress, get_file_paths
+from intan.processing import notch_filter
 
 
-def load_rhd_file(filepath=None, verbose=True):
+_TS_PAT = re.compile(r'(?P<date>\d{6,8})[_-]?(?P<time>\d{6})')  # e.g. 250901_163304 or 20250901-163304
+
+
+
+def _parse_dt_from_name(basename):
+    """Try to parse YYMMDD/YYYMMDD + HHMMSS from filename stem."""
+    stem = os.path.splitext(os.path.basename(basename))[0]
+    m = _TS_PAT.search(stem)
+    if not m:
+        return None
+    d, t = m.group('date'), m.group('time')
+    try:
+        if len(d) == 6:   # YYMMDD
+            return datetime.strptime(d + t, '%y%m%d%H%M%S')
+        elif len(d) == 8: # YYYYMMDD
+            return datetime.strptime(d + t, '%Y%m%d%H%M%S')
+    except ValueError:
+        return None
+    return None
+
+
+def _common_prefix_no_ts(stems):
+    """Longest common prefix after stripping the timestamp token."""
+    cleaned = []
+    for s in stems:
+        s2 = _TS_PAT.sub('', s)               # remove date_time token
+        s2 = s2.strip('_-. ')                 # tidy separators
+        cleaned.append(s2)
+    pref = os.path.commonprefix(cleaned).rstrip('_-. ')
+    return pref or "merged"
+
+
+def _build_export_basename(paths):
     """
-    Load a full `.rhd` file recorded by Intan Technologies hardware.
-
-    Uses the embedded header to decode all available signals, applies any
-    recording-time filtering settings, and returns a structured result.
-
-    Parameters:
-        filepath (str or None): Path to the .rhd file. If None, opens file dialog.
-        verbose (bool): Whether to print file summary and timing.
-
-    Returns:
-        dict: Parsed signal and metadata dictionary.
+    Build a clean export base name like:
+    <prefix>_YYYYMMDDTHHMMSS-HHMMSS_nN_concat
     """
-    if not filepath:
+    stems = [os.path.splitext(os.path.basename(p))[0] for p in paths]
+    prefix = _common_prefix_no_ts(stems)
+
+    # parse start/end datetimes from names, else fallback to file mtimes
+    dts = []
+    for p in paths:
+        dt = _parse_dt_from_name(os.path.basename(p))
+        if dt is None:
+            try:
+                dt = datetime.fromtimestamp(os.path.getmtime(p))
+            except Exception:
+                dt = None
+        dts.append(dt)
+
+    # sort by path order as already sorted upstream; just pick first/last non-None
+    dt_start = next((x for x in dts if x is not None), None)
+    dt_end   = next((x for x in reversed(dts) if x is not None), None)
+
+    if dt_start and dt_end:
+        same_day = (dt_start.date() == dt_end.date())
+        start_tag = dt_start.strftime('%Y%m%dT%H%M%S')
+        end_tag   = dt_end.strftime('%H%M%S') if same_day else dt_end.strftime('%Y%m%dT%H%M%S')
+        time_part = f"{start_tag}-{end_tag}"
+    elif dt_start:
+        time_part = dt_start.strftime('%Y%m%dT%H%M%S')
+    else:
+        time_part = "unknown_time"
+
+    n = len(paths)
+    return f"{prefix}_{time_part}_n{n}_concat"
+
+
+def load_rhd_file(filepath=None, merge_files=False, sort_files=True, rebuild_time=True, verbose=False):
+    """
+    Load Intan `.rhd` file(s). If multiple files are selected/provided and
+    `merge_files=True`, concatenate them along the time axis.
+
+    Parameters
+    ----------
+    filepath : str | list[str] | tuple[str] | None
+        Path to a single .rhd file, or a sequence of paths. If None, opens a
+        file dialog (multi-select when merge_files=True).
+    merge_files : bool
+        If True and multiple files are provided/selected, concatenate them.
+    sort_files : bool
+        Sort paths lexicographically (filenames often encode time).
+    rebuild_time : bool
+        If True, rebuild a strictly monotonic t_amplifier after concatenation.
+    verbose : bool
+        Print progress.
+
+    Returns
+    -------
+    dict
+        Parsed signal & metadata dictionary. When concatenating, arrays are
+        stitched along the sample axis and metadata keys are harmonized.
+    """
+    # --------- Resolve filepaths ---------
+    def _ensure_list(x):
+        if x is None:
+            return []
+        if isinstance(x, (list, tuple)):
+            return list(x)
+        return [x]
+
+    if filepath is None:
         root = tk.Tk()
         root.withdraw()  # Hide the main window
-        filepath = filedialog.askopenfilename()
-        if not filepath:
-            print("No file selected, returning.")
-            return None, False
-
-    # Start timing
-    tic = time.time()
-
-    # Open file
-    fid = open(filepath, 'rb')
-    filesize = os.path.getsize(filepath)
-
-    # Read file header
-    header = read_header(fid)
-
-    # Calculate how much data is present and summarize to console.
-    data_present, filesize, num_blocks, num_samples = (
-        calculate_data_size(header, filepath, fid, verbose))
-
-    # If .rhd file contains data, read all present data blocks into 'data'
-    # dict, and verify the amount of data read.
-    if data_present:
-        data = read_all_data_blocks(header, num_samples, num_blocks, fid, verbose)
-        check_end_of_file(filesize, fid)
-
-    # Save information in 'header' to 'result' dict.
-    result = {}
-    header_to_result(header, result)
-
-    # If .rhd file contains data, parse data into readable forms and, if
-    # necessary, apply the same notch filter that was active during recording.
-    if data_present:
-        parse_data(header, data)
-        apply_notch_filter(header, data)
-
-        # Save recorded data in 'data' to 'result' dict.
-        data_to_result(header, data, result)
-
-    # Otherwise (.rhd file is just a header for One File Per Signal Type or
-    # One File Per Channel data formats, in which actual data is saved in
-    # separate .dat files), just return data as an empty list.
+        if merge_files:
+            paths = filedialog.askopenfilenames(
+                title="Select one or more .rhd files (will be concatenated)",
+                initialdir="/",
+                filetypes=(("RHD files", "*.rhd"), ("All files", "*.*"))
+            )
+            paths = list(paths)
+        else:
+            p = filedialog.askopenfilename(
+                title="Select a .rhd File",
+                initialdir="/",
+                filetypes=(("RHD files", "*.rhd"), ("All files", "*.*"))
+            )
+            paths = [p] if p else []
+        if not paths:
+            print("No file selected, returning None.")
+            return None
     else:
+        paths = _ensure_list(filepath)
+
+    if len(paths) > 1 and not merge_files:
+        raise ValueError("Multiple files provided but merge_files=False. "
+                         "Pass a single path or set merge_files=True.")
+
+    if sort_files and len(paths) > 1:
+        paths = sorted(paths)
+        if verbose:
+            print("Paths to merge:")
+            for path in paths:
+                print(" -", path)
+
+    # --------- single-file reader ---------
+    def _read_one(path):
+        if verbose:
+            print(f"[load_rhd] Reading {os.path.basename(path)}")
+        tic = time.time()
+        fid = open(path, 'rb')
+        filesize = os.path.getsize(path)
+
+        # Read header and determine data size
+        header = read_header(fid)
+        data_present, filesize, num_blocks, num_samples = (
+            calculate_data_size(header, path, fid, verbose)
+        )
+
+        # Read blocks (if any), then sanity-check EOF
         data = []
+        if data_present:
+            data = read_all_data_blocks(header, num_samples, num_blocks, fid, verbose)
+            check_end_of_file(filesize, fid)
 
-    # Save filename to result
-    result['file_name'] = os.path.basename(filepath)
-    result['file_path'] = filepath
+        # Populate result with header info
+        result = {}
+        header_to_result(header, result)
 
-    # Report how long read took.
-    print('Done!  Elapsed time: {0:0.1f} seconds'.format(time.time() - tic))
+        # Parse & scale data (if present), apply notch as needed, store into result
+        if data_present:
+            parse_data(header, data)
+            apply_notch_filter(header, data)
+            data_to_result(header, data, result)
 
-    # Return 'result' dict.
-    return result
+        # Annotate filename/path
+        result['file_name'] = os.path.basename(path)
+        result['file_path'] = path
+
+        # Sample rate (Hz)
+        fs = None
+        try:
+            fs = float(result['frequency_parameters']['amplifier_sample_rate'])
+        except Exception:
+            try:
+                fs = float(header.get('sample_rate', None))
+            except Exception:
+                fs = None
+        result["fs"] = fs           # legacy convenience
+        result["_fs_Hz"] = fs       # canonical key used by merge branch
+
+        # Infer sample count from typical arrays
+        _n_samp = None
+        for key in ("t_amplifier", "board_adc_data", "amplifier_data"):
+            arr = result.get(key, None)
+            if isinstance(arr, np.ndarray):
+                _n_samp = arr.shape[-1]
+                break
+        result["n_samples"] = _n_samp
+
+        if verbose:
+            dur = (_n_samp / fs) if (fs and _n_samp) else None
+            print(f"  -> samples: {_n_samp}, fs: {fs}, dur: {dur:.2f}s | {time.time() - tic:0.2f}s")
+
+        # Single-file export helpers (safe: no 'merged' or 'results' here)
+        stem = os.path.splitext(result['file_name'])[0]
+        result['export_basename'] = stem
+        result['export_basepath'] = os.path.dirname(result['file_path'])
+
+        # Channel name convenience list
+        if 'amplifier_channels' in result and isinstance(result['amplifier_channels'], (list, tuple)):
+            try:
+                result['channel_names'] = [ch.get('native_channel_name') for ch in result['amplifier_channels']]
+            except Exception:
+                n = len(result['amplifier_channels'])
+                result['channel_names'] = [f"A-{i+1:03d}" for i in range(n)]
+        else:
+            result['channel_names'] = []
+
+        return result
+
+    # --------- no-merge fast-path ---------
+    if len(paths) == 1:
+        return _read_one(paths[0])
+
+    # --------- merge multiple files ---------
+    results = [_read_one(p) for p in paths]
+
+    # Check sampling-rate compatibility
+    fs_set = {r.get("_fs_Hz") or r.get("fs") for r in results}
+    fs_set = {f for f in fs_set if f is not None}
+    if len(fs_set) > 1:
+        raise ValueError(f"Sampling rates differ across files: {fs_set}")
+
+    merged = {}
+    first = results[0]
+    for k, v in first.items():
+        merged[k] = v
+
+    # Helpers for sample counts and concatenation
+    def _samples_of(r):
+        t = r.get("t_amplifier", None)
+        if isinstance(t, np.ndarray):
+            return t.size
+        a = r.get("amplifier_data", None)
+        if isinstance(a, np.ndarray):
+            return a.shape[-1]
+        return r.get("n_samples", None)
+
+    fs = first.get("_fs_Hz") or first.get("fs")
+
+    # Offsets/durations per segment
+    concat_offsets = []
+    concat_durations = []
+    offset = 0
+    for r in results:
+        n = _samples_of(r) or 0
+        concat_offsets.append(offset)
+        concat_durations.append((n / fs) if (fs and n) else np.nan)
+        offset += n
+
+    # Concatenate ndarray fields present in any result
+    all_keys = set().union(*[set(r.keys()) for r in results])
+
+    def _cat(key, arrays):
+        arrays = [a for a in arrays if isinstance(a, np.ndarray)]
+        if not arrays:
+            return None
+        ndim = arrays[0].ndim
+        if ndim == 2:
+            n_ch = arrays[0].shape[0]
+            for a in arrays[1:]:
+                if a.shape[0] != n_ch:
+                    raise ValueError(f"Channel mismatch for '{key}': {a.shape[0]} vs {n_ch}")
+            return np.concatenate(arrays, axis=1)
+        elif ndim == 1:
+            return np.concatenate(arrays, axis=0)
+        else:
+            lead = arrays[0].shape[:-1]
+            for a in arrays[1:]:
+                if a.shape[:-1] != lead:
+                    raise ValueError(f"Shape mismatch for '{key}': {a.shape} vs {arrays[0].shape}")
+            return np.concatenate(arrays, axis=-1)
+
+    for key in all_keys:
+        if key.startswith("_"):
+            continue
+        arrays = [r.get(key, None) for r in results]
+        if any(isinstance(a, np.ndarray) for a in arrays):
+            try:
+                merged[key] = _cat(key, arrays)
+            except Exception as e:
+                if verbose:
+                    print(f"[merge] Skipping concat for '{key}': {e}")
+                merged[key] = first.get(key, None)
+
+    # Merge names/paths, annotate, optionally rebuild time to be monotonic
+    merged['file_name'] = ";".join([r.get('file_name', "") for r in results])
+    merged['file_path'] = ";".join([r.get('file_path', "") for r in results])
+    merged['_fs_Hz'] = fs
+    merged['concat_segment_offsets_samples'] = np.array(concat_offsets, dtype=int)
+    merged['concat_segment_durations_s'] = np.array(concat_durations, dtype=float)
+
+    if rebuild_time and fs:
+        n = _samples_of(merged) or 0
+        merged["t_amplifier"] = np.arange(n, dtype=float) / fs
+
+    if verbose:
+        total_samp = _samples_of(merged) or 0
+        total_dur = (total_samp / fs) if (fs and total_samp) else None
+        print(f"[merge] concatenated {len(results)} files → samples={total_samp}, dur={total_dur:.2f}s")
+
+    # Canonical export basename/path and channel names
+    original_paths = [r.get('file_path') for r in results if r.get('file_path')]
+    merged['export_basename'] = _build_export_basename(original_paths)
+    merged['export_basepath'] = os.path.dirname(merged['file_path'].split(';')[0])
+
+    if 'amplifier_channels' in results[0]:
+        try:
+            merged['channel_names'] = [ch.get('native_channel_name') for ch in results[0]['amplifier_channels']]
+        except Exception:
+            n = len(results[0]['amplifier_channels'])
+            merged['channel_names'] = [f"A-{i+1:03d}" for i in range(n)]
+    else:
+        merged['channel_names'] = []
+
+    return merged
+
 
 
 def read_time_file(path):

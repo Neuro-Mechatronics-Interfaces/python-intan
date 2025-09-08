@@ -28,6 +28,7 @@ gesture_classifier/*.pth
 # Temporary files used for debugging 
 /temp/
 temp/*
+/old/
 
 # Distribution / packaging
 .Python

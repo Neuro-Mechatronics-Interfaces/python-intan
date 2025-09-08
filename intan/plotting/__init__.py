@@ -6,3 +6,4 @@ from ._waterfall import (
 )
 from ._emg_plots import plot_channel_by_name, plot_channel_by_index, plot_figure
 from ._realtime_plotter import RealtimePlotter, run_realtime_plot
+from ._stacked_plot import StackedPlot

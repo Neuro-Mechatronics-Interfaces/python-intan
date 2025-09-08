@@ -17,6 +17,11 @@ of data from local or mounted environments.
 
 import sys
 import os
+import json
+import numpy as np
+from typing import Optional
+from pathlib import Path
+import yaml
 import platform
 import pathlib
 import pandas as pd
@@ -237,3 +242,170 @@ def load_labeled_file(path=None):
     df_raw["Sample"] = df_raw["Sample"].astype(int)
     df_sorted = df_raw.sort_values(by="Sample").reset_index(drop=True)
     return df_sorted
+
+
+def load_txt_config(file_path=None, verbose=False):
+    """
+    Parse a simple key=value style configuration file (e.g. config.txt).
+
+    Parameters:
+        file_path (str): Path to the config file.
+        verbose (bool): If True, print warnings and info messages.
+
+    Returns:
+        dict: Dictionary of key-value settings.
+
+    """
+
+    if file_path is None:
+        file_path = filedialog.askopenfilename(title="Select Notes File", filetypes=[("Text files", "*.txt")])
+        if not file_path:
+            if verbose:
+                print("Cancelled selection")
+            return None
+
+    # Dictionary to store the key-value pairs
+    config_data = {}
+    with open(file_path, 'r') as file:
+        for line in file:
+            # Strip whitespace and ignore empty lines or comments
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+
+            # Split the line into key and value at the first '='
+            key, value = line.split('=', 1)
+            config_data[key.strip()] = value.strip()
+    return config_data
+
+
+def load_yaml_file(file_path=None):
+    """
+    Load configuration from a YAML file.
+
+    Args:
+        file_path (str): Path to the YAML file.
+
+    Returns:
+        dict: Parsed config dictionary.
+
+    """
+    if file_path is None:
+        file_path = filedialog.askopenfilename(title="Select Notes File",
+                                               filetypes=[("Text files", ["*.yaml", "*.yml"])])
+        if not file_path:
+            return None
+
+    with open(file_path, 'r') as f:
+        config = yaml.safe_load(f)
+    return config
+
+
+def load_json_file(file_path=None):
+    """
+    Load configuration from a JSON file.
+
+    Args:
+        file_path (str): Path to the JSON file.
+
+    Returns:
+        dict: Parsed config dictionary.
+
+    """
+    if file_path is None:
+        file_path = filedialog.askopenfilename(title="Select Notes File",
+                                               filetypes=[("Text files", ["*.json"])])
+        if not file_path:
+            return None
+
+    with open(file_path, 'r') as f:
+        config = json.load(f)
+    return config
+
+
+def load_config_file(file_path=None, verbose=False):
+    """
+    Load configuration from a file, supporting .txt, .yaml, and .json formats.
+
+    Args:
+        file_path (str): Path to the config file.
+        verbose (bool): If True, print debug information.
+
+    Returns:
+        dict: Parsed config dictionary or None if loading failed.
+    """
+    if file_path is None:
+        file_path = filedialog.askopenfilename(title="Select Config File",
+                                               filetypes=[("Text files", ["*.txt", "*.yaml", "*.yml", "*.json"])])
+        if not file_path:
+            if verbose:
+                print("Cancelled selection")
+            return None
+
+    ext = Path(file_path).suffix.lower()
+    if ext == '.txt':
+        return load_txt_config(file_path, verbose)
+    elif ext in ['.yaml', '.yml']:
+        return load_yaml_file(file_path)
+    elif ext == '.json':
+        return load_json_file(file_path)
+    else:
+        print(f"Unsupported config file format: {ext}")
+        return None
+
+
+def labels_from_events(event_path, window_starts, *, strict_segment=False, fs=2000):
+    """
+    Map each window start (absolute sample index) to a label using an events CSV
+    with columns: 'Sample Index', 'Timestamp', 'Label'. The Timestamp text is ignored.
+
+    strict_segment=True: drops any window whose [start, start+step) crosses an event boundary.
+    """
+    df = pd.read_csv(event_path)
+    if 'Sample Index' not in df.columns or 'Label' not in df.columns:
+        raise ValueError("Event file must have 'Sample Index' and 'Label' columns")
+    ev_idx = np.asarray(df['Sample Index'].values, dtype=np.int64)
+    ev_lab = df['Label'].astype(str).values
+
+    # Trim any '#' comments from labels
+    ev_lab = np.array([lab.split('#')[0].strip() for lab in ev_lab], dtype=str)
+
+    # sort by sample index
+    order = np.argsort(ev_idx)
+    ev_idx = ev_idx[order]
+    ev_lab = ev_lab[order]
+
+    # for each window start, pick the last event with idx <= start
+    # searchsorted returns insertion position; subtract 1 to get the last <=
+    pos = np.searchsorted(ev_idx, window_starts, side='right') - 1
+    # anything before the first event is Unknown
+    y = np.where(pos >= 0, ev_lab[pos], 'Unknown')
+
+    if strict_segment:
+        # drop windows that cross an event boundary
+        # boundary after this window's start is at ev_idx[pos+1]
+        next_pos = pos + 1
+        next_change = np.where(next_pos < ev_idx.size, ev_idx[next_pos], np.iinfo(np.int64).max)
+        # if your step in samples is known, ensure start+step <= next_change
+        # (pass it in or compute the exact end you want). As a simple guard:
+        # keep only windows whose label doesn't change immediately after start.
+        ok = (next_change > window_starts)
+        y = np.where(ok, y, 'Unknown')
+    return y
+
+
+def last_event_index(path: str) -> Optional[int]:
+    if not os.path.isfile(path): return None
+    last = None
+    with open(path, "r", encoding="utf-8") as f:
+        for ln in f:
+            ln = ln.strip()
+            if not ln or ln.startswith("#") or ln.lower().startswith("sample"):
+                continue
+            try:
+                idx = int(ln.split()[0].replace(",", ""))
+                last = idx if last is None else max(last, idx)
+            except Exception:
+                pass
+    return last
+

@@ -1,3 +1,3 @@
-from ._emg_viewer_gui import EMGViewer
-from ._emg_launcher import launch_emg_viewer
-from ._emg_trial_selector import EMGSelector, launch_emg_selector
+from ._emg_viewer import EMGViewer
+from ._launcher import launch_emg_viewer, launch_emg_trial_selector
+from ._emg_trial_selector import EMGTrialSelector

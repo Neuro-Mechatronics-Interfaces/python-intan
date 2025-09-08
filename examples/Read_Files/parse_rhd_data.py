@@ -5,7 +5,6 @@ import numpy as np
 from tqdm import tqdm
 
 
-
 def load_gesture_timing(text_path):
     """
     Load gesture timing data from a text file.

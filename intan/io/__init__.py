@@ -1,4 +1,5 @@
-from ._channel_utils import (
+from ._canonicalizer import CANON, SYNONYMS, canonical_label
+from ._rhd_channel_utils import (
     print_all_channel_names,
     find_channel_in_header,
     find_channel_in_group,
@@ -22,17 +23,16 @@ from ._file_utils import (
     read_config_file,
     get_file_paths,
     load_labeled_file,
-)
-from ._metadata_utils import (
-    plural,
-    get_bytes_per_data_block,
-    calculate_data_size,
-    bytes_per_signal_type,
-    calculate_num_samples,
-    print_record_time_summary
+    load_json_file,
+    load_yaml_file,
+    load_txt_config,
+    load_json_file,
+    load_config_file,
+    labels_from_events,
+    last_event_index,
 )
 
-from ._block_parser import (
+from ._rhd_block_parser import (
     get_timestamp_signed,
     read_one_data_block,
     read_timestamps,
@@ -46,7 +46,7 @@ from ._block_parser import (
     plural
 )
 
-from ._header_parsing import (
+from ._rhd_header_parsing import (
     read_header,
     read_version_number,
     set_num_samples_per_data_block,
@@ -67,9 +67,14 @@ from ._header_parsing import (
     append_new_channel,
     header_to_result,
     print_header_summary,
-    read_qstring
+    read_qstring,
+    plural,
+    get_bytes_per_data_block,
+    calculate_data_size,
+    bytes_per_signal_type,
+    calculate_num_samples,
+    print_record_time_summary
 )
-
 from ._rhd_loader import (
     load_rhd_file,
     read_time_file,
@@ -80,4 +85,25 @@ from ._rhd_loader import (
     load_per_signal_files,
     load_files_from_path
 )
-
+from ._npz_utils import (
+    list_npz_files,
+    find_npz_by_label,
+    load_npz_record,
+    save_as_npz,
+    load_npz_file,
+    load_npz_files,
+)
+from ._utilities import (
+    parse_event_file,
+    parse_numeric_args,
+    convert_events_to_list,
+    lock_params_to_meta,
+    load_metadata_json,
+    normalize_name,
+    build_indices_from_mapping,
+    align_channels_by_name,
+    select_training_channels_by_name,
+    trained_channel_names_from_meta,
+    trained_channel_names_from_dataset_npz,
+    get_trained_channel_names,
+)

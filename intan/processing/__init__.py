@@ -3,25 +3,32 @@ from ._filters import (
     notch_filter,
     bandpass_filter,
     lowpass_filter,
-    filter_emg,
+)
+from ._realtime_filter import RealtimeFilter
+from ._features import (
+    FEATURE_REGISTRY,
     rectify,
     window_rms,
     window_rms_1D,
     compute_rms,
+    compute_rolling_rms,
     downsample,
     common_average_reference,
     compute_grid_average,
     z_score_norm,
-    apply_pca,
+    #apply_pca,
     orthogonalize,
-    normalize
-)
-from ._features import (
-    mean_absolute_value,
-    zero_crossings,
-    slope_sign_changes,
-    waveform_length,
-    root_mean_square,
+    normalize,
     extract_features,
-    FEATURE_REGISTRY
+    extract_features_sliding_window,
+    feature_spec_from_registry,
+    envelope_extraction,
 )
+from ._preprocessing import EMGPreprocessor
+from ._transformations import (
+    estimate_lag_coarse_to_fine,
+    normxcorr_offset,
+    align_by_lag,
+    align_multichannel_by_lag,
+)
+from ._fill import FillStats, fix_missing_emg

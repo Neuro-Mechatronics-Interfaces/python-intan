@@ -20,7 +20,7 @@ Intended for exploratory data analysis and EMG feature validation.
 
 import matplotlib.pyplot as plt
 from intan.io._exceptions import ChannelNotFoundError
-from intan.io._channel_utils import find_channel_in_header
+from intan.io._rhd_channel_utils import find_channel_in_header
 
 
 def plot_channel_by_name(channel_name, result):

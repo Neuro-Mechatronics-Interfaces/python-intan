@@ -27,6 +27,9 @@ def waterfall(ax=None, data=None, channel_indices=None, time_vector=None, offset
     if ax is None:
         fig, ax = plt.subplots(figsize=(10, 12))
 
+    if data is None or time_vector is None or channel_indices is None:
+        raise ValueError("Data, time_vector, and channel_indices must be provided.")
+
     offset = 0  # Start with no offset
     cmap = plt.get_cmap(colormap)  # You can also experiment with other color maps like 'jet', 'viridis', etc.
     num_channels = len(channel_indices)

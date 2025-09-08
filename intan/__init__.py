@@ -9,7 +9,7 @@ This package includes modules for:
 - Configuration and device control
 """
 
-__version__ = "1.3.0"
+__version__ = "0.0.3"
 __author__ = "Jonathan Shulgach"
 __email__ = "jshulgac@andrew.cmu.edu"
 __license__ = "MIT"
@@ -25,7 +25,7 @@ submodules = [
     'plotting',
     # 'control',
     'processing',
-    'rhx_interface',
+    'interface',
     'samples',
     # 'stream',
 ]

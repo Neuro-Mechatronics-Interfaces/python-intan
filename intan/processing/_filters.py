@@ -1,5 +1,5 @@
 """
-intan.processing._filters
+nml_hand_exo.processing._filters
 
 Comprehensive EMG signal preprocessing module.
 
@@ -14,41 +14,17 @@ Includes:
 This module supports feature extraction pipelines for real-time classification
 and pre-training EMG datasets with overlapping or fixed windows.
 """
+
 import time
 import numpy as np
-from scipy.signal import butter, filtfilt, hilbert, iirnotch
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+from scipy.signal import butter, filtfilt, hilbert, iirnotch, lfilter, lfilter_zi
+from ._features import compute_rms, window_rms, common_average_reference, envelope_extraction
 
+#from sklearn.decomposition import PCA
+#from sklearn.preprocessing import StandardScaler
 
-# Deflationary orthogonality
-def orthogonalize(W, wp, i):
-    """
-    Orthogonalizes the weight vector wp with respect to the first i columns of W.
+from scipy.signal import butter, filtfilt, iirnotch
 
-    Parameters:
-        W: Weight matrix of shape (n_features, n_features).
-        wp: Weight vector to be orthogonalized of shape (n_features,).
-        i: Index of the column in W to orthogonalize against.
-
-    Returns:
-        wp: Orthogonalized weight vector of shape (n_features,).
-    """
-    return wp - ((wp @ W[:i, :].T) @ W[:i, :])
-
-
-# wp normalization
-def normalize(wp):
-    """
-    Normalizes the weight vector wp.
-
-    Parameters:
-        wp: Weight vector to be normalized of shape (n_features,).
-
-    Returns:
-        wp: Normalized weight vector of shape (n_features,).
-    """
-    return wp / np.linalg.norm(wp)
 
 
 def preprocess_emg(emg_data, sample_rate):
@@ -64,7 +40,7 @@ def preprocess_emg(emg_data, sample_rate):
     """
     filtered_data = notch_filter(emg_data, fs=sample_rate, f0=60)
     filtered_data = bandpass_filter(filtered_data, lowcut=20, highcut=400, fs=sample_rate, order=2, axis=1)
-    rms_features = calculate_rms(filtered_data, int(0.1 * sample_rate))
+    rms_features = compute_rms(filtered_data, int(0.1 * sample_rate))
     return rms_features
 
 
@@ -192,141 +168,6 @@ def filter_emg(emg_data, filter_type='bandpass', lowcut=30, highcut=500, fs=1259
     return filtered_data
 
 
-def rectify(emg_data):
-    """
-    Rectifies EMG data by converting all values to their absolute values.
-
-    Parameters:
-        emg_data (numpy array): List of numpy arrays or pandas DataFrame items with filtered EMG data.
-
-    Returns:
-        rectified_data: List of rectified numpy arrays (same shape as input data).
-    """
-    return np.abs(emg_data)
-
-
-def window_rms(emg_data, window_size=400, verbose=False):
-    """
-    Apply windowed RMS to each channel in the multichannel EMG data.
-
-    Parameters:
-        emg_data: Numpy array of shape (num_samples, num_channels).
-        window_size: Size of the window for RMS calculation.
-        verbose: Whether to print progress.
-
-    Returns:
-        Smoothed EMG data with windowed RMS applied to each channel (same shape as input).
-    """
-    if verbose: print(f"| Applying windowed RMS with window size {window_size}")
-    num_channels, num_samples = emg_data.shape
-    rms_data = np.zeros((num_channels, num_samples))
-
-    for i in range(num_channels):
-        rms_data[i, :] = window_rms_1D(emg_data[i, :], window_size)
-
-    return rms_data
-
-
-def window_rms_1D(signal, window_size):
-    """
-    Compute windowed RMS of the signal.
-
-    Parameters:
-        signal: Input EMG signal.
-        window_size: Size of the window for RMS calculation.
-
-    Returns:
-        Windowed RMS signal.
-    """
-    return np.sqrt(np.convolve(signal ** 2, np.ones(window_size) / window_size, mode='same'))
-
-
-def calculate_rms(data, window_size, verbose=False):
-    """
-    Calculates RMS features for each channel using non-overlapping windows.
-
-    Parameters:
-        data: 2D numpy array of EMG data (channels, samples).
-        window_size: Size of the window for RMS calculation.
-        verbose: Whether to print progress.
-    Returns:
-        rms_features: 2D numpy array of RMS features (channels, windows).
-    """
-    if verbose:
-        print("| Calculating RMS features...")
-    n_channels, n_samples = data.shape
-    n_windows = n_samples // window_size
-    rms_features = np.zeros((n_channels, n_windows))
-
-    for ch in range(n_channels):
-        for i in range(n_windows):
-            window = data[ch, i * window_size:(i + 1) * window_size]
-            rms_features[ch, i] = np.sqrt(np.mean(window ** 2))
-
-    return rms_features  # Shape (n_channels, n_windows)
-
-
-def downsample(emg_data, sampling_rate, target_fs=1000):
-    """
-    Downsamples the EMG data to the target sampling rate.
-
-    Parameters:
-        emg_data: 2D numpy array of shape (num_channels, num_samples).
-        sampling_rate: Sampling rate of the original EMG data.
-        target_fs: Target sampling rate for downsampling.
-
-    Returns:
-        downsampled_data: 2D numpy array of shape (num_channels, downsampled_samples).
-    """
-    # Compute the downsampling factor
-    downsample_factor = int(sampling_rate / target_fs)
-
-    # Downsample the data by taking every nth sample
-    downsampled_data = emg_data[:, ::downsample_factor]
-
-    return downsampled_data
-
-
-def common_average_reference(emg_data, verbose=False):
-    """
-    Applies Common Average Referencing (CAR) to the multi-channel EMG data.
-
-    Parameters:
-        emg_data: 2D numpy array of shape (num_channels, num_samples).
-
-    Returns:
-        car_data: 2D numpy array after applying CAR (same shape as input).
-    """
-    if verbose:
-        print("| Subtracting common average reference")
-    # Compute the common average (mean across all channels at each time point)
-    common_avg = np.mean(emg_data, axis=0)  # Shape: (num_samples,)
-
-    # Subtract the common average from each channel
-    car_data = emg_data - common_avg  # Broadcast subtraction across channels
-
-    return car_data
-
-
-def envelope_extraction(data, method='hilbert'):
-    """
-    Extracts the envelope of the EMG signal using the Hilbert transform.
-
-    Parameters:
-        data: 2D numpy array of EMG data (channels, samples).
-        method: Method for envelope extraction ('hilbert' or other).
-
-    Returns:
-        envelope: 2D numpy array of the envelope (channels, samples).
-    """
-    if method == 'hilbert':
-        analytic_signal = hilbert(data, axis=1)
-        envelope = np.abs(analytic_signal)
-    else:
-        raise ValueError("Unsupported method for envelope extraction.")
-    return envelope
-
-
 def process_emg_pipeline(data, lowcut=30, highcut=500, order=5, window_size=400, verbose=False):
     """
     Processing steps to match the CNN-ECA methodology
@@ -387,86 +228,35 @@ def sliding_window(data, window_size, step_size):
     return windows
 
 
-def apply_pca(data, num_components=8, verbose=False):
-    """
-    Applies PCA to reduce the number of EMG channels to the desired number of components.
-
-    Parameters:
-        data: 2D numpy array of EMG data (channels, samples) -> (128, 500,000).
-        num_components: Number of principal components to reduce to (e.g., 8).
-
-    Returns:
-        pca_data: 2D numpy array of reduced EMG data (num_components, samples).
-        explained_variance_ratio: Percentage of variance explained by each of the selected components.
-    """
-    # Step 1: Standardize the data across the channels
-    scaler = StandardScaler()
-    features_std = scaler.fit_transform(data)  # Standardizing along the channels
-
-    # Step 2: Apply PCA
-    pca = PCA(n_components=num_components)
-    pca_data = pca.fit_transform(features_std)  # Apply PCA on the transposed data
-
-    if verbose:
-        print("Original shape:", data.shape)
-        print("PCA-transformed data shape:", pca_data.shape)
-
-    # Step 3: Get the explained variance ratio (useful for understanding how much variance is retained)
-    explained_variance_ratio = pca.explained_variance_ratio_
-
-    return pca_data, explained_variance_ratio
 
 
-def z_score_norm(data):
-    """
-    Apply z-score normalization to the input data.
+# def apply_pca(data, num_components=8, verbose=False):
+#     """
+#     Applies PCA to reduce the number of EMG channels to the desired number of components.
+#
+#     Parameters:
+#         data: 2D numpy array of EMG data (channels, samples) -> (128, 500,000).
+#         num_components: Number of principal components to reduce to (e.g., 8).
+#
+#     Returns:
+#         pca_data: 2D numpy array of reduced EMG data (num_components, samples).
+#         explained_variance_ratio: Percentage of variance explained by each of the selected components.
+#     """
+#     # Step 1: Standardize the data across the channels
+#     scaler = StandardScaler()
+#     features_std = scaler.fit_transform(data)  # Standardizing along the channels
+#
+#     # Step 2: Apply PCA
+#     pca = PCA(n_components=num_components)
+#     pca_data = pca.fit_transform(features_std)  # Apply PCA on the transposed data
+#
+#     if verbose:
+#         print("Original shape:", data.shape)
+#         print("PCA-transformed data shape:", pca_data.shape)
+#
+#     # Step 3: Get the explained variance ratio (useful for understanding how much variance is retained)
+#     explained_variance_ratio = pca.explained_variance_ratio_
+#
+#     return pca_data, explained_variance_ratio
 
-    Parameters:
-        data: 2D numpy array of shape (channels, samples).
 
-    Returns:
-        normalized_data: 2D numpy array of shape (channels, samples) after z-score normalization.
-    """
-    mean = np.mean(data, axis=1)[:, np.newaxis]
-    std = np.std(data, axis=1)[:, np.newaxis]
-    normalized_data = (data - mean) / std
-    return normalized_data
-
-
-# RMS (Root Mean Square)
-def compute_rms(emg_window):
-    """
-    Compute the RMS of a given EMG window.
-
-    Parameters:
-        emg_window (np.ndarray): 1D numpy array representing the EMG window.
-
-    Returns:
-        float: RMS value of the EMG window.
-    """
-    return np.sqrt(np.mean(emg_window ** 2))
-
-
-def compute_grid_average(emg_data, grid_spacing=8, axis=0):
-    """
-    Computes the average of the EMG grids according to the grid spacing. For example, a spacing of 8 means that
-    channels 1, 9, 17, etc. will be averaged together to form the first grid, and so on.
-
-    Parameters:
-        emg_data (np.ndarray): 2D numpy array of shape (num_channels, num_samples).
-        grid_spacing (int): Number of channels to average together.
-        axis (int): Axis along which to compute the grid averages.
-
-    Returns:
-        grid_averages (np.ndarray): 2D numpy array of shape (num_grids, num_samples).
-    """
-    num_channels, num_samples = emg_data.shape
-    num_grids = num_channels // grid_spacing
-    grid_averages = np.zeros((num_grids, num_samples))
-
-    for i in range(num_grids):
-        start_idx = i * grid_spacing
-        end_idx = (i + 1) * grid_spacing
-        grid_averages[i, :] = np.mean(emg_data[start_idx:end_idx, :], axis=axis)
-
-    return grid_averages
