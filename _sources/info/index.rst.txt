@@ -7,7 +7,6 @@ Welcome to the tutorials section for python-intan! Below are step-by-step tutori
    :maxdepth: 1
    :caption: Tutorials
 
-   installation
    load_files
    plotting
    rhx_device

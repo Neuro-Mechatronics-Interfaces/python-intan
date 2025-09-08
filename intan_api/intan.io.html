@@ -46,13 +46,18 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+              <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../tutorials/index.html">Tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">FAQS</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../info/index.html">Tutorials</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Examples</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../examples/index.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/introduction.html">Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
 <ul class="current">
@@ -104,76 +109,6 @@
   <section id="intan-io-package">
 <h1>intan.io package<a class="headerlink" href="#intan-io-package" title="Link to this heading"></a></h1>
 <p>This module contains all the I/O utilities for loading, saving, and managing Intan files.</p>
-<dl class="py function" id="module-intan.io._channel_utils">
-<dt class="sig sig-object py" id="intan.io._channel_utils.print_all_channel_names">
-<span class="sig-name descname"><span class="pre">print_all_channel_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/io/_channel_utils.html#print_all_channel_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.io._channel_utils.print_all_channel_names" title="Link to this definition"></a></dt>
-<dd><p>Searches through all present signal types in ‘result’ dict, and prints
-the names of these channels. Useful, for example, to determine names of
-channels that can be plotted.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>result</strong> (<em>dict</em>) – The result of a call to read_header() or header_to_result().</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="intan.io._channel_utils.print_names_in_group">
-<span class="sig-name descname"><span class="pre">print_names_in_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal_group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/io/_channel_utils.html#print_names_in_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.io._channel_utils.print_names_in_group" title="Link to this definition"></a></dt>
-<dd><p>Searches through all channels in this group and print them.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>signal_group</strong> (<em>list</em>) – The list of channels to search through.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="intan.io._channel_utils.find_channel_in_group">
-<span class="sig-name descname"><span class="pre">find_channel_in_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/io/_channel_utils.html#find_channel_in_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.io._channel_utils.find_channel_in_group" title="Link to this definition"></a></dt>
-<dd><p>Finds a channel with this name in this group, returning whether or not
-it’s present and, if so, the position of this channel in signal_group.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>channel_name</strong> (<em>str</em>) – The name of the channel to search for.</p></li>
-<li><p><strong>signal_group</strong> (<em>list</em>) – The list of channels to search through.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Whether or not the channel was found.
-channel_index (int): The index of the channel in signal_group.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>channel_found (bool)</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="intan.io._channel_utils.find_channel_in_header">
-<span class="sig-name descname"><span class="pre">find_channel_in_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/io/_channel_utils.html#find_channel_in_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.io._channel_utils.find_channel_in_header" title="Link to this definition"></a></dt>
-<dd><p>Looks through all present signal groups in header, searching for
-‘channel_name’. If found, return the signal group and the index of that
-channel within the group.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>channel_name</strong> (<em>str</em>) – The name of the channel to search for.</p></li>
-<li><p><strong>header</strong> (<em>dict</em>) – The header dictionary containing signal groups.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Whether or not the channel was found.
-signal_group_name (str): The name of the signal group containing the channel.
-channel_index (int): The index of the channel in the signal group.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>channel_found (bool)</p>
-</dd>
-</dl>
-</dd></dl>
-
 <p id="module-intan.io._exceptions">intan.io._exceptions</p>
 <p>Custom exception classes used throughout the <cite>intan</cite> package.</p>
 <p>These exceptions provide clearer debugging information for:

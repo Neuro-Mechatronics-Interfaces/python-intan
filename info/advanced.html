@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>intan.plotting package &mdash; python-intan 0.0.3 documentation</title>
+  <title>Advanced &mdash; python-intan 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -22,8 +22,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="intan.processing package" href="intan.processing.html" />
-    <link rel="prev" title="intan.io package" href="intan.io.html" /> 
+    <link rel="next" title="Examples" href="../examples/introduction.html" />
+    <link rel="prev" title="Applications" href="applications.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -48,36 +48,28 @@
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">FAQS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faqs.html">FAQS</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../info/index.html">Tutorials</a></li>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="load_files.html">Load Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plotting.html">Plotting EMG Data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rhx_device.html">Intan RHX Controller Device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="signal_processing.html">Signal Processing and Feature Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="applications.html">Applications</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Advanced</a></li>
+</ul>
+</li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Examples</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../examples/introduction.html">Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">intan</a><ul class="current">
-<li class="toctree-l2 current"><a class="reference internal" href="intan.html">intan package</a><ul class="current">
-<li class="toctree-l3 current"><a class="reference internal" href="intan.html#subpackages">Subpackages</a><ul class="current">
-<li class="toctree-l4"><a class="reference internal" href="intan.applications.html">intan.applications package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="intan.decomposition.html">intan.decomposition package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="intan.io.html">intan.io package</a></li>
-<li class="toctree-l4 current"><a class="current reference internal" href="#">intan.plotting package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="intan.processing.html">intan.processing package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="intan.rhx_interface.html">intan.rhx_interface package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="intan.samples.html">intan.samples package</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="intan.html#module-intan">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intan_api/modules.html">intan</a></li>
 </ul>
 
         </div>
@@ -94,11 +86,10 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">intan</a></li>
-          <li class="breadcrumb-item"><a href="intan.html">intan package</a></li>
-      <li class="breadcrumb-item active">intan.plotting package</li>
+          <li class="breadcrumb-item"><a href="index.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">Advanced</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/intan_api/intan.plotting.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/info/advanced.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -106,17 +97,17 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="intan-plotting-package">
-<h1>intan.plotting package<a class="headerlink" href="#intan-plotting-package" title="Link to this heading"></a></h1>
-<p>All visualization utilities for EMG and Intan data, including waterfall, single-channel, and real-time plotting.</p>
+  <section id="advanced">
+<h1>Advanced<a class="headerlink" href="#advanced" title="Link to this heading"></a></h1>
+<p>Under Construction …</p>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="intan.io.html" class="btn btn-neutral float-left" title="intan.io package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="intan.processing.html" class="btn btn-neutral float-right" title="intan.processing package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="applications.html" class="btn btn-neutral float-left" title="Applications" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../examples/introduction.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
