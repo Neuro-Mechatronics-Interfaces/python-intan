@@ -22,7 +22,7 @@ import logging
 import numpy as np
 from collections import deque
 
-from intan.interface import IntanRHXDevice, LSLPublisher
+from intan.interface import IntanRHXDevice, LSLMessagePublisher
 from intan.processing import EMGPreprocessor
 from intan.ml import ModelManager, EMGClassifier
 
@@ -66,18 +66,27 @@ def _compute_infer_period_s(infer_ms: int | None, infer_hz: float | None, fallba
     # default: lock to training step
     return max(1e-3, fallback_step_ms / 1000.0)
 
-def run(
-    root_dir: str,
-    label: str = "",
-    window_ms: int | None = None,
-    step_ms: int | None = None,
-    infer_ms: int | None = None,
-    infer_hz: float | None = None,
-    seconds_total: float = 60.0,
-    smooth_k: int = 5,
-    use_lsl: bool = False,
-    verbose: bool = False,
-):
+
+def _training_names_from_meta(root_dir: str, label: str, meta: dict, data_meta: dict) -> list[str]:
+    # Prefer the names saved with the training subset/order
+    for key in ("selected_channel_names", "selected_channels_names", "channel_names"):
+        names = data_meta.get(key) or meta.get(key)
+        if isinstance(names, (list, tuple)) and names:
+            return list(names)
+    try:
+        names = get_trained_channel_names(root_dir, label=label)
+        if names:
+            return list(names)
+    except Exception:
+        pass
+    raise RuntimeError
+
+
+def run(root_dir: str, label: str = "", window_ms: int | None = None, step_ms: int | None = None,
+    infer_ms: int | None = None, infer_hz: float | None = None, seconds_total: float = 60.0, smooth_k: int = 5,
+    use_lsl: bool = False, verbose: bool = False):
+    """Stream EMG from Intan RHX device and run gesture inference at a user-chosen rate."""
+
     lvl = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(format='[%(levelname)s] %(message)s', level=lvl)
 
@@ -97,35 +106,32 @@ def run(
         f"(window={window_ms} ms, training step={step_ms} ms)"
     )
 
-    trained_names = (
-        get_trained_channel_names(root_dir, label=label)
-        or data_meta.get("channel_names")
-        or meta.get("channel_names")
-    )
+    # Get training channel names
+    trained_names = _training_names_from_meta(root_dir, label, meta, data_meta)
+    trained_names = [str(x).strip() for x in trained_names]
+    print(f"Trained channel names: {trained_names}")
     if not trained_names:
         raise RuntimeError("No training channel_names found in metadata.")
+    logging.info(f"Training channel count: {len(trained_names)}")
 
     # Optional LSL publisher
     lsl = None
     if use_lsl:
-        lsl = LSLPublisher(name="EMGGesture", stream_type="Markers", only_on_change=False)
+        lsl = LSLMessagePublisher(name="EMGGesture", stream_type="Markers", only_on_change=False)
 
     # --- Device setup ---
     dev = IntanRHXDevice()
     fs = float(getattr(dev, "sample_rate", data_meta.get("sample_rate_hz", 4000.0)))
-    device_names_full = _get_device_channel_names(dev)
+    #device_names_full = _get_device_channel_names(dev)
 
     # Map trained names -> device indices and enable only those
     idxs = []
-    present = set(device_names_full)
-    for nm in trained_names:
-        if nm not in present:
-            raise RuntimeError(f"Trained channel '{nm}' not present in device channel list.")
-        idxs.append(device_names_full.index(nm))
-    dev.enable_wide_channel(idxs)
+    for i, nm in enumerate(trained_names):
+        idxs.append(i)
+    dev.enable_wide_channel(idxs, port=trained_names[0][0]) # Port as first char of first name
 
     dev.start_streaming()
-    device_active_names = [device_names_full[i] for i in idxs]
+    device_active_names = trained_names
 
     # --- Model & preprocessing reused at each tick ---
     manager = ModelManager(root_dir=root_dir, label=label, model_cls=EMGClassifier, config={"verbose": verbose})
@@ -221,10 +227,9 @@ def main():
     p.add_argument("--label",       type=str, default="")
     p.add_argument("--window_ms",   type=int, default=None, help="Override; else from metadata.")
     p.add_argument("--step_ms",     type=int, default=None, help="Override; else from metadata.")
-    # NEW: choose inference cadence
     p.add_argument("--infer_ms",    type=int, default=None, help="Run inference every N ms (overrides infer_hz).")
     p.add_argument("--infer_hz",    type=float, default=None, help="Run inference N times per second.")
-    p.add_argument("--seconds",     type=float, default=20.0, help="Total seconds to run (<=0 for infinite).")
+    p.add_argument("--seconds",     type=float, default=0, help="Total seconds to run (<=0 for infinite).")
     p.add_argument("--smooth_k",    type=int, default=5, help="Majority-vote window (0/1 disables).")
     p.add_argument("--use_lsl",     action="store_true", help="Send predictions to an LSL 'Markers' stream.")
     p.add_argument("--verbose",     action="store_true", help="Enable verbose debug.")

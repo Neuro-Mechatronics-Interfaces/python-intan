@@ -6,5 +6,5 @@ from ._rhx_device import IntanRHXDevice, FRAMES_PER_BLOCK
 #import intan.interface._playback_options as playback_options
 from ._rhx_config import RHXConfig
 
-from ._lsl_publisher import LSLPublisher
+from ._lsl_publisher import LSLMessagePublisher
 from ._lsl_subscriber import LSLSubscriber

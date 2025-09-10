@@ -76,7 +76,7 @@ class RHXConfig:
 
     # === Data Output Options ===
 
-    def enable_wide_channel(self, channels, status=True):
+    def enable_wide_channel(self, channels, port: str = 'a', status: bool = True):
         """
         Enable or disable wide channel data output.
 
@@ -94,7 +94,7 @@ class RHXConfig:
 
         self.clear_all_data_outputs()
         for ch in channels:
-            name = f"a-{ch:03d}"
+            name = f"{port}-{ch:03d}"
             self.set_parameter(f"{name}.tcpdataoutputenabled", 'true' if status else 'false')
 
     def enable_high_channel(self, channels, status=True):

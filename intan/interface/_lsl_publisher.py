@@ -11,7 +11,7 @@ except ImportError as e:
     ) from e
 
 
-class LSLPublisher:
+class LSLMessagePublisher:
     """
     Publish messages over Lab Streaming Layer (LSL) as a string Marker stream.
 

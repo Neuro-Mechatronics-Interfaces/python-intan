@@ -241,7 +241,18 @@ def load_rhd_file(filepath=None, merge_files=False, sort_files=True, rebuild_tim
         return result
 
     # --------- no-merge fast-path ---------
+    print(f'Filepaths to load: {paths}')
     if len(paths) == 1:
+        # # path still might not be a file path but directory
+        # path = get_file_paths(paths[0], '.rhd', verbose=verbose)
+        # print(f'Expanded to .rhd files: {path}')
+        # if len(path) > 1 and merge_files:
+        #     paths = sorted(path) if sort_files else path
+        # elif len(path) == 1:
+        #     return _read_one(path[0])
+        # else:
+        #     raise ValueError(f"No .rhd files found in {paths[0]}")
+
         return _read_one(paths[0])
 
     # --------- merge multiple files ---------
