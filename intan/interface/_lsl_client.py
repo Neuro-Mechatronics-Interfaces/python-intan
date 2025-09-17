@@ -1,11 +1,20 @@
 import threading
 from collections import deque
 import numpy as np
-from pylsl import StreamInlet, resolve_byprop
+from pylsl import StreamInlet, resolve_byprop, IRREGULAR_RATE
+from typing import Optional, Sequence, Tuple, List
+from dataclasses import dataclass
 
+@dataclass
+class ResolveSpec:
+    name: Optional[str] = None
+    stype: Optional[str] = "EMG"
+    source_id: Optional[str] = None
+    timeout: float = 5.0
+    verbose: bool = False
 
 # A generic LSL handler that subscribes to LSL streams and provides basic functionality
-class LSLClient:
+class OldLSLClient:
     def __init__(self, stream_name=None, stream_type=None, maxlen=10000, auto_start=True, verbose=False):
         if stream_name is None and stream_type is None:
             raise ValueError("Either stream_name or stream_type must be provided.")
@@ -134,3 +143,201 @@ class LSLClient:
             "channel_labels": self.channel_labels,
             "units": self.units,
         }
+
+class LSLClient:
+    """
+    Fast numeric LSL client with:
+      - name/type/source_id resolution (any combination)
+      - chunked inlet loop into a NumPy ring buffer (T x C)
+      - helper APIs for live viewers: read_window, get_samples, drain_new, latest, fs_estimate
+      - context manager support
+    """
+
+    def __init__(
+        self,
+        stream_name: Optional[str] = None,
+        stream_type: Optional[str] = "EMG",
+        source_id: Optional[str] = None,
+        *,
+        timeout: float = 5.0,
+        max_seconds: float = 10.0,
+        fs_hint: float = 2000.0,
+        channels_hint: int = 128,
+        auto_start: bool = True,
+        verbose: bool = False,
+    ):
+        # Resolve
+        self.spec = ResolveSpec(stream_name, stream_type, source_id, timeout, verbose)
+        info = self._resolve_info()
+        self.inlet = StreamInlet(info, max_buflen=120)
+
+        # Stream properties
+        self.name = info.name()
+        self.type = info.type()
+        self.fs = float(info.nominal_srate() if info.nominal_srate() and info.nominal_srate() != IRREGULAR_RATE else fs_hint)
+        self.n_channels = int(info.channel_count() or channels_hint)
+
+        # Channel metadata (best-effort)
+        self.channel_labels, self.units = self._get_channel_metadata(info)
+
+        # Ring buffer (T x C)
+        self.max_seconds = float(max_seconds)
+        self.T = max(1, int(self.fs * self.max_seconds))
+        self.n_samples = self.T # Older support
+        self._buf = np.zeros((self.T, self.n_channels), dtype=np.float32)
+        self._wp = 0                      # write pointer
+        self._count = 0                   # total valid samples (<= T)
+        self._lock = threading.Lock()
+
+        # Incremental drain timestamping
+        self._last_t = 0.0
+
+        # Worker
+        self._stop = False
+        self._th: Optional[threading.Thread] = None
+        self.verbose = verbose
+        if auto_start:
+            self.start_streaming()
+
+    # ---------- lifecycle ----------
+    def start_streaming(self):
+        if self._th and self._th.is_alive():
+            return
+        self._stop = False
+        self._th = threading.Thread(target=self._loop, daemon=True)
+        self._th.start()
+
+    def stop_streaming(self):
+        self._stop = True
+        if self._th:
+            self._th.join(timeout=1.0)
+        self._th = None
+
+    def close(self):
+        self.stop_streaming()
+        try:
+            self.inlet.close_stream()
+        except Exception:
+            pass
+
+    # context manager
+    def __enter__(self):
+        self.start_streaming()
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+
+    # ---------- viewers API ----------
+    def read_window(self, seconds: float) -> np.ndarray:
+        """Return the most recent window as (T, C)."""
+        n = max(1, int(self.fs * float(seconds)))
+        with self._lock:
+            n = min(n, self._buf.shape[0])
+            idx = (np.arange(n) + (self._wp - n)) % self._buf.shape[0]
+            return self._buf[idx, :].copy()
+
+    def get_samples(self, channel: int, n_samples: int) -> List[float]:
+        """Minimal API for _realtime_plotter.py."""
+        X = self.read_window(n_samples / self.fs)
+        if X.size == 0 or channel >= X.shape[1]:
+            return []
+        return X[-n_samples:, channel].astype(np.float32).tolist()
+
+    def drain_new(self) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        API for _stacked_plot.py:
+          returns (t_new, Y) where t_new is 1D (N,) seconds (relative),
+          and Y is (C, N).
+        """
+        X = self.read_window(0.25)  # ~250 ms updates
+        if X.size == 0:
+            return np.empty((0,), dtype=np.float64), np.zeros((self.n_channels, 0), np.float32)
+        n = X.shape[0]
+        dt = 1.0 / self.fs
+        t_new = self._last_t + dt * np.arange(1, n + 1, dtype=np.float64)
+        self._last_t = t_new[-1]
+        return t_new, X.T
+
+    # def latest(self) -> Tuple[np.ndarray, np.ndarray]:
+    #     """Return (t_rel, Y) for full ring: t_rel ∈ [-W, 0], Y shape (C, T)."""
+    #     X = self.read_window(self.max_seconds)
+    #     if X.size == 0:
+    #         return np.empty((0,), dtype=np.float64), np.zeros((self.n_channels, 0), np.float32)
+    #     T = X.shape[0]
+    #     t_rel = np.linspace(-T / self.fs, 0.0, T, dtype=np.float64)
+    #     return t_rel, X.T
+    def latest(self, window_secs=5.0):
+        X = self.read_window(window_secs)  # (T, C) float32
+        if X.size == 0:
+            return None, None
+        T = X.shape[0]
+        t_rel = np.linspace(-T / self.fs, 0.0, T, dtype=np.float64)
+        return t_rel, X.T  # (C, T)
+
+    def fs_estimate(self) -> float:
+        """Simple estimate (we use nominal fs)."""
+        return float(self.fs)
+
+    # ---------- internals ----------
+    def _loop(self):
+        pull_timeout = 0.05  # seconds
+        while not self._stop:
+            try:
+                data, _ts = self.inlet.pull_chunk(timeout=pull_timeout)
+            except Exception:
+                data = None
+            if not data:
+                continue
+
+            X = np.asarray(data, dtype=np.float32)
+            if X.ndim == 1:
+                X = X[None, :]
+            X = X[:, :self.n_channels]
+
+            n = X.shape[0]
+            with self._lock:
+                dst = self._wp % self.T
+                first = min(n, self.T - dst)
+                self._buf[dst:dst + first, :] = X[:first, :]
+                rem = n - first
+                if rem > 0:
+                    self._buf[:rem, :] = X[first:, :]
+                self._wp = (self._wp + n) % self.T
+                self._count = min(self._count + n, self.T)
+
+    def _resolve_info(self):
+        # try name → source_id → type, accepting any that the user provided
+        streams = []
+        tried = []
+        if self.spec.name:
+            tried.append(("name", self.spec.name))
+            streams = resolve_byprop("name", self.spec.name, timeout=self.spec.timeout)
+            if streams:
+                return streams[0]
+        if self.spec.source_id:
+            tried.append(("source_id", self.spec.source_id))
+            streams = resolve_byprop("source_id", self.spec.source_id, timeout=self.spec.timeout)
+            if streams:
+                return streams[0]
+        if self.spec.stype:
+            tried.append(("type", self.spec.stype))
+            streams = resolve_byprop("type", self.spec.stype, timeout=self.spec.timeout)
+            if streams:
+                return streams[0]
+        raise TimeoutError(f"No LSL stream found after tries: {tried} (timeout={self.spec.timeout}s).")
+
+    @staticmethod
+    def _get_channel_metadata(info) -> Tuple[Sequence[str], Sequence[str]]:
+        try:
+            ch = info.desc().child("channels").child("channel")
+            labels, units = [], []
+            n = int(info.channel_count())
+            for _ in range(n):
+                labels.append(ch.child_value("label") or f"Ch{_}")
+                units.append(ch.child_value("unit") or "au")
+                ch = ch.next_sibling()
+            return labels, units
+        except Exception:
+            n = int(info.channel_count() or 0)
+            return [f"Ch{i}" for i in range(n)], ["au"] * n

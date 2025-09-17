@@ -1,9 +1,8 @@
 import sys
 import argparse
 from PyQt5.QtWidgets import QApplication
-from intan.interface import L
-from intan.plotting import StackedPlotter
-
+from intan.plotting import StackedPlot
+from intan.interface import LSLClient
 
 def parse_channel_args(channels_arg, default_channels=[0, 1, 2, 3]):
     """
@@ -33,7 +32,6 @@ if __name__ == "__main__":
     parser.add_argument("--channels", nargs="+", default=["0", "1", "2", "3"],
                         help="Channels to plot: e.g., --channels 0 1 2 or --channels 0:64 or --channels all")
     parser.add_argument("--stream-type", type=str, default="EMG", help="LSL stream type to look for (default: EMG)")
-    parser.add_argument("--downsample", type=int, default=1, help="Downsample factor (e.g., 2, 5, 10)")
     args = parser.parse_args()
 
     # Parse channel selection
@@ -43,10 +41,11 @@ if __name__ == "__main__":
     # Launch the Qt Application
     app = QApplication(sys.argv)
 
-    client = LSLClient(stream_type=args.stream_type)
-    client.start_streaming()
+    client = LSLClient(stream_type=args.stream_type, auto_start=True)
+    #client.start_streaming()
 
     # Create and launch the stacked plotter
-    plotter = StackedPlotter(client=client, channels_to_plot=channels_to_plot, downsample_factor=args.downsample)
-    plotter.start()
+    plotter = StackedPlot(client=client)
+    #plotter.start()
+    plotter.show()
     sys.exit(app.exec_())

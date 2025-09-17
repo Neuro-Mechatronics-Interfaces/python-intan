@@ -28,7 +28,9 @@ import numpy as np
 from struct import unpack
 from collections import deque
 import threading
-
+from typing import Optional
+from ._lsl_options import LSLOptions
+from ._lsl_publisher import LSLNumericPublisher, LSLMarkerPublisher
 from ._rhx_config import RHXConfig
 
 FRAMES_PER_BLOCK = 128  # Software hard coded but will
@@ -55,8 +57,17 @@ class IntanRHXDevice(RHXConfig):
             sample_rate (float): Expected EMG sample rate.
             verbose (bool): Enable debug logging.
         """
-    def __init__(self, host="127.0.0.1", command_port=5000, data_port=5001, num_channels=128, sample_rate=None,
-                 buffer_duration_sec=5, auto_start=False, verbose=False):
+    def __init__(self,
+                 host="127.0.0.1",
+                 command_port=5000,
+                 data_port=5001,
+                 num_channels=128,
+                 sample_rate=None,
+                 buffer_duration_sec=5,
+                 auto_start=False,
+                 use_lsl: bool = False,
+                 lsl_options: Optional[LSLOptions] = None,
+                 verbose=False):
         self.host = host
         self.command_port = command_port
         self.data_port = data_port
@@ -78,7 +89,7 @@ class IntanRHXDevice(RHXConfig):
         self.bytes_per_frame = 4 + 2 * self.num_channels  # ts(int32) + C*uint16
         self.bytes_per_block = 4 + FRAMES_PER_BLOCK * self.bytes_per_frame
         self.blocks_per_write = 1
-        self.read_size = self.bytes_per_block * 4  # request ≥4 blocks per recv by default
+        self.read_size = self.bytes_per_block * 1  # request ≥4 blocks per recv by default
         self._synced = False  # parser sync state across reads
 
         # Attempt connection to device
@@ -95,8 +106,62 @@ class IntanRHXDevice(RHXConfig):
             # Inherit the commands from the configuration class
             super().__init__(self.command_socket, verbose=verbose)
 
+        # LSL Setup
+        self.use_lsl = use_lsl
+        self.lsl = lsl_options or LSLOptions()
+        self._lsl_numeric: Optional[LSLNumericPublisher] = None
+        self._lsl_markers: Optional[LSLMarkerPublisher] = None
+        self._lsl_chunk = int(getattr(self.lsl, "chunk_size", 32) or 32) # For predictable latency
+
         if auto_start:
             self.start_streaming()
+
+    def _lsl_open_outlets(self):
+        """Create LSL outlets using the latest fs/ch. Fail-soft if unavailable."""
+        if not self.use_lsl:
+            return
+        try:
+            # Prefer device-reported numbers
+            fs = float(self.sample_rate or self.lsl.fs or 2000.0)
+            ch = int(self.num_channels or self.lsl.channels or 1)
+
+            # Create numeric outlet if missing
+            if self._lsl_numeric is None:
+                self._lsl_numeric = LSLNumericPublisher(
+                    name=self.lsl.numeric_name,
+                    stype=self.lsl.numeric_type,
+                    fs=fs,
+                    channels=ch,
+                    source_id=self.lsl.source_id,
+                    channel_labels=self.lsl.channel_labels,
+                )
+
+            # (Optional) markers
+            if self.lsl.with_markers and self._lsl_markers is None:
+                self._lsl_markers = LSLMarkerPublisher(
+                    name=self.lsl.marker_name,
+                    stype=self.lsl.marker_type,
+                    source_id=f"{self.lsl.source_id}-markers",
+                )
+        except Exception as e:
+            # Don’t break acquisition if pylsl is missing or outlet creation fails
+            if self.verbose:
+                print(f"[LSL] Outlet init failed: {e}")
+            self._lsl_numeric = None
+            self._lsl_markers = None
+
+    def _lsl_close_outlets(self):
+        """Close outlets and clear buffers."""
+        try:
+            if self._lsl_markers:
+                self._lsl_markers.close()
+        finally:
+            self._lsl_markers = None
+        try:
+            if self._lsl_numeric:
+                self._lsl_numeric.close()
+        finally:
+            self._lsl_numeric = None
 
     def _streaming_worker(self):
         rolling_buffer = bytearray()
@@ -126,6 +191,25 @@ class IntanRHXDevice(RHXConfig):
                                 self.circular_buffer[:, idx:] = emg_data[:, :part1]
                                 self.circular_buffer[:, :n - part1] = emg_data[:, part1:]
                             self.circular_idx = (idx + n) % buf_len
+
+                    if self.use_lsl and self._lsl_numeric is not None:
+                        try:
+                            C, N = emg_data.shape
+                            cs = self._lsl_chunk  # e.g., 32 samples/packet
+                            # precompute timestamps once for this burst (device timebase in seconds)
+                            t_all = self._make_timestamps(N)  # shape (N,)
+
+                            for i0 in range(0, N, cs):
+                                i1 = min(i0 + cs, N)
+                                blk = emg_data[:, i0:i1]  # (C, K)
+                                self._lsl_numeric.push_chunk(blk.T)  # stamp on send
+
+                        except Exception as e:
+                            if self.verbose:
+                                print(f"[LSL] push failed: {e}")
+                            # Don’t kill the stream; just drop LSL outlet if it misbehaves
+                            self._lsl_numeric = None
+
                 # Optional: Sleep a tiny bit if you want to reduce CPU usage
                 # time.sleep(0.001)
         finally:
@@ -139,7 +223,8 @@ class IntanRHXDevice(RHXConfig):
     def _update_read_size(self):
         self.bytes_per_frame = 4 + 2 * self.num_channels
         self.bytes_per_block = 4 + FRAMES_PER_BLOCK * self.bytes_per_frame
-        self.read_size = self.bytes_per_block * max(4, int(getattr(self, "blocks_per_write", 1)))
+        #  allow 1 block (previously max(4, …) forced bigger reads → higher latency)
+        self.read_size = self.bytes_per_block * max(1, int(getattr(self, "blocks_per_write", 1)))
 
     def configure(self, **kwargs):
         for key, value in kwargs.items():
@@ -286,6 +371,24 @@ class IntanRHXDevice(RHXConfig):
         if self.streaming:
             print("Already streaming")
             return
+
+        # Ensure sample_rate/num_channels are known
+        if self.sample_rate is None:
+            self.sample_rate = self.get_sample_rate()
+        self.effective_fs = float(self.sample_rate)
+        self.init_circular_buffer()
+
+        # Force low-latency mode (if possible)
+        try:
+            self.set_blocks_per_write(1)
+            self.blocks_per_write = 1
+            self._update_read_size()
+        except Exception:
+            pass
+
+        # LSL outlets (if enabled)
+        self._lsl_open_outlets()
+
         self.streaming = True
         self.streaming_thread = threading.Thread(target=self._streaming_worker, daemon=True)
         self.streaming_thread.start()
@@ -294,6 +397,9 @@ class IntanRHXDevice(RHXConfig):
         self.streaming = False
         if self.streaming_thread is not None:
             self.streaming_thread.join()
+            self.streaming_thread = None
+
+        self._lsl_close_outlets()
 
     def get_latest_window(self, duration_ms):
         num_samples = int(self.sample_rate * duration_ms / 1000)
@@ -371,6 +477,8 @@ class IntanRHXDevice(RHXConfig):
                 self.set_run_mode("stop")
                 if self.verbose:
                     print("Runmode set to stop before closing.")
+
+        self._lsl_close_outlets()
         self.command_socket.close()
         self.data_socket.close()
 
@@ -385,3 +493,6 @@ class IntanRHXDevice(RHXConfig):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
+
+
+

@@ -13,7 +13,7 @@ from intan.io import load_npz_file, load_config_file, labels_from_events, build_
 from intan.processing import EMGPreprocessor, FEATURE_REGISTRY
 
 
-def build_training_dataset(root_dir: str, label: str = "", save_path: str | None = None, window_ms: int = 200,
+def build_training_dataset(root_dir: str, events_file: str | None = None, file_dir: str | None = None, label: str = "", save_path: str | None = None, window_ms: int = 200,
     step_ms: int = 50, channels: list[int] | None = None, channel_map: str | None = None,
     channel_map_file: str = "custom_channel_mappings.json", mapping_non_strict: bool = False, overwrite: bool = False,
     verbose: bool = False):
@@ -28,7 +28,8 @@ def build_training_dataset(root_dir: str, label: str = "", save_path: str | None
         return
 
     # Load raw EMG
-    data = load_npz_file(find_npz_by_label(os.path.join(root_dir,'emg'), label=label)[0], verbose=verbose)
+    #data = load_npz_file(find_npz_by_label(os.path.join(root_dir,'emg'), label=label)[0], verbose=verbose)
+    data = load_npz_file(file_dir, verbose=verbose)
     emg_fs = float(data["sample_rate"])
     emg = data["amplifier_data"]         # (C, N)
     emg_t = data["t_amplifier"]          # (N,)
@@ -70,7 +71,7 @@ def build_training_dataset(root_dir: str, label: str = "", save_path: str | None
 
     # Feature extraction
     X = pre.extract_emg_features(emg_pp, window_ms=window_ms, step_ms=step_ms, progress=True,
-        tqdm_kwargs={"desc": "Building dataset", "leave": False},
+        tqdm_kwargs={"desc": "Building dataset", "leave": False, "ascii": True},
     )
 
     # Compute window start indices (left edges in absolute sample index)
@@ -79,8 +80,13 @@ def build_training_dataset(root_dir: str, label: str = "", save_path: str | None
     window_starts = np.arange(X.shape[0], dtype=int) * step_samples + start_index
 
     # Labels from events
-    ev_path = os.path.join(root_dir, "events", f"{label}_emg.event") if label else "emg.events"
-    y = labels_from_events(ev_path, window_starts)
+    if events_file is None:
+        events_name = f"{label}_emg.event" if label else "emg.event"
+        print(f"No events_file provided, using: {events_name}")
+        events_file = os.path.join(root_dir, "events", events_name)
+
+    print(f"Loading events from: {events_file}")
+    y = labels_from_events(events_file, window_starts)
 
     # Filter out Unknown/Start
     mask = ~np.isin(y, ["Unknown", "Start"])
@@ -129,6 +135,8 @@ if __name__ == "__main__":
 
     p = argparse.ArgumentParser(description="Build EMG training dataset from OEBin + events.")
     p.add_argument("--root_dir", type=str, required=True)
+    p.add_argument("--events_file", type=str, default=None, help="If different from root_dir/events")
+    p.add_argument("--file_dir", type=str, required=True, help="If different from root_dir/raw")
     p.add_argument("--config_file", type=str, default=None)
     p.add_argument("--label", type=str, default="")
     p.add_argument("--channels", nargs="+", type=int, default=None)
@@ -147,6 +155,8 @@ if __name__ == "__main__":
         cfg = load_config_file(args.config_file)
     cfg.update({
         "root_dir": args.root_dir or cfg.get("root_dir", ""),
+        "events_file": args.events_file or cfg.get("events_file", None),
+        "file_dir": args.file_dir or cfg.get("file_dir", None),
         "label": args.label or cfg.get("label", ""),
         "channels": args.channels or cfg.get("channels", None),
         "channel_map": args.channel_map or cfg.get("channel_map", None),

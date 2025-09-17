@@ -15,12 +15,12 @@ Examples:
   python 3c_predict_streaming_from_device.py \
     --root_dir "G:/.../2024_11_11" --label "128_channels" --infer_hz 20
 """
-
+import re
 import time
 import argparse
 import logging
 import numpy as np
-from collections import deque
+from collections import deque, defaultdict
 
 from intan.interface import IntanRHXDevice, LSLMessagePublisher
 from intan.processing import EMGPreprocessor
@@ -32,6 +32,40 @@ from intan.io import (
     lock_params_to_meta,
     select_training_channels_by_name,
 )
+
+CHAN_RE = re.compile(r'^\s*([A-Da-d])\s*[-_ ]?\s*(\d{1,3})\s*$')
+
+def enable_trained_channels(dev, trained_names):
+    """
+    Enable Intan wideband channels based on names like 'A-003'.
+    Returns dict { 'a': [idx0,...], 'b': [...], ... } of 0-based indices enabled per port.
+    """
+    by_port = defaultdict(list)
+
+    for nm in trained_names:
+        m = CHAN_RE.match(str(nm))
+        if not m:
+            logging.warning(f"skip unrecognized channel name: {nm!r}")
+            continue
+        port = m.group(1).lower()             # 'a' / 'b' / 'c' / 'd'
+        ch_1b = int(m.group(2))               # e.g. 3
+        idx0  = ch_1b - 1                     # 0-based index
+        if 0 <= idx0 < 128:
+            by_port[port].append(idx0)
+        else:
+            logging.warning(f"out-of-range channel {nm} -> {port.upper()}-{ch_1b:03d}")
+
+    # Dedup, sort, and enable per port
+    for port, idxs in by_port.items():
+        idxs = sorted(set(idxs))
+        try:
+            dev.enable_wide_channel(idxs, port=port)   # vector form, if supported
+        except Exception:
+            for i in idxs:
+                dev.enable_wide_channel(i, port=port)  # scalar fallback
+        by_port[port] = idxs
+
+    return by_port
 
 def _get_device_channel_names(dev) -> list[str]:
     if hasattr(dev, "get_channel_names"):
@@ -66,7 +100,6 @@ def _compute_infer_period_s(infer_ms: int | None, infer_hz: float | None, fallba
     # default: lock to training step
     return max(1e-3, fallback_step_ms / 1000.0)
 
-
 def _training_names_from_meta(root_dir: str, label: str, meta: dict, data_meta: dict) -> list[str]:
     # Prefer the names saved with the training subset/order
     for key in ("selected_channel_names", "selected_channels_names", "channel_names"):
@@ -80,7 +113,6 @@ def _training_names_from_meta(root_dir: str, label: str, meta: dict, data_meta: 
     except Exception:
         pass
     raise RuntimeError
-
 
 def run(root_dir: str, label: str = "", window_ms: int | None = None, step_ms: int | None = None,
     infer_ms: int | None = None, infer_hz: float | None = None, seconds_total: float = 60.0, smooth_k: int = 5,
@@ -125,13 +157,33 @@ def run(root_dir: str, label: str = "", window_ms: int | None = None, step_ms: i
     #device_names_full = _get_device_channel_names(dev)
 
     # Map trained names -> device indices and enable only those
-    idxs = []
-    for i, nm in enumerate(trained_names):
-        idxs.append(i)
-    dev.enable_wide_channel(idxs, port=trained_names[0][0]) # Port as first char of first name
+    #idxs = []
+    #for i, nm in enumerate(trained_names):
+    #    idxs.append(i)
+    #dev.enable_wide_channel(idxs, port=trained_names[0][0]) # Port as first char of first name
+    dev.clear_all_data_outputs()
+    enabled = enable_trained_channels(dev, trained_names)
+
+    # Build the actual device order we just enabled (to match raw_win channel order)
+    device_active_names = []
+    for port in sorted(enabled.keys()):  # deterministic ordering by port
+        for idx0 in enabled[port]:  # ascending within the port
+            device_active_names.append(f"{port.upper()}-{idx0 + 1:03d}")
+
+    logging.info("Enabled channels: " + ", ".join(
+        f"{p.upper()}:{len(is_)}" for p, is_ in sorted(enabled.items())
+    ))
+
+    # make the device reflect the enabled channel count
+    n_enabled = len(device_active_names)  # 116 in your case
+    if getattr(dev, "num_channels", None) != n_enabled:
+        dev.num_channels = n_enabled
+        # make sure socket read sizes match the new channel count
+        if hasattr(dev, "_update_read_size"):
+            dev._update_read_size()
 
     dev.start_streaming()
-    device_active_names = trained_names
+    #device_active_names = trained_names
 
     # --- Model & preprocessing reused at each tick ---
     manager = ModelManager(root_dir=root_dir, label=label, model_cls=EMGClassifier, config={"verbose": verbose})
@@ -199,7 +251,7 @@ def run(root_dir: str, label: str = "", window_ms: int | None = None, step_ms: i
                     if conf is None:
                         logging.info(f"[{(time.monotonic()-t0):6.2f}s] pred={pred_label}  smoothed={smoothed} (k={len(recent)})")
                     else:
-                        logging.info(f"[{(time.monotonic()-t0):6.2f}s] pred={pred_label} (p≈{conf:.2f})  smoothed={smoothed} (k={len(recent)})")
+                        logging.info(f"[{(time.monotonic()-t0):6.2f}s] pred={pred_label} (p={conf:.2f})  smoothed={smoothed} (k={len(recent)})")
                     last_print_label = smoothed
 
             # schedule next tick; catch up if we fell behind

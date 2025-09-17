@@ -1,0 +1,39 @@
+{
+  "python": "C:\\Users\\NML\\Documents\\Github\\python-intan\\.venv\\Scripts\\python.exe",
+  "root_dir": "",
+  "label": "gestures",
+  "verbose": false,
+  "scripts": {
+    "build": "C:\\Users\\NML\\Documents\\Github\\python-intan\\examples\\gesture_classifier\\1a_build_training_dataset_rhd.py",
+    "train": "C:\\Users\\NML\\Documents\\Github\\python-intan\\examples\\gesture_classifier\\2_train_model.py",
+    "realtime": "C:\\Users\\NML\\Documents\\Github\\python-intan\\examples\\gesture_classifier\\3d_predict_from_device_realtime.py"
+  },
+  "dataset": {
+    "file_path": "",
+    "events_pattern": "{label}_emg.event",
+    "overwrite": false,
+    "verbose": false
+  },
+  "train": {
+    "dataset_name": "{label}_training_dataset.npz",
+    "save_eval": false,
+    "overwrite": false,
+    "verbose": false
+  },
+  "prediction": {
+    "file_path": "",
+    "events_file": "{label}_emg.event",
+    "use_lsl": true
+  },
+  "live": {
+    "infer_ms": "",
+    "infer_hz": "",
+    "window_ms": "",
+    "step_ms": "",
+    "smooth_k": "5",
+    "seconds": "0",
+    "use_lsl": false,
+    "host": "127.0.0.1",
+    "port": "6000"
+  }
+}

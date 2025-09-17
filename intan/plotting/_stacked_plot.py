@@ -120,7 +120,6 @@ class StackedPlot(QtWidgets.QMainWindow):
         smooth_alpha=0.25,
         symmetric=False,
         max_points=2000,
-        # filter defaults:
         enable_filter_ui=True,
     ):
         super().__init__()
@@ -133,11 +132,11 @@ class StackedPlot(QtWidgets.QMainWindow):
         self.smooth_alpha = float(smooth_alpha)
         self.symmetric = bool(symmetric)
         self.max_points = int(max_points)
-        self.N_channels = self.client.N_channels
+        self.n_channels = self.client.n_channels
 
         self.setWindowTitle(
             f"Stacked — {self.client.name}  type={self.client.type}  "
-            f"nom fs={self.client.fs:.1f}Hz  chans={self.N_channels}"
+            f"nom fs={self.client.fs:.1f}Hz  chans={self.n_channels}"
         )
         self.resize(1200, 820)
 
@@ -153,21 +152,28 @@ class StackedPlot(QtWidgets.QMainWindow):
 
         # Construct plots
         self.plots, self.curves = [], []
-        self._ylims = [None] * self.N_channels
-        for i in range(self.N_channels):
+        self._ylims = [None] * self.n_channels
+        for i in range(self.n_channels):
             pw = pg.PlotWidget()
             pw.showGrid(x=True, y=True)
             pw.setXRange(-self.window_secs, 0)
-            if i < self.N_channels - 1:
+            if i < self.n_channels - 1:
                 pw.hideAxis("bottom")
-            pw.setLabel("left", f"Ch {self.client.channel_index[i]}")
-            curve = pw.plot(pen=pg.mkPen(pg.intColor(i, hues=self.N_channels), width=1))
+            label = (
+                self.client.channel_labels[i]
+                if hasattr(self.client, "channel_labels") and i < len(self.client.channel_labels)
+                else f"{i}"
+            )
+            pw.setLabel("left", f"Ch {label}")
+
+            #pw.setLabel("left", f"Ch {self.client.channel_labels[i]}")
+            curve = pw.plot(pen=pg.mkPen(pg.intColor(i, hues=self.n_channels), width=1))
             if self.fixed_ylim is not None:
                 pw.setYRange(self.fixed_ylim[0], self.fixed_ylim[1], padding=0)
             self.inner_layout.addWidget(pw)
             self.plots.append(pw); self.curves.append(curve)
 
-        for i in range(1, self.N_channels):
+        for i in range(1, self.n_channels):
             self.plots[i].setXLink(self.plots[0])
 
         self.scroll.setWidget(self.inner)
@@ -178,23 +184,13 @@ class StackedPlot(QtWidgets.QMainWindow):
         self._bypass = False
         self.filter = RealtimeFilter(
             fs=self.client.fs,
-            n_channels=self.N_channels,
-            # bp_low=20.0,
-            # bp_high=498.0,
-            # bp_order=4,
-            # enable_bandpass=True,
-            # notch_freqs=(60.0,),
-            # notch_q=30.0,
-            # enable_notch=True,
-            # lp_cut=None,
-            # lp_order=4,
-            # enable_lowpass=False,
+            n_channels=self.n_channels,
         )
 
-        self._ft = np.zeros(self.client.N_samples, dtype=np.float64)  # filter state for each channel
-        self._fy = np.zeros((self.N_channels, self.client.N_samples), dtype=np.float32)  # filtered output
-        self._fwidx = 0
-        self._fcount = 0
+        # self._ft = np.zeros(self.client.T, dtype=np.float64)  # filter state for each channel
+        # self._fy = np.zeros((self.n_channels, self.client.T), dtype=np.float32)  # filtered output
+        # self._fwidx = 0
+        # self._fcount = 0
 
         # ---- Optional filter UI
         if enable_filter_ui:
@@ -240,7 +236,7 @@ class StackedPlot(QtWidgets.QMainWindow):
         self.auto_ylim = bool(enabled)
         # when turning auto on, clear smoothed limits so it re-initializes
         if self.auto_ylim:
-            self._ylims = [None] * self.N_channels
+            self._ylims = [None] * self.n_channels
         else:
             # when turning it off, snap to current fixed range if set
             if self.fixed_ylim is not None:
@@ -262,12 +258,16 @@ class StackedPlot(QtWidgets.QMainWindow):
         super().closeEvent(ev)
 
     def _update_title_fs(self):
-        fs_hat = self.client.fs_estimate()
+        fs_hat = getattr(self.client, "fs_estimate", lambda: float("nan"))()
+        title = (
+            f"LSL Stacked — {getattr(self.client, 'name', 'Stream')}  "
+            f"type={getattr(self.client, 'type', '?')}  "
+            f"nom fs={getattr(self.client, 'fs', float('nan')):.1f}Hz"
+        )
         if np.isfinite(fs_hat):
-            self.setWindowTitle(
-                f"LSL Stacked — {self.client.name}  type={self.client.type}  "
-                f"nom fs={self.client.fs:.1f}Hz  est fs={fs_hat:.2f}Hz  chans={self.N_channels}"
-            )
+            title += f"  est fs={fs_hat:.2f}Hz"
+        title += f"  chans={self.n_channels}"
+        self.setWindowTitle(title)
 
     def _robust_limits(self, y):
         lo, hi = np.nanpercentile(y, self.robust_pct)
@@ -297,54 +297,71 @@ class StackedPlot(QtWidgets.QMainWindow):
 
     # ---------- main update ----------
     def update_plots(self):
-        # get only new samples
-        t_new, Y_new = self.client.drain_new()
-        if t_new is not None and Y_new.shape[1] > 0:
-            # filter just the new tail (or bypass)
-            if not getattr(self, "_bypass", False):
-                Y_new = self.filter.process(Y_new)
-
-            # append to filtered ring
-            n = Y_new.shape[1]
-            dst = self._fwidx % self.client.N_samples
-            first = min(n, self.client.N_samples - dst)
-            self._fy[:, dst:dst + first] = Y_new[:, :first]
-            self._ft[dst:dst + first] = t_new[:first]
-            rem = n - first
-            if rem > 0:
-                self._fy[:, :rem] = Y_new[:, first:]
-                self._ft[:rem] = t_new[first:]
-            self._fwidx = (self._fwidx + n) % self.client.N_samples
-            self._fcount = min(self._fcount + n, self.client.N_samples)
-
-        # nothing to draw yet
-        if self._fcount == 0:
+        t_rel, Y = self.client.latest(window_secs=self.window_secs)
+        if t_rel is None or Y.size == 0:
             return
 
-        # build last window from filtered ring (exactly like client.latest, but on filtered data)
-        end = self._fwidx
-        if self._fcount < self.client.N_samples:
-            t = self._ft[:self._fcount].copy()
-            Y = self._fy[:, :self._fcount].copy()
-        else:
-            t = np.hstack((self._ft[end:], self._ft[:end])).copy()
-            Y = np.hstack((self._fy[:, end:], self._fy[:, :end])).copy()
+        if not self._bypass:
+            Y = self.filter.process(Y)
 
-        t_last = t[-1]
-        t_rel = t - t_last
-        mask = t_rel >= -self.window_secs
-        t_rel, Y = t_rel[mask], Y[:, mask]
-
-        # (optional) decimate for draw speed
         t_rel, Y = self._maybe_decimate(t_rel, Y)
-
-        for i in range(self.N_channels):
+        for i in range(self.n_channels):
             yi = Y[i]
             self.curves[i].setData(t_rel, yi)
             if self.auto_ylim and yi.size:
                 lims = self._robust_limits(yi)
                 if lims is not None:
                     self._smooth_set_ylim(i, *lims)
+
+    # def update_plots(self):
+    #     # get only new samples
+    #     t_new, Y_new = self.client.drain_new()
+    #     if t_new is not None and Y_new.shape[1] > 0:
+    #         # filter just the new tail (or bypass)
+    #         if not getattr(self, "_bypass", False):
+    #             Y_new = self.filter.process(Y_new)
+    #
+    #         # append to filtered ring
+    #         n = Y_new.shape[1]
+    #         dst = self._fwidx % self.client.n_samples
+    #         first = min(n, self.client.n_samples - dst)
+    #         self._fy[:, dst:dst + first] = Y_new[:, :first]
+    #         self._ft[dst:dst + first] = t_new[:first]
+    #         rem = n - first
+    #         if rem > 0:
+    #             self._fy[:, :rem] = Y_new[:, first:]
+    #             self._ft[:rem] = t_new[first:]
+    #         self._fwidx = (self._fwidx + n) % self.client.n_samples
+    #         self._fcount = min(self._fcount + n, self.client.n_samples)
+    #
+    #     # nothing to draw yet
+    #     if self._fcount == 0:
+    #         return
+    #
+    #     # build last window from filtered ring (exactly like client.latest, but on filtered data)
+    #     end = self._fwidx
+    #     if self._fcount < self.client.n_samples:
+    #         t = self._ft[:self._fcount].copy()
+    #         Y = self._fy[:, :self._fcount].copy()
+    #     else:
+    #         t = np.hstack((self._ft[end:], self._ft[:end])).copy()
+    #         Y = np.hstack((self._fy[:, end:], self._fy[:, :end])).copy()
+    #
+    #     t_last = t[-1]
+    #     t_rel = t - t_last
+    #     mask = t_rel >= -self.window_secs
+    #     t_rel, Y = t_rel[mask], Y[:, mask]
+    #
+    #     # (optional) decimate for draw speed
+    #     t_rel, Y = self._maybe_decimate(t_rel, Y)
+    #
+    #     for i in range(self.n_channels):
+    #         yi = Y[i]
+    #         self.curves[i].setData(t_rel, yi)
+    #         if self.auto_ylim and yi.size:
+    #             lims = self._robust_limits(yi)
+    #             if lims is not None:
+    #                 self._smooth_set_ylim(i, *lims)
 
 
     # def update_plots(self):
@@ -359,7 +376,7 @@ class StackedPlot(QtWidgets.QMainWindow):
     #     # decimate for draw speed
     #     t_rel, Y = self._maybe_decimate(t_rel, Y)
     #
-    #     for i in range(self.N_channels):
+    #     for i in range(self.n_channels):
     #         yi = Y[i]
     #         self.curves[i].setData(t_rel, yi)
     #         if self.auto_ylim and yi.size:

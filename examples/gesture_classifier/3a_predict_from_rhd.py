@@ -10,8 +10,8 @@ Offline gesture prediction from an Intan .rhd file using the *exact* training se
 Usage example:
   python 3b_predict_rhd.py \
     --root_dir "G:\\...\\2024_11_11" \
-    --rhd_file "G:\\...\\2024_11_11\\raw\\my_recording.rhd" \
-    --event_file "G:\\...\\2024_11_11\\events\\emg.event" \
+    --file_dir "G:\\...\\2024_11_11\\raw\\my_recording.rhd" \
+    --events_file "G:\\...\\2024_11_11\\events\\emg.event" \
     --verbose
 """
 
@@ -30,8 +30,8 @@ from intan.processing import EMGPreprocessor
 from intan.ml import ModelManager, EMGClassifier, evaluate_against_events
 
 
-def run(root_dir: str, rhd_file: str, label: str = "", window_ms: int | None = None, step_ms: int | None = None,
-    selected_channels=None, event_file: str | None = None, verbose: bool = False):
+def run(root_dir: str, file_dir: str, label: str = "", window_ms: int | None = None, step_ms: int | None = None,
+    selected_channels=None, events_file: str | None = None, verbose: bool = False):
 
     # Logging
     lvl = logging.DEBUG if verbose else logging.INFO
@@ -47,7 +47,7 @@ def run(root_dir: str, rhd_file: str, label: str = "", window_ms: int | None = N
     logging.info(f"Training-locked params: window_ms={window_ms}  step_ms={step_ms}  env_cut={env_cut}")
 
     # Load raw EMG from .rhd
-    data = load_rhd_file(rhd_file, verbose=verbose)
+    data = load_rhd_file(file_dir, verbose=verbose)
     print(data.keys())
     #emg_fs = float(data["sample_rate"])
     emg_fs = data['frequency_parameters']['amplifier_sample_rate']
@@ -80,12 +80,8 @@ def run(root_dir: str, rhd_file: str, label: str = "", window_ms: int | None = N
         pre = EMGPreprocessor(fs=emg_fs, env_cut=env_cut)
 
     emg_pp = pre.preprocess(emg)
-    X = pre.extract_emg_features(
-        emg_pp,
-        window_ms=window_ms,
-        step_ms=step_ms,
-        progress=True,
-        tqdm_kwargs={"desc": "Extracting features", "unit": "win", "leave": False},
+    X = pre.extract_emg_features(emg_pp, window_ms=window_ms, step_ms=step_ms, progress=True,
+        tqdm_kwargs={"desc": "Extracting features", "unit": "win", "leave": False, "ascii": True},
     )
     logging.info(f"Extracted feature matrix X with shape {X.shape}")
 
@@ -111,13 +107,13 @@ def run(root_dir: str, rhd_file: str, label: str = "", window_ms: int | None = N
     y_pred = manager.predict(X)
 
     # Evaluate against events
-    #file_path = os.path.join(root_dir, 'events', f"{os.path.basename(rhd_file).split('.')[0]}_emg.event")
+    #file_path = os.path.join(root_dir, 'events', f"{os.path.basename(file_dir).split('.')[0]}_emg.event")
     #evaluate_against_events(file_path, window_starts, y_pred)
 
     # --- Optional offline evaluation against an events file ---
-    if event_file:
-        logging.info(f"Evaluating against events in: {event_file}")
-        evaluate_against_events(event_file, window_starts, y_pred)
+    if events_file:
+        logging.info(f"Evaluating against events in: {events_file}")
+        evaluate_against_events(events_file, window_starts, y_pred)
     else:
         # Quick preview of predictions
         uniq, cnt = np.unique(y_pred, return_counts=True)
@@ -129,11 +125,11 @@ def main():
     p = argparse.ArgumentParser("3b: Offline EMG gesture prediction from Intan RHD (training-locked)")
     p.add_argument("--config_file", type=str)
     p.add_argument("--root_dir",    type=str, required=True, help="Directory that contains the trained model/metadata.")
-    p.add_argument("--rhd_file",    type=str, required=True, help="Path to the .rhd file to evaluate.")
+    p.add_argument("--file_dir",    type=str, required=True, help="Path to the .rhd file to evaluate.")
+    p.add_argument("--events_file", type=str, default=None, help="If different from root_dir/events")
     p.add_argument("--label",       type=str, default="")
     p.add_argument("--window_ms",   type=int, default=None)
     p.add_argument("--step_ms",     type=int, default=None)
-    p.add_argument("--event_file",  type=str, default=None, help="Optional explicit path to events file.")
     p.add_argument("--verbose",     action="store_true")
     args = p.parse_args()
 
@@ -142,11 +138,11 @@ def main():
         cfg = load_config_file(args.config_file)
     cfg.update({
         "root_dir": args.root_dir or cfg.get("root_dir", ""),
-        "rhd_file": args.rhd_file,
+        "file_dir": args.file_dir,
+        "events_file": args.events_file or cfg.get("events_file", None),
         "label": args.label or cfg.get("label", ""),
         "window_ms": args.window_ms or cfg.get("window_ms", None),
         "step_ms": args.step_ms or cfg.get("step_ms", None),
-        "event_file": args.event_file or cfg.get("event_file", None),
         "verbose": args.verbose or cfg.get("verbose", False),
     })
     run(**cfg)

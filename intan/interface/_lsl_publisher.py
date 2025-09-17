@@ -2,15 +2,50 @@
 from __future__ import annotations
 import json
 from typing import Optional, Dict, Any
+from typing import Sequence
+import numpy as np
+from pylsl import StreamInfo, StreamOutlet, local_clock, cf_string, IRREGULAR_RATE
 
-try:
-    from pylsl import StreamInfo, StreamOutlet, local_clock, cf_string
-except ImportError as e:
-    raise SystemExit(
-        "pylsl is not installed. Install it with:\n\n    pip install pylsl\n"
-    ) from e
+class LSLNumericPublisher:
+    def __init__(self, name: str, stype: str, fs: float, channels: int,
+                 source_id: str, channel_labels: Optional[Sequence[str]] = None):
+        if StreamInfo is None:
+            raise RuntimeError("pylsl is not available; install pylsl to enable LSL streaming.")
+        info = StreamInfo(name=name, type=stype, channel_count=channels,
+                          nominal_srate=fs, channel_format='float32', source_id=source_id)
+        # Optional metadata
+        chns = info.desc().append_child("channels")
+        labels = list(channel_labels) if channel_labels else [f"ch_{i}" for i in range(channels)]
+        for lbl in labels:
+            ch = chns.append_child("channel")
+            ch.append_child_value("label", str(lbl))
+            ch.append_child_value("unit", "au")
+            ch.append_child_value("type", "EMG")
+        self.outlet = StreamOutlet(info, chunk_size=0, max_buffered=360)
+        self.channels = channels
 
+    def push_chunk(self, x: np.ndarray, ts: Optional[float] = None):
+        if x.ndim == 1: x = x[None, :]
+        if x.shape[1] != self.channels:
+            raise ValueError(f"LSL outlet expects {self.channels} channels, got {x.shape[1]}")
+        self.outlet.push_chunk(x.tolist(), timestamp=(ts if ts is not None else 0.0))
 
+    def close(self): self.outlet = None
+
+class LSLMarkerPublisher:
+    def __init__(self, name: str, stype: str = "Markers", source_id: str = "markers-1"):
+        if StreamInfo is None:
+            raise RuntimeError("pylsl is not available; install pylsl to enable LSL streaming.")
+        info = StreamInfo(name=name, type=stype, channel_count=1,
+                          nominal_srate=IRREGULAR_RATE, channel_format='string', source_id=source_id)
+        self.outlet = StreamOutlet(info, chunk_size=0, max_buffered=128)
+
+    def push(self, value: str, ts: Optional[float] = None):
+        self.outlet.push_sample([str(value)], timestamp=(ts if ts is not None else 0.0))
+
+    def close(self): self.outlet = None
+
+# Old name kept for backward compatibility
 class LSLMessagePublisher:
     """
     Publish messages over Lab Streaming Layer (LSL) as a string Marker stream.

@@ -13,7 +13,21 @@ from intan.io import load_rhd_file, load_config_file, labels_from_events, build_
 from intan.processing import EMGPreprocessor, FEATURE_REGISTRY
 
 
-def build_training_dataset(root_dir: str, events_dir: str | None = None, rhd_dir: str | None = None, label: str = "", save_path: str | None = None, window_ms: int = 200,
+def _parse_channels_arg(arg: str | None, total: int | None = None) -> list[int] | None:
+    if not arg:
+        return None
+    s = arg.strip().lower()
+    if s == "all":
+        # fall back to total if known; otherwise None means “use all”
+        return list(range(int(total))) if total is not None else None
+    if ":" in s:
+        a, b = s.split(":", 1)
+        return list(range(int(a), int(b)))
+    # allow comma or whitespace
+    parts = [tok for piece in s.split(",") for tok in piece.split()]
+    return [int(x) for x in parts if x != ""]
+
+def build_training_dataset(root_dir: str, events_file: str | None = None, file_dir: str | None = None, label: str = "", save_path: str | None = None, window_ms: int = 200,
     step_ms: int = 50, channels: list[int] | None = None, channel_map: str | None = None,
     channel_map_file: str = "custom_channel_mappings.json", mapping_non_strict: bool = False, overwrite: bool = False,
     verbose: bool = False):
@@ -29,14 +43,13 @@ def build_training_dataset(root_dir: str, events_dir: str | None = None, rhd_dir
 
 
     # Load raw EMG
-    data = load_rhd_file(rhd_dir, verbose=verbose)
+    data = load_rhd_file(file_dir, verbose=verbose)
     emg_fs = float(data["frequency_parameters"]['amplifier_sample_rate'])
     emg = data["amplifier_data"]         # (C, N)
     emg_t = data["t_amplifier"]          # (N,)
     raw_channel_names = list(data.get("channel_names", [])) or [f"CH{i}" for i in range(emg.shape[0])]
 
     # Channel selection (by name mapping or by explicit indices)
-    selected_channel_names = raw_channel_names
     selected_channels = channels
 
     # If a channel_map is provided, it takes precedence over --channels
@@ -63,7 +76,8 @@ def build_training_dataset(root_dir: str, events_dir: str | None = None, rhd_dir
     else:
         selected_channel_names = raw_channel_names
 
-    print(f"Using selected channels: {selected_channel_names}")
+    if verbose:
+        print(f"Using selected channels: {selected_channel_names}")
 
     # Preprocess (matching your training defaults)
     pre = EMGPreprocessor(fs=emg_fs, envelope_cutoff=5.0, verbose=verbose)
@@ -71,7 +85,7 @@ def build_training_dataset(root_dir: str, events_dir: str | None = None, rhd_dir
 
     # Feature extraction
     X = pre.extract_emg_features(emg_pp, window_ms=window_ms, step_ms=step_ms, progress=True,
-        tqdm_kwargs={"desc": "Building dataset", "leave": False},
+        tqdm_kwargs={"desc": "Building dataset", "leave": False, "ascii": True},
     )
 
     # Compute window start indices (left edges in absolute sample index)
@@ -80,13 +94,13 @@ def build_training_dataset(root_dir: str, events_dir: str | None = None, rhd_dir
     window_starts = np.arange(X.shape[0], dtype=int) * step_samples + start_index
 
     # Labels from events
-    if events_dir is None:
+    if events_file is None:
         events_name = f"{label}_emg.event" if label else "emg.event"
-        print(f"No events_dir provided, using: {events_name}")
-        events_dir = os.path.join(root_dir, "events", events_name)
+        print(f"No events_file provided, using: {events_name}")
+        events_file = os.path.join(root_dir, "events", events_name)
 
-    print(f"Loading events from: {events_dir}")
-    y = labels_from_events(events_dir, window_starts)
+    print(f"Loading events from: {events_file}")
+    y = labels_from_events(events_file, window_starts)
 
     # Filter out Unknown/Start
     mask = ~np.isin(y, ["Unknown", "Start"])
@@ -117,7 +131,7 @@ def build_training_dataset(root_dir: str, events_dir: str | None = None, rhd_dir
         channel_names=selected_channel_names,
         feature_spec=feature_spec_json,
         channel_mapping_name=np.array(map_name or "", dtype=object),
-        channel_mapping_file=np.array(cfg.get("channel_map_file", ""), dtype=object),
+        channel_mapping_file=np.array(channel_map_file or "", dtype=object),
     )
     logging.info(f"Saved dataset: {save_path}")
 
@@ -135,11 +149,12 @@ if __name__ == "__main__":
 
     p = argparse.ArgumentParser(description="Build EMG training dataset from OEBin + events.")
     p.add_argument("--root_dir", type=str, required=True)
-    p.add_argument("--events_dir", type=str, default=None, help="If different from root_dir/events")
-    p.add_argument("--rhd_dir", type=str, required=True, help="If different from root_dir/raw")
+    p.add_argument("--events_file", type=str, default=None, help="If different from root_dir/events")
+    p.add_argument("--file_dir", type=str, required=True, help="If different from root_dir/raw")
     p.add_argument("--config_file", type=str, default=None)
     p.add_argument("--label", type=str, default="")
-    p.add_argument("--channels", nargs="+", type=int, default=None)
+    #p.add_argument("--channels", nargs="+", type=int, default=None)
+    p.add_argument("--channels", type=str, default=None, help="Channel list: 'all', '0:64', '0 1 2', or '0,1,2'")
     p.add_argument("--channel_map", type=str, default=None, help="Name inside the mapping JSON (e.g., sleeve_halfcount)")
     p.add_argument("--channel_map_file", type=str, default="custom_channel_mappings.json", help="Path to mapping JSON")
     p.add_argument("--mapping_non_strict", action="store_true", help="Allow missing names in mapping (skip them)")
@@ -150,15 +165,17 @@ if __name__ == "__main__":
     p.add_argument("--verbose", action="store_true")
     args = p.parse_args()
 
+    parsed_channels = _parse_channels_arg(args.channels)
+
     cfg = {}
     if args.config_file:
         cfg = load_config_file(args.config_file)
     cfg.update({
         "root_dir": args.root_dir or cfg.get("root_dir", ""),
-        "events_dir": args.events_dir or cfg.get("events_dir", None),
-        "rhd_dir": args.rhd_dir or cfg.get("rhd_dir", None),
+        "events_file": args.events_file or cfg.get("events_file", None),
+        "file_dir": args.file_dir or cfg.get("file_dir", None),
         "label": args.label or cfg.get("label", ""),
-        "channels": args.channels or cfg.get("channels", None),
+        "channels": parsed_channels if parsed_channels is not None else cfg.get("channels", None),
         "channel_map": args.channel_map or cfg.get("channel_map", None),
         "channel_map_file": args.channel_map_file or cfg.get("channel_map_file", "custom_channel_mappings.json"),
         "mapping_non_strict": args.mapping_non_strict or cfg.get("mapping_non_strict", False),

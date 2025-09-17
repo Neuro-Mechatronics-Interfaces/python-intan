@@ -96,6 +96,12 @@ def _infer_label_classes(y, class_names, label_to_id):
 
 def train_model(cfg: dict, save_eval: bool = False):
     label = cfg.get("label", "")
+
+    # if dataset_dir is provided, override root_dir for dataset search
+    data_path = None
+    if cfg.get("dataset_dir") is not None:
+        data_path = cfg["dataset_dir"]
+
     data_path = _find_dataset_path(cfg["root_dir"], label)
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Dataset file not found. Looked for: {data_path}")
@@ -187,6 +193,7 @@ def main():
     p = argparse.ArgumentParser(description="Train an EMG gesture classification model.")
     p.add_argument("--config_file", type=str, default=None)
     p.add_argument("--root_dir",   type=str, required=True)
+    p.add_argument("--dataset_dir", type=str, default=None,)
     p.add_argument("--label",      type=str, default="")
     p.add_argument("--kfold",      action="store_true")
     p.add_argument("--overwrite",  action="store_true")
@@ -200,6 +207,7 @@ def main():
         cfg = load_config_file(args.config_file)
     cfg.update({
         "root_dir": args.root_dir or cfg.get("root_dir", ""),
+        "dataset_dir": args.root_dir or cfg.get("dataset_dir", ""),
         "label": args.label or cfg.get("label", ""),
         "kfold": args.kfold or cfg.get("kfold", False),
         "overwrite": args.overwrite or cfg.get("overwrite", False),
@@ -207,7 +215,6 @@ def main():
     })
 
     train_model(cfg, args.save_eval)
-
 
 if __name__ == "__main__":
     main()

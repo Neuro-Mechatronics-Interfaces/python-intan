@@ -92,7 +92,7 @@ class RHXConfig:
         elif not isinstance(channels, Iterable):
             raise TypeError("Channels must be an int, range, or iterable list.")
 
-        self.clear_all_data_outputs()
+        #self.clear_all_data_outputs()
         for ch in channels:
             name = f"{port}-{ch:03d}"
             self.set_parameter(f"{name}.tcpdataoutputenabled", 'true' if status else 'false')
