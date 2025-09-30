@@ -448,8 +448,8 @@ def load_dat_file(filepath=None):
     if not filepath:
         root = tk.Tk()
         root.withdraw()  # Hide the main window
-        root_dir = filedialog.askdirectory()
-        if not root_dir:
+        filepath = filedialog.askdirectory()
+        if not filepath:
             print("No folder selected, returning.")
             return None, False
 
@@ -461,16 +461,16 @@ def load_dat_file(filepath=None):
     # file_dir = os.path.dirname(filepath)
 
     # Attempt to read header information from an .rhd file if it exists
-    if not os.path.exists(os.path.join(root_dir, 'info.rhd')):
+    if not os.path.exists(os.path.join(filepath, 'info.rhd')):
         print("No info.rhd file found in the directory.")
         return None, False
-    file_name = os.path.join(root_dir, 'info.rhd')
+    file_name = os.path.join(filepath, 'info.rhd')
 
     # Load the header information
     header = load_rhd_file(file_name, verbose=False)
 
     # Now load the associated .dat files (One File Per Signal Type format)
-    result = load_per_signal_files(root_dir, header)
+    result = load_per_signal_files(filepath, header)
 
     # Add header keys to the result
     for key in header.keys():

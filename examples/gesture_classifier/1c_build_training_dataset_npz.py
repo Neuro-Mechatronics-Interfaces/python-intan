@@ -13,8 +13,31 @@ from intan.io import load_npz_file, load_config_file, labels_from_events, build_
 from intan.processing import EMGPreprocessor, FEATURE_REGISTRY
 
 
+def _indices_by_port(names: list[str], port: str) -> list[int]:
+    p = (port or "").strip().upper().rstrip("-")
+    if p not in {"A", "B", "C", "D"}:
+        raise ValueError(f"Unknown port '{port}'. Expected one of A/B/C/D.")
+    prefix = f"{p}-"
+    return [i for i, n in enumerate(names) if n.upper().startswith(prefix)]
+
+
+def _parse_channels_arg(arg: str | None, total: int | None = None) -> list[int] | None:
+    if not arg:
+        return None
+    s = arg.strip().lower()
+    if s == "all":
+        # fall back to total if known; otherwise None means “use all”
+        return list(range(int(total))) if total is not None else None
+    if ":" in s:
+        a, b = s.split(":", 1)
+        return list(range(int(a), int(b)))
+    # allow comma or whitespace
+    parts = [tok for piece in s.split(",") for tok in piece.split()]
+    return [int(x) for x in parts if x != ""]
+
+
 def build_training_dataset(root_dir: str, events_file: str | None = None, file_dir: str | None = None, label: str = "", save_path: str | None = None, window_ms: int = 200,
-    step_ms: int = 50, channels: list[int] | None = None, channel_map: str | None = None,
+    step_ms: int = 50, port: str | None = None, channels: list[int] | None = None, channel_map: str | None = None,
     channel_map_file: str = "custom_channel_mappings.json", mapping_non_strict: bool = False, overwrite: bool = False,
     verbose: bool = False):
 
@@ -55,6 +78,9 @@ def build_training_dataset(root_dir: str, events_file: str | None = None, file_d
         # Build indices in the exact mapped order
         selected_channels = build_indices_from_mapping(raw_channel_names, mapping_names, strict=(not mapping_non_strict))
 
+    elif selected_channels is None and port:
+        selected_channels = _indices_by_port(raw_channel_names, port)
+
     if selected_channels is not None:
         logging.info(f"Using {len(selected_channels)} selected channels.")
         emg = emg[selected_channels, :]
@@ -88,9 +114,19 @@ def build_training_dataset(root_dir: str, events_file: str | None = None, file_d
     print(f"Loading events from: {events_file}")
     y = labels_from_events(events_file, window_starts)
 
+
     # Filter out Unknown/Start
     mask = ~np.isin(y, ["Unknown", "Start"])
     X, y, window_starts = X[mask], y[mask], window_starts[mask]
+
+    mask = ~np.isin(y, [
+        "ThumbIndexMiddleExtension",
+        "ThumbIndexExtension",
+        "IndexMiddleExtension",
+    ])
+    X, y, window_starts = X[mask], y[mask], window_starts[mask]
+
+    print("unique Y (after filtering):", np.unique(y))
 
     if X.shape[0] != len(y):
         raise ValueError(f"Mismatch windows ({X.shape[0]}) vs labels ({len(y)})")
@@ -139,7 +175,8 @@ if __name__ == "__main__":
     p.add_argument("--file_dir", type=str, required=True, help="If different from root_dir/raw")
     p.add_argument("--config_file", type=str, default=None)
     p.add_argument("--label", type=str, default="")
-    p.add_argument("--channels", nargs="+", type=int, default=None)
+    p.add_argument("--port", type=str, default=None, help="Filter channels by port letter (e.g., B). Ignored if --channel_map is provided.")
+    p.add_argument("--channels", type=str, default=None, help="Channel list: 'all', '0:64', '0 1 2', or '0,1,2'")
     p.add_argument("--channel_map", type=str, default=None, help="Name inside the mapping JSON (e.g., sleeve_halfcount)")
     p.add_argument("--channel_map_file", type=str, default="custom_channel_mappings.json", help="Path to mapping JSON")
     p.add_argument("--mapping_non_strict", action="store_true", help="Allow missing names in mapping (skip them)")
@@ -150,6 +187,9 @@ if __name__ == "__main__":
     p.add_argument("--verbose", action="store_true")
     args = p.parse_args()
 
+    parsed_channels = _parse_channels_arg(args.channels)
+    print(f" Parsed channels: {parsed_channels}")
+
     cfg = {}
     if args.config_file:
         cfg = load_config_file(args.config_file)
@@ -158,7 +198,8 @@ if __name__ == "__main__":
         "events_file": args.events_file or cfg.get("events_file", None),
         "file_dir": args.file_dir or cfg.get("file_dir", None),
         "label": args.label or cfg.get("label", ""),
-        "channels": args.channels or cfg.get("channels", None),
+        "port": args.port or cfg.get("port", None),
+        "channels": parsed_channels if parsed_channels is not None else cfg.get("channels", None),
         "channel_map": args.channel_map or cfg.get("channel_map", None),
         "channel_map_file": args.channel_map_file or cfg.get("channel_map_file", "custom_channel_mappings.json"),
         "mapping_non_strict": args.mapping_non_strict or cfg.get("mapping_non_strict", False),

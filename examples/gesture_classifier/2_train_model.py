@@ -193,7 +193,7 @@ def main():
     p = argparse.ArgumentParser(description="Train an EMG gesture classification model.")
     p.add_argument("--config_file", type=str, default=None)
     p.add_argument("--root_dir",   type=str, required=True)
-    p.add_argument("--dataset_dir", type=str, default=None,)
+    p.add_argument("--dataset_dir", type=str, default=None)
     p.add_argument("--label",      type=str, default="")
     p.add_argument("--kfold",      action="store_true")
     p.add_argument("--overwrite",  action="store_true")

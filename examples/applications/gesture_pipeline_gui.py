@@ -649,6 +649,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.resize(1150, 760)
 
         # Channel selection state (shared across tabs)
+        self._selected_channels = []  # <-- initialize so profile save/load is safe
         self.n_channels = 128
         self.channels_enabled = None  # np.bool_ array length n_channels
 
@@ -1414,7 +1415,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 "channels": self.tab_channel.spnCh.value(),
                 "rms_window": self.tab_channel.dsbWin.value(),
                 "mode": self.tab_channel.cmbMode.currentText(),
-                "selected": self._selected_channels,
+                "selected": getattr(self, "_selected_channels", []),
                 "host": self.tab_channel.leHost.text(),
                 "port": self.tab_channel.lePort.text(),
             },
