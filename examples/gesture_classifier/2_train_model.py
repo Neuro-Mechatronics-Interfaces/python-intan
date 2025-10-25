@@ -120,7 +120,45 @@ def train_model(cfg: dict, save_eval: bool = False):
         cv_metrics = manager.cross_validate(X, y)
         print("Cross-validation metrics:")
         for i, m in enumerate(cv_metrics, 1):
-            print(f"Fold {i}: {m}")
+            #print(f"Fold {i}: {m}")
+            print(f"Fold {i}")
+
+        # --- Minimal addition: save per-fold accuracy + mean/std as JSON ---
+        # Try to pull 'accuracy' from each fold; fall back to classification_report['accuracy'].
+        per_fold = []
+        for m in (cv_metrics or []):
+            acc = None
+            if isinstance(m, dict):
+                # Direct key
+                acc = m.get("accuracy", None)
+                # Fall back to nested classification_report
+                if acc is None:
+                    cr = m.get("classification_report") if isinstance(m.get("classification_report"), dict) else None
+                    if cr is not None:
+                        acc = cr.get("accuracy", None)
+            per_fold.append(float(acc) if acc is not None else float("nan"))
+
+        vals = np.array(per_fold, dtype=float)
+        mean = float(np.nanmean(vals)) if vals.size else float("nan")
+        std = float(np.nanstd(vals, ddof=1)) if vals.size > 1 else 0.0
+        print(f"Mean accuracy: {mean:.4f} ± {std:.4f}")
+
+        out_dir = os.path.join(cfg["root_dir"], "model")
+        os.makedirs(out_dir, exist_ok=True)
+        out_path = os.path.join(out_dir, f'{cfg.get("label", "")}_cv_summary.json'.strip("_"))
+
+        payload = {
+            "metric_name": "accuracy",
+            "per_fold": vals.tolist(),
+            "mean": mean,
+            "std": std,
+            "all_metrics": cv_metrics,  # keep raw fold outputs for later
+        }
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+        print(f"[INFO] Saved CV summary → {out_path}")
+        # --- End minimal addition ---
+
     elif not os.path.isfile(manager.model_path) or cfg.get("overwrite", False):
         print("Training new model...")
         manager.train(X, y)

@@ -99,6 +99,36 @@ class EMGTrialSelector:
         tk.Button(button_frame, text="Save", command=self.save_table).pack(side="left", padx=5)
         tk.Button(button_frame, text="Delete", command=self.delete_selected).pack(side="left", padx=5)
 
+        # Track drawn marker artists so we can clear them
+        self._marker_artists = []
+
+        # --- Edge Extraction Controls ---
+        tk.Label(sidebar_frame, text="Edge detect (selected chan)").pack(anchor="w", pady=(12, 0))
+
+        edge_frame = tk.Frame(sidebar_frame)
+        edge_frame.pack(fill="x", pady=4)
+
+        tk.Label(edge_frame, text="Threshold").grid(row=0, column=0, sticky="w")
+        self.edge_threshold_entry = tk.Entry(edge_frame, width=10)
+        self.edge_threshold_entry.grid(row=0, column=1, sticky="w", padx=4)
+        self.edge_threshold_entry.insert(0, "0.5")  # default threshold
+
+        tk.Label(edge_frame, text="Type").grid(row=1, column=0, sticky="w")
+        self.edge_type_combo = ttk.Combobox(edge_frame, state="readonly", width=12,
+                                            values=["rising", "falling"])
+        self.edge_type_combo.grid(row=1, column=1, sticky="w", padx=4)
+        self.edge_type_combo.current(0)
+
+        tk.Label(edge_frame, text="Min gap (ms)").grid(row=2, column=0, sticky="w")
+        self.edge_mingap_entry = tk.Entry(edge_frame, width=10)
+        self.edge_mingap_entry.grid(row=2, column=1, sticky="w", padx=4)
+        self.edge_mingap_entry.insert(0, "50")  # debounce gap
+
+        btns = tk.Frame(sidebar_frame)
+        btns.pack(fill="x", pady=4)
+        tk.Button(btns, text="Extract Edges", command=self.extract_edges).pack(side="left", padx=3)
+        tk.Button(btns, text="Clear Indices", command=self.clear_indices).pack(side="left", padx=3)
+
         self.canvas.mpl_connect("button_press_event", self.on_click)
 
     def load_file(self):
@@ -109,6 +139,7 @@ class EMGTrialSelector:
 
         path = filedialog.askopenfilename(filetypes=[
             ("RHD files", "*.rhd"),
+            ("NPZ Files", "*.npz"),
             ("CSV Files", "*.csv"),
             ("All files", "*.*")])
         if not path:
@@ -126,7 +157,19 @@ class EMGTrialSelector:
             emg_columns = [i for i, col in enumerate(header) if "EMG" in col]
             self.emg_data = data[:, emg_columns].T
 
-            self.sampling_rate = 1000.0 / (self.time_vector[1] - self.time_vector[0])  # Assuming uniform sampling
+            dt = float(self.time_vector[1] - self.time_vector[0])
+            if dt <= 0:
+                messagebox.showerror("Error", "Non-positive timestep in CSV.")
+                return
+            self.sampling_rate = 1.0 / dt  # Hz (seconds already)
+
+        elif path.endswith('.npz'):
+            # Load NPZ file. Should have 'emg_data' or 'emg', 'time_vector' or 't', and 'sampling_rate' or 'fs' keys
+            data = np.load(path)
+            self.emg_data = data['emg_data'] if 'emg_data' in data else data['emg']
+            self.time_vector = data['time_vector'] if 'time_vector' in data else data['t']
+            self.sampling_rate = float(data['sampling_rate'] if 'sampling_rate' in data else data['fs'])
+
         else:
             # Load RHD file. Should have dedicated structure
             result = load_rhd_file(path)
@@ -229,6 +272,99 @@ class EMGTrialSelector:
         for item in selected:
             self.table.delete(item)
 
+    def _detect_edges(self, x: np.ndarray, threshold: float, edge_type: str, min_gap_samples: int) -> np.ndarray:
+        """
+        Return sample indices where the signal crosses the threshold with a specified edge type.
+
+        x: 1D array (samples)
+        threshold: float
+        edge_type: 'rising' or 'falling'
+        min_gap_samples: minimum spacing between returned indices
+        """
+        if edge_type == "rising":
+            crossings = np.where((x[:-1] < threshold) & (x[1:] >= threshold))[0] + 1
+        elif edge_type == "falling":
+            crossings = np.where((x[:-1] > threshold) & (x[1:] <= threshold))[0] + 1
+        else:
+            crossings = np.array([], dtype=int)
+
+        # Debounce / min gap
+        if crossings.size == 0 or min_gap_samples <= 1:
+            return crossings
+
+        keep = [crossings[0]]
+        last = crossings[0]
+        for ix in crossings[1:]:
+            if ix - last >= min_gap_samples:
+                keep.append(ix)
+                last = ix
+        return np.asarray(keep, dtype=int)
+
+    def _add_marker_line(self, t_val: float, y_val: float | None = None):
+        """Draw and remember marker lines so we can clear them later."""
+        v = self.ax.axvline(x=t_val, color='blue', linestyle='--', alpha=0.8)
+        self._marker_artists.append(v)
+        if y_val is not None:
+            h = self.ax.axhline(y=y_val, color='red', linestyle='--', alpha=0.4)
+            self._marker_artists.append(h)
+
+    def extract_edges(self):
+        if self.emg_data is None or self.time_vector is None or self.sampling_rate is None:
+            return
+
+        try:
+            thr = float(self.edge_threshold_entry.get())
+        except Exception:
+            messagebox.showerror("Error", "Threshold must be a number.")
+            return
+
+        # Use the combobox value for detection type:
+        edge_kind = self.edge_type_combo.get()  # "rising" or "falling"
+
+        # Use the text entry as the saved label:
+        label = self.label_entry.get().strip() or edge_kind
+
+        try:
+            min_gap_ms = float(self.edge_mingap_entry.get())
+        except Exception:
+            messagebox.showerror("Error", "Min gap must be a number (ms).")
+            return
+
+        min_gap_samples = max(1, int((min_gap_ms / 1000.0) * float(self.sampling_rate)))
+
+        chan = self.current_channel
+        x = self.emg_data[chan].astype(float, copy=False)
+
+        idxs = self._detect_edges(x, thr, edge_kind, min_gap_samples)
+        if idxs.size == 0:
+            messagebox.showinfo("Edges", "No edges found with current parameters.")
+            return
+
+        added = 0
+        for idx in idxs:
+            t = idx / float(self.sampling_rate)
+            self.table.insert("", "end", values=(int(idx), label))
+            self._add_marker_line(t_val=t, y_val=None)
+            added += 1
+
+        self.canvas.draw()
+        messagebox.showinfo("Edges", f"Added {added} edge(s) labeled '{label}'.")
+
+    def clear_indices(self):
+        """Clear all rows in the table and remove drawn marker lines."""
+        # Clear table
+        for item in self.table.get_children():
+            self.table.delete(item)
+        # Remove marker artists
+        try:
+            for art in self._marker_artists:
+                art.remove()
+        except Exception:
+            pass
+        self._marker_artists.clear()
+        self.canvas.draw()
+
+
     def update_channel(self, event=None):
         """
         Update the current channel based on the selection from the dropdown.
@@ -260,8 +396,9 @@ class EMGTrialSelector:
             return
 
         sample_index = max(0, int(time_clicked * self.sampling_rate))
-        self.ax.axvline(x=time_clicked, color='blue', linestyle='--')
-        self.ax.axhline(y=amp_clicked, color='red', linestyle='--')
+        #self.ax.axvline(x=time_clicked, color='blue', linestyle='--')
+        #self.ax.axhline(y=amp_clicked, color='red', linestyle='--')
+        self._add_marker_line(t_val=time_clicked, y_val=amp_clicked)
         self.canvas.draw()
 
         # Insert editable row into the table
@@ -284,3 +421,7 @@ class EMGTrialSelector:
     def on_closing(self):
         self.root.quit()
 
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = EMGTrialSelector(root)
+    root.mainloop()
