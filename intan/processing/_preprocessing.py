@@ -22,6 +22,7 @@ class EMGPreprocessor:
         notch_freqs: tuple[float, ...] = (60.0,), notch_q: float = 30.0, envelope_cutoff: float | None = None,
         envelope_order: int = 4, feature_fns: List[Union[str, Callable]] | None = None, verbose: bool = False,
     ):
+        self._imu_norm_stats = None
         self.fs = float(fs)
         self.band = (float(band[0]), float(band[1]))
         self.notch_freqs = tuple(float(f) for f in notch_freqs)
@@ -179,3 +180,29 @@ class EMGPreprocessor:
             spec["n_channels"] = int(n_channels)
             spec["n_features_per_channel"] = len(self._feature_names)
         return spec
+
+    def fit_imu_normalizer(self, imu_matrix, eps: float = 1e-6):
+        """
+        imu_matrix: shape (n_windows, n_imu_features)
+        Returns dict with 'mean' and 'std' (1D arrays length = n_imu_features).
+        """
+        X = np.asarray(imu_matrix, dtype=np.float32)
+        mu = np.nanmean(X, axis=0)
+        sd = np.nanstd(X, axis=0)
+        sd = np.where(sd < eps, 1.0, sd)  # guard zero-variance columns
+        self._imu_norm_stats = {"mean": mu.astype(np.float32), "std": sd.astype(np.float32)}
+        return self._imu_norm_stats
+
+    def transform_imu(self, imu_matrix, stats: dict | None = None):
+        """
+        Apply z-score normalization column-wise using provided or fitted stats.
+        """
+        st = stats or getattr(self, "_imu_norm_stats", None)
+        if st is None:
+            raise RuntimeError("IMU normalizer not fitted; call fit_imu_normalizer() or pass stats.")
+        X = np.asarray(imu_matrix, dtype=np.float32)
+        return (X - st["mean"]) / st["std"]
+
+    def fit_transform_imu(self, imu_matrix, eps: float = 1e-6):
+        st = self.fit_imu_normalizer(imu_matrix, eps=eps)
+        return self.transform_imu(imu_matrix, stats=st), st

@@ -401,7 +401,7 @@ class IntanRHXDevice(RHXConfig):
 
         self._lsl_close_outlets()
 
-    def get_latest_window(self, duration_ms):
+    def get_latest_window(self, duration_ms=200):
         num_samples = int(self.sample_rate * duration_ms / 1000)
         buf_len = self.circular_buffer.shape[1]
         with self.buffer_lock:
