@@ -8,12 +8,15 @@ All visualization utilities for EMG and Intan data, including waterfall, single-
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: intan.plotting._emg_plots
+Submodules
+----------
+
+.. automodule:: intan.plotting._realtime_plotter
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: intan.plotting._realtime_plotter
+.. automodule:: intan.plotting._stacked_plot
    :members:
    :undoc-members:
    :show-inheritance:

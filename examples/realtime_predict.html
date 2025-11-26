@@ -49,7 +49,7 @@
               <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">FAQS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">Frequently Asked Questions (FAQs)</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
@@ -125,7 +125,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Example: Predict gestures in real-time using a pre-trained model.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.rhx_interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_labeled_file</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">joblib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
@@ -188,9 +188,9 @@
 <span class="k">finally</span><span class="p">:</span>
     <span class="n">device</span><span class="o">.</span><span class="n">stop_streaming</span><span class="p">()</span>
     <span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-<span class="err">```</span>
 </pre></div>
 </div>
+<hr class="docutils" />
 </section>
 
 

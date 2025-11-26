@@ -36,7 +36,7 @@ You’ll see how to:
     matplotlib.use("Qt5Agg")  # Use fast, responsive backend
     import matplotlib.pyplot as plt
     import matplotlib.animation as animation
-    from intan.rhx_interface import IntanRHXDevice
+    from intan.interface import IntanRHXDevice
 
     # === Configuration ===
     CHANNELS = [10, 11, 12, 13, 14, 15]

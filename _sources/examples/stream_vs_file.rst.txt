@@ -26,7 +26,7 @@ This is useful for verifying that your live streaming pipeline matches the saved
 
     import matplotlib.pyplot as plt
     from intan.io import load_rhd_file
-    from intan.rhx_interface import IntanRHXDevice, config_options
+    from intan.interface import IntanRHXDevice, RHXConfig
 
     # === Config ===
     SAMPLES_TO_COMPARE = 8000    # Number of samples to compare (e.g., 2 seconds at 4 kHz)
@@ -35,7 +35,7 @@ This is useful for verifying that your live streaming pipeline matches the saved
     # --- 1. Stream data live from RHX device ---
     print("Connecting to RHX TCP client...")
     device = IntanRHXDevice()
-    config_options.set_channel(device, 'a', channel=CHANNEL_INDEX, enable_wide=True)
+    device.enable_wide_channel([CHANNEL_INDEX], port='a', status=True)
 
     print("Streaming data...")
     timestamps, voltages = device.stream(duration_sec=2)

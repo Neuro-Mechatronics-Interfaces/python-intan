@@ -10,10 +10,8 @@ These examples demonstrate integration between Intan EMG systems and external ha
 
 Control a 3D-printed robotic hand using EMG-based gesture recognition. This example shows how to integrate the Intan system with a Raspberry Pi Pico-controlled servo system.
 
-.. image:: ../../assets/arm-moving.gif
-    :alt: 3D-printed arm in action
-    :width: 600
-    :align: center
+.. note::
+   Demo video available in the `3D printed arm README <https://github.com/Neuro-Mechatronics-Interfaces/python-intan/tree/main/examples/3D_printed_arm_control>`_.
 
 **Hardware Requirements:**
 

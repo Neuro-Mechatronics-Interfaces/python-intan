@@ -22,8 +22,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="intan.plotting package" href="intan.plotting.html" />
-    <link rel="prev" title="intan.decomposition package" href="intan.decomposition.html" /> 
+    <link rel="next" title="intan.ml package" href="intan.ml.html" />
+    <link rel="prev" title="intan.interface package" href="intan.interface.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -49,7 +49,7 @@
               <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">FAQS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">Frequently Asked Questions (FAQs)</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
@@ -66,10 +66,11 @@
 <li class="toctree-l3 current"><a class="reference internal" href="intan.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="intan.applications.html">intan.applications package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="intan.decomposition.html">intan.decomposition package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.interface.html">intan.interface package</a></li>
 <li class="toctree-l4 current"><a class="current reference internal" href="#">intan.io package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.ml.html">intan.ml package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="intan.plotting.html">intan.plotting package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="intan.processing.html">intan.processing package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="intan.rhx_interface.html">intan.rhx_interface package</a></li>
 <li class="toctree-l4"><a class="reference internal" href="intan.samples.html">intan.samples package</a></li>
 </ul>
 </li>
@@ -109,6 +110,33 @@
   <section id="intan-io-package">
 <h1>intan.io package<a class="headerlink" href="#intan-io-package" title="Link to this heading"></a></h1>
 <p>This module contains all the I/O utilities for loading, saving, and managing Intan files.</p>
+<section id="module-intan.io._canonicalizer">
+<span id="submodules"></span><h2>Submodules<a class="headerlink" href="#module-intan.io._canonicalizer" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.io._canonicalizer.canonical_label">
+<span class="sig-name descname"><span class="pre">canonical_label</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lower'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_fuzzy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fuzzy_cutoff</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.88</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/io/_canonicalizer.html#canonical_label"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.io._canonicalizer.canonical_label" title="Link to this definition"></a></dt>
+<dd><p>Canonicalize a raw label string to your official namespace.
+:rtype: <span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></span></p>
+<ul class="simple">
+<li><p>style=”camel”: return CamelCase (e.g., “PinkyFlexion”)</p></li>
+<li><p>style=”lower”: return canonical token key (e.g., “pinkyflexion”)</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>s</strong> (<em>str</em>)</p></li>
+<li><p><strong>style</strong> (<em>str</em>)</p></li>
+<li><p><strong>allow_fuzzy</strong> (<em>bool</em>)</p></li>
+<li><p><strong>fuzzy_cutoff</strong> (<em>float</em>)</p></li>
+<li><p><strong>strict</strong> (<em>bool</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
 <p id="module-intan.io._exceptions">intan.io._exceptions</p>
 <p>Custom exception classes used throughout the <cite>intan</cite> package.</p>
 <p>These exceptions provide clearer debugging information for:
@@ -187,14 +215,85 @@ is not an integer multiple of the excepted data block size.</p>
 expected RHX TCP magic number (0x2ef07a08).</p>
 </dd></dl>
 
+<dl class="py function" id="module-intan.io._rhd_channel_utils">
+<dt class="sig sig-object py" id="intan.io._rhd_channel_utils.print_all_channel_names">
+<span class="sig-name descname"><span class="pre">print_all_channel_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">result</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/io/_rhd_channel_utils.html#print_all_channel_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.io._rhd_channel_utils.print_all_channel_names" title="Link to this definition"></a></dt>
+<dd><p>Searches through all present signal types in ‘result’ dict, and prints
+the names of these channels. Useful, for example, to determine names of
+channels that can be plotted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>result</strong> (<em>dict</em>) – The result of a call to read_header() or header_to_result().</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.io._rhd_channel_utils.print_names_in_group">
+<span class="sig-name descname"><span class="pre">print_names_in_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal_group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/io/_rhd_channel_utils.html#print_names_in_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.io._rhd_channel_utils.print_names_in_group" title="Link to this definition"></a></dt>
+<dd><p>Searches through all channels in this group and print them.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>signal_group</strong> (<em>list</em>) – The list of channels to search through.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.io._rhd_channel_utils.find_channel_in_group">
+<span class="sig-name descname"><span class="pre">find_channel_in_group</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_group</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/io/_rhd_channel_utils.html#find_channel_in_group"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.io._rhd_channel_utils.find_channel_in_group" title="Link to this definition"></a></dt>
+<dd><p>Finds a channel with this name in this group, returning whether or not
+it’s present and, if so, the position of this channel in signal_group.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel_name</strong> (<em>str</em>) – The name of the channel to search for.</p></li>
+<li><p><strong>signal_group</strong> (<em>list</em>) – The list of channels to search through.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether or not the channel was found.
+channel_index (int): The index of the channel in signal_group.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>channel_found (bool)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.io._rhd_channel_utils.find_channel_in_header">
+<span class="sig-name descname"><span class="pre">find_channel_in_header</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">header</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/io/_rhd_channel_utils.html#find_channel_in_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.io._rhd_channel_utils.find_channel_in_header" title="Link to this definition"></a></dt>
+<dd><p>Looks through all present signal groups in header, searching for
+‘channel_name’. If found, return the signal group and the index of that
+channel within the group.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>channel_name</strong> (<em>str</em>) – The name of the channel to search for.</p></li>
+<li><p><strong>header</strong> (<em>dict</em>) – The header dictionary containing signal groups.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Whether or not the channel was found.
+signal_group_name (str): The name of the signal group containing the channel.
+channel_index (int): The index of the channel in the signal group.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>channel_found (bool)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 </section>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="intan.decomposition.html" class="btn btn-neutral float-left" title="intan.decomposition package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="intan.plotting.html" class="btn btn-neutral float-right" title="intan.plotting package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="intan.interface.html" class="btn btn-neutral float-left" title="intan.interface package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="intan.ml.html" class="btn btn-neutral float-right" title="intan.ml package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

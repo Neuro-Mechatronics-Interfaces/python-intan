@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FAQS &mdash; python-intan 0.0.3 documentation</title>
+  <title>Frequently Asked Questions (FAQs) &mdash; python-intan 0.0.3 documentation</title>
       <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
@@ -49,10 +49,85 @@
               <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">FAQS</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#where-can-i-find-anaconda">Where can I find Anaconda?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#how-do-i-install-anaconda">How do I install Anaconda?</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#is-lsl-supported">IS LSL Supported?</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Frequently Asked Questions (FAQs)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation-setup">Installation &amp; Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#where-can-i-find-anaconda">Where can I find Anaconda?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-install-anaconda">How do I install Anaconda?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-install-the-python-intan-package">How do I install the python-intan package?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-python-version-is-required">What Python version is required?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-enable-gpu-support-for-tensorflow">How do I enable GPU support for TensorFlow?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#file-loading-data-access">File Loading &amp; Data Access</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-file-formats-are-supported">What file formats are supported?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-load-a-rhd-file">How do I load a .rhd file?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#can-i-load-multiple-files-at-once">Can I load multiple files at once?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-access-specific-channels">How do I access specific channels?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#why-is-my-file-loading-slowly">Why is my file loading slowly?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#device-hardware">Device &amp; Hardware</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#is-lsl-supported">Is LSL Supported?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-connect-to-an-intan-rhx-device">How do I connect to an Intan RHX device?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#my-device-won-t-connect-what-should-i-check">My device won’t connect. What should I check?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-hardware-is-compatible">What hardware is compatible?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#can-i-use-this-without-intan-hardware">Can I use this without Intan hardware?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#data-processing">Data Processing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-filter-my-emg-data">How do I filter my EMG data?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-preprocessing-steps-are-recommended-for-emg">What preprocessing steps are recommended for EMG?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-calculate-rms">How do I calculate RMS?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-downsample-my-data">How do I downsample my data?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#machine-learning">Machine Learning</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-train-a-gesture-classifier">How do I train a gesture classifier?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-ml-models-are-supported">What ML models are supported?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-much-training-data-do-i-need">How much training data do I need?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#my-model-accuracy-is-low-how-can-i-improve-it">My model accuracy is low. How can I improve it?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#visualization">Visualization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-plot-my-data">How do I plot my data?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-create-real-time-plots">How do I create real-time plots?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#can-i-use-the-gui-applications">Can I use the GUI applications?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#troubleshooting">Troubleshooting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#importerror-no-module-named-intan">ImportError: No module named ‘intan’</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#modulenotfounderror-no-module-named-tensorflow">ModuleNotFoundError: No module named ‘tensorflow’</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#could-not-connect-to-rhx-tcp-server-error">“Could not connect to RHX TCP server” error</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#memory-error-when-loading-large-files">Memory error when loading large files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pyqt5-errors-in-gui-applications">PyQt5 errors in GUI applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sampling-rate-mismatch-warnings">Sampling rate mismatch warnings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#channels-appear-empty-or-zero">Channels appear empty or zero</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#performance-optimization">Performance Optimization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-can-i-speed-up-real-time-processing">How can I speed up real-time processing?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-optimize-for-low-latency">How do I optimize for low latency?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#platform-specific">Platform-Specific</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#does-this-work-on-macos">Does this work on macOS?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#does-this-work-on-linux">Does this work on Linux?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#can-i-use-this-in-wsl2">Can I use this in WSL2?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#contributing-support">Contributing &amp; Support</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-can-i-contribute">How can I contribute?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#where-can-i-get-help">Where can I get help?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-report-a-bug">How do I report a bug?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#is-this-package-maintained">Is this package maintained?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#citation-license">Citation &amp; License</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#how-do-i-cite-this-package">How do I cite this package?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#what-license-is-this-under">What license is this under?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#still-have-questions">Still have questions?</a></li>
 </ul>
 </li>
 </ul>
@@ -83,7 +158,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">FAQS</li>
+      <li class="breadcrumb-item active">Frequently Asked Questions (FAQs)</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../_sources/info/faqs.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -93,19 +168,743 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="faqs">
-<h1>FAQS<a class="headerlink" href="#faqs" title="Link to this heading"></a></h1>
+  <section id="frequently-asked-questions-faqs">
+<h1>Frequently Asked Questions (FAQs)<a class="headerlink" href="#frequently-asked-questions-faqs" title="Link to this heading"></a></h1>
+<nav class="contents local" id="quick-links">
+<p class="topic-title">Quick Links</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#installation-setup" id="id1">Installation &amp; Setup</a></p>
+<ul>
+<li><p><a class="reference internal" href="#where-can-i-find-anaconda" id="id2">Where can I find Anaconda?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-install-anaconda" id="id3">How do I install Anaconda?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-install-the-python-intan-package" id="id4">How do I install the python-intan package?</a></p></li>
+<li><p><a class="reference internal" href="#what-python-version-is-required" id="id5">What Python version is required?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-enable-gpu-support-for-tensorflow" id="id6">How do I enable GPU support for TensorFlow?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#file-loading-data-access" id="id7">File Loading &amp; Data Access</a></p>
+<ul>
+<li><p><a class="reference internal" href="#what-file-formats-are-supported" id="id8">What file formats are supported?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-load-a-rhd-file" id="id9">How do I load a .rhd file?</a></p></li>
+<li><p><a class="reference internal" href="#can-i-load-multiple-files-at-once" id="id10">Can I load multiple files at once?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-access-specific-channels" id="id11">How do I access specific channels?</a></p></li>
+<li><p><a class="reference internal" href="#why-is-my-file-loading-slowly" id="id12">Why is my file loading slowly?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#device-hardware" id="id13">Device &amp; Hardware</a></p>
+<ul>
+<li><p><a class="reference internal" href="#is-lsl-supported" id="id14">Is LSL Supported?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-connect-to-an-intan-rhx-device" id="id15">How do I connect to an Intan RHX device?</a></p></li>
+<li><p><a class="reference internal" href="#my-device-won-t-connect-what-should-i-check" id="id16">My device won’t connect. What should I check?</a></p></li>
+<li><p><a class="reference internal" href="#what-hardware-is-compatible" id="id17">What hardware is compatible?</a></p></li>
+<li><p><a class="reference internal" href="#can-i-use-this-without-intan-hardware" id="id18">Can I use this without Intan hardware?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#data-processing" id="id19">Data Processing</a></p>
+<ul>
+<li><p><a class="reference internal" href="#how-do-i-filter-my-emg-data" id="id20">How do I filter my EMG data?</a></p></li>
+<li><p><a class="reference internal" href="#what-preprocessing-steps-are-recommended-for-emg" id="id21">What preprocessing steps are recommended for EMG?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-calculate-rms" id="id22">How do I calculate RMS?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-downsample-my-data" id="id23">How do I downsample my data?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#machine-learning" id="id24">Machine Learning</a></p>
+<ul>
+<li><p><a class="reference internal" href="#how-do-i-train-a-gesture-classifier" id="id25">How do I train a gesture classifier?</a></p></li>
+<li><p><a class="reference internal" href="#what-ml-models-are-supported" id="id26">What ML models are supported?</a></p></li>
+<li><p><a class="reference internal" href="#how-much-training-data-do-i-need" id="id27">How much training data do I need?</a></p></li>
+<li><p><a class="reference internal" href="#my-model-accuracy-is-low-how-can-i-improve-it" id="id28">My model accuracy is low. How can I improve it?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#visualization" id="id29">Visualization</a></p>
+<ul>
+<li><p><a class="reference internal" href="#how-do-i-plot-my-data" id="id30">How do I plot my data?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-create-real-time-plots" id="id31">How do I create real-time plots?</a></p></li>
+<li><p><a class="reference internal" href="#can-i-use-the-gui-applications" id="id32">Can I use the GUI applications?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#troubleshooting" id="id33">Troubleshooting</a></p>
+<ul>
+<li><p><a class="reference internal" href="#importerror-no-module-named-intan" id="id34">ImportError: No module named ‘intan’</a></p></li>
+<li><p><a class="reference internal" href="#modulenotfounderror-no-module-named-tensorflow" id="id35">ModuleNotFoundError: No module named ‘tensorflow’</a></p></li>
+<li><p><a class="reference internal" href="#could-not-connect-to-rhx-tcp-server-error" id="id36">“Could not connect to RHX TCP server” error</a></p></li>
+<li><p><a class="reference internal" href="#memory-error-when-loading-large-files" id="id37">Memory error when loading large files</a></p></li>
+<li><p><a class="reference internal" href="#pyqt5-errors-in-gui-applications" id="id38">PyQt5 errors in GUI applications</a></p></li>
+<li><p><a class="reference internal" href="#sampling-rate-mismatch-warnings" id="id39">Sampling rate mismatch warnings</a></p></li>
+<li><p><a class="reference internal" href="#channels-appear-empty-or-zero" id="id40">Channels appear empty or zero</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#performance-optimization" id="id41">Performance Optimization</a></p>
+<ul>
+<li><p><a class="reference internal" href="#how-can-i-speed-up-real-time-processing" id="id42">How can I speed up real-time processing?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-optimize-for-low-latency" id="id43">How do I optimize for low latency?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#platform-specific" id="id44">Platform-Specific</a></p>
+<ul>
+<li><p><a class="reference internal" href="#does-this-work-on-macos" id="id45">Does this work on macOS?</a></p></li>
+<li><p><a class="reference internal" href="#does-this-work-on-linux" id="id46">Does this work on Linux?</a></p></li>
+<li><p><a class="reference internal" href="#can-i-use-this-in-wsl2" id="id47">Can I use this in WSL2?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#contributing-support" id="id48">Contributing &amp; Support</a></p>
+<ul>
+<li><p><a class="reference internal" href="#how-can-i-contribute" id="id49">How can I contribute?</a></p></li>
+<li><p><a class="reference internal" href="#where-can-i-get-help" id="id50">Where can I get help?</a></p></li>
+<li><p><a class="reference internal" href="#how-do-i-report-a-bug" id="id51">How do I report a bug?</a></p></li>
+<li><p><a class="reference internal" href="#is-this-package-maintained" id="id52">Is this package maintained?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#citation-license" id="id53">Citation &amp; License</a></p>
+<ul>
+<li><p><a class="reference internal" href="#how-do-i-cite-this-package" id="id54">How do I cite this package?</a></p></li>
+<li><p><a class="reference internal" href="#what-license-is-this-under" id="id55">What license is this under?</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#still-have-questions" id="id56">Still have questions?</a></p></li>
+</ul>
+</nav>
+<hr class="docutils" />
+<section id="installation-setup">
+<h2><a class="toc-backref" href="#id1" role="doc-backlink">Installation &amp; Setup</a><a class="headerlink" href="#installation-setup" title="Link to this heading"></a></h2>
 <section id="where-can-i-find-anaconda">
-<h2>Where can I find Anaconda?<a class="headerlink" href="#where-can-i-find-anaconda" title="Link to this heading"></a></h2>
+<h3><a class="toc-backref" href="#id2" role="doc-backlink">Where can I find Anaconda?</a><a class="headerlink" href="#where-can-i-find-anaconda" title="Link to this heading"></a></h3>
 <p>Anaconda can be downloaded from the official website at <a class="reference external" href="https://www.anaconda.com/products/distribution">https://www.anaconda.com/products/distribution</a>. It is available for Windows, macOS, and Linux.</p>
 </section>
 <section id="how-do-i-install-anaconda">
-<h2>How do I install Anaconda?<a class="headerlink" href="#how-do-i-install-anaconda" title="Link to this heading"></a></h2>
+<h3><a class="toc-backref" href="#id3" role="doc-backlink">How do I install Anaconda?</a><a class="headerlink" href="#how-do-i-install-anaconda" title="Link to this heading"></a></h3>
 <p>Anaconda can be installed by downloading the installer from the official website and following the installation instructions provided there. The installation process is straightforward and typically involves running the downloaded installer and following the prompts.</p>
+<p>Alternatively, you can use Miniconda (a minimal version): <a class="reference external" href="https://docs.conda.io/en/latest/miniconda.html">https://docs.conda.io/en/latest/miniconda.html</a></p>
 </section>
+<section id="how-do-i-install-the-python-intan-package">
+<h3><a class="toc-backref" href="#id4" role="doc-backlink">How do I install the python-intan package?</a><a class="headerlink" href="#how-do-i-install-the-python-intan-package" title="Link to this heading"></a></h3>
+<p><strong>From PyPI (recommended):</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>python-intan
+</pre></div>
+</div>
+<p><strong>From source (for development):</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Neuro-Mechatronics-Interfaces/python-intan.git
+<span class="nb">cd</span><span class="w"> </span>python-intan
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+</section>
+<section id="what-python-version-is-required">
+<h3><a class="toc-backref" href="#id5" role="doc-backlink">What Python version is required?</a><a class="headerlink" href="#what-python-version-is-required" title="Link to this heading"></a></h3>
+<p>Python 3.10 or higher is required. We recommend Python 3.10 or 3.11 for best compatibility with TensorFlow and other dependencies.</p>
+</section>
+<section id="how-do-i-enable-gpu-support-for-tensorflow">
+<h3><a class="toc-backref" href="#id6" role="doc-backlink">How do I enable GPU support for TensorFlow?</a><a class="headerlink" href="#how-do-i-enable-gpu-support-for-tensorflow" title="Link to this heading"></a></h3>
+<p><strong>For NVIDIA GPUs on Windows/WSL2:</strong></p>
+<ol class="arabic">
+<li><p>Install NVIDIA drivers for your GPU</p></li>
+<li><p>Install CUDA toolkit:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># WSL2</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>cuda
+
+<span class="c1"># Or via pip</span>
+pip<span class="w"> </span>install<span class="w"> </span>tensorflow<span class="o">[</span>and-cuda<span class="o">]</span><span class="w"> </span>nvidia-cudnn-cu12
+</pre></div>
+</div>
+</li>
+<li><p>Verify GPU availability:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">list_physical_devices</span><span class="p">(</span><span class="s1">&#39;GPU&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>See the <a class="reference internal" href="../examples/gesture_classification.html"><span class="doc">Gesture Classification Pipeline</span></a> guide for detailed GPU setup instructions.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="file-loading-data-access">
+<h2><a class="toc-backref" href="#id7" role="doc-backlink">File Loading &amp; Data Access</a><a class="headerlink" href="#file-loading-data-access" title="Link to this heading"></a></h2>
+<section id="what-file-formats-are-supported">
+<h3><a class="toc-backref" href="#id8" role="doc-backlink">What file formats are supported?</a><a class="headerlink" href="#what-file-formats-are-supported" title="Link to this heading"></a></h3>
+<p>The package supports:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">.rhd</span></code> - Intan’s native recording format (recommended)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.rhs</span></code> - Intan stimulation recording format</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.dat</span></code> - Legacy Intan binary format</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.csv</span></code> - Comma-separated values (for preprocessed data)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">.npz</span></code> - NumPy compressed arrays (for processed datasets)</p></li>
+</ul>
+<p>See <a class="reference internal" href="../examples/loading_data.html"><span class="doc">Loading and Parsing Data Files</span></a> for examples.</p>
+</section>
+<section id="how-do-i-load-a-rhd-file">
+<h3><a class="toc-backref" href="#id9" role="doc-backlink">How do I load a .rhd file?</a><a class="headerlink" href="#how-do-i-load-a-rhd-file" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rhd_file</span>
+
+<span class="c1"># With file picker dialog</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">()</span>
+
+<span class="c1"># Or specify path directly</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">(</span><span class="s1">&#39;/path/to/file.rhd&#39;</span><span class="p">)</span>
+
+<span class="c1"># Access data</span>
+<span class="n">emg_data</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">]</span>  <span class="c1"># Shape: (channels, samples)</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;frequency_parameters&#39;</span><span class="p">][</span><span class="s1">&#39;amplifier_sample_rate&#39;</span><span class="p">]</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;t_amplifier&#39;</span><span class="p">]</span>  <span class="c1"># Time vector</span>
+</pre></div>
+</div>
+</section>
+<section id="can-i-load-multiple-files-at-once">
+<h3><a class="toc-backref" href="#id10" role="doc-backlink">Can I load multiple files at once?</a><a class="headerlink" href="#can-i-load-multiple-files-at-once" title="Link to this heading"></a></h3>
+<p>Yes! Use <code class="docutils literal notranslate"><span class="pre">load_rhd_files()</span></code> with the <code class="docutils literal notranslate"><span class="pre">concatenate</span></code> option:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rhd_files</span>
+
+<span class="c1"># Load as separate files</span>
+<span class="n">results_list</span> <span class="o">=</span> <span class="n">load_rhd_files</span><span class="p">(</span><span class="n">concatenate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Or concatenate into single recording</span>
+<span class="n">combined</span> <span class="o">=</span> <span class="n">load_rhd_files</span><span class="p">(</span><span class="n">concatenate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="how-do-i-access-specific-channels">
+<h3><a class="toc-backref" href="#id11" role="doc-backlink">How do I access specific channels?</a><a class="headerlink" href="#how-do-i-access-specific-channels" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rhd_file</span><span class="p">,</span> <span class="n">get_channel_names</span>
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">(</span><span class="s1">&#39;data.rhd&#39;</span><span class="p">)</span>
+
+<span class="c1"># Get all channel names</span>
+<span class="n">channel_names</span> <span class="o">=</span> <span class="n">get_channel_names</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">channel_names</span><span class="p">)</span>  <span class="c1"># [&#39;A-000&#39;, &#39;A-001&#39;, ...]</span>
+
+<span class="c1"># Access by index</span>
+<span class="n">channel_5_data</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">][</span><span class="mi">5</span><span class="p">,</span> <span class="p">:]</span>
+
+<span class="c1"># Access by name</span>
+<span class="n">channel_idx</span> <span class="o">=</span> <span class="n">channel_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s1">&#39;A-015&#39;</span><span class="p">)</span>
+<span class="n">channel_data</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">][</span><span class="n">channel_idx</span><span class="p">,</span> <span class="p">:]</span>
+</pre></div>
+</div>
+</section>
+<section id="why-is-my-file-loading-slowly">
+<h3><a class="toc-backref" href="#id12" role="doc-backlink">Why is my file loading slowly?</a><a class="headerlink" href="#why-is-my-file-loading-slowly" title="Link to this heading"></a></h3>
+<p>Large files (&gt;1GB) can take time to load. Try:</p>
+<ol class="arabic">
+<li><p><strong>Memory-mapped loading</strong> (doesn’t load entire file into RAM):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">(</span><span class="s1">&#39;large_file.rhd&#39;</span><span class="p">,</span> <span class="n">mmap_mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Load only specific channels</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">(</span><span class="s1">&#39;data.rhd&#39;</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Use a faster disk</strong> (SSD vs HDD makes a big difference)</p></li>
+</ol>
+</section>
+</section>
+<hr class="docutils" />
+<section id="device-hardware">
+<h2><a class="toc-backref" href="#id13" role="doc-backlink">Device &amp; Hardware</a><a class="headerlink" href="#device-hardware" title="Link to this heading"></a></h2>
 <section id="is-lsl-supported">
-<h2>IS LSL Supported?<a class="headerlink" href="#is-lsl-supported" title="Link to this heading"></a></h2>
-<p>Not yet, but it is planned for future releases. The library will eventually support the Lab Streaming Layer (LSL) for real-time data streaming and synchronization.</p>
+<h3><a class="toc-backref" href="#id14" role="doc-backlink">Is LSL Supported?</a><a class="headerlink" href="#is-lsl-supported" title="Link to this heading"></a></h3>
+<p><strong>Yes!</strong> Lab Streaming Layer (LSL) is fully supported as of version 0.0.2. You can:</p>
+<ul class="simple">
+<li><p>Publish Intan EMG data to LSL streams</p></li>
+<li><p>Subscribe to external LSL marker streams</p></li>
+<li><p>Synchronize recording with other LSL-compatible applications</p></li>
+</ul>
+<p>See <a class="reference internal" href="../examples/lsl_streaming.html"><span class="doc">Lab Streaming Layer (LSL) Integration</span></a> for complete examples.</p>
+</section>
+<section id="how-do-i-connect-to-an-intan-rhx-device">
+<h3><a class="toc-backref" href="#id15" role="doc-backlink">How do I connect to an Intan RHX device?</a><a class="headerlink" href="#how-do-i-connect-to-an-intan-rhx-device" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
+
+<span class="c1"># Connect (defaults to localhost:5000/5001)</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">()</span>
+
+<span class="c1"># Enable channels</span>
+<span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">))</span>  <span class="c1"># Enable first 64 channels</span>
+
+<span class="c1"># Start streaming</span>
+<span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
+
+<span class="c1"># Get data</span>
+<span class="n">timestamps</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">duration_sec</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+
+<span class="c1"># Cleanup</span>
+<span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Important:</strong> Make sure the RHX software is running with TCP servers enabled (Remote Control → Network).</p>
+</section>
+<section id="my-device-won-t-connect-what-should-i-check">
+<h3><a class="toc-backref" href="#id16" role="doc-backlink">My device won’t connect. What should I check?</a><a class="headerlink" href="#my-device-won-t-connect-what-should-i-check" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p><strong>Is RHX software running?</strong> The Intan RHX software must be open</p></li>
+<li><p><strong>Are TCP servers enabled?</strong> In RHX: Network → Enable TCP Servers</p></li>
+<li><p><strong>Check ports:</strong> Default is 5000 (command) and 5001 (data). Verify in RHX settings</p></li>
+<li><p><strong>Firewall:</strong> Ensure Windows Firewall isn’t blocking the connection</p></li>
+<li><p><strong>Try manual connection:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span>
+    <span class="n">host</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span>
+    <span class="n">command_port</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+    <span class="n">data_port</span><span class="o">=</span><span class="mi">5001</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Connected: </span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">connected</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="what-hardware-is-compatible">
+<h3><a class="toc-backref" href="#id17" role="doc-backlink">What hardware is compatible?</a><a class="headerlink" href="#what-hardware-is-compatible" title="Link to this heading"></a></h3>
+<p>The package works with:</p>
+<ul class="simple">
+<li><p><strong>Intan RHX Recording Controllers</strong> (RHD USB Interface Board, RHD Recording Controller)</p></li>
+<li><p><strong>RHD2000 Series Amplifiers</strong> (RHD2132, RHD2164, RHD2216, etc.)</p></li>
+<li><p><strong>RHS2000 Series Stimulation/Recording Amplifiers</strong></p></li>
+<li><p><strong>Raspberry Pi Pico</strong> (for peripheral control and IMU integration)</p></li>
+<li><p><strong>Lab Streaming Layer</strong> compatible devices</p></li>
+</ul>
+</section>
+<section id="can-i-use-this-without-intan-hardware">
+<h3><a class="toc-backref" href="#id18" role="doc-backlink">Can I use this without Intan hardware?</a><a class="headerlink" href="#can-i-use-this-without-intan-hardware" title="Link to this heading"></a></h3>
+<p>Yes! You can:</p>
+<ul class="simple">
+<li><p>Load and analyze existing <code class="docutils literal notranslate"><span class="pre">.rhd</span></code> files without hardware</p></li>
+<li><p>Process EMG data from other sources (load via <code class="docutils literal notranslate"><span class="pre">.csv</span></code> or <code class="docutils literal notranslate"><span class="pre">.npz</span></code>)</p></li>
+<li><p>Use the signal processing and ML modules independently</p></li>
+<li><p>Develop and test with sample data</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="data-processing">
+<h2><a class="toc-backref" href="#id19" role="doc-backlink">Data Processing</a><a class="headerlink" href="#data-processing" title="Link to this heading"></a></h2>
+<section id="how-do-i-filter-my-emg-data">
+<h3><a class="toc-backref" href="#id20" role="doc-backlink">How do I filter my EMG data?</a><a class="headerlink" href="#how-do-i-filter-my-emg-data" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">filter_emg</span><span class="p">,</span> <span class="n">notch_filter</span>
+
+<span class="c1"># Remove 60Hz powerline noise</span>
+<span class="n">emg_notched</span> <span class="o">=</span> <span class="n">notch_filter</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">f0</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+
+<span class="c1"># Bandpass filter (10-500 Hz typical for EMG)</span>
+<span class="n">emg_filtered</span> <span class="o">=</span> <span class="n">filter_emg</span><span class="p">(</span><span class="n">emg_notched</span><span class="p">,</span> <span class="s1">&#39;bandpass&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span>
+                           <span class="n">lowcut</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">highcut</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+<span class="c1"># High-pass to remove DC offset</span>
+<span class="n">emg_hp</span> <span class="o">=</span> <span class="n">filter_emg</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="s1">&#39;highpass&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">lowcut</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="what-preprocessing-steps-are-recommended-for-emg">
+<h3><a class="toc-backref" href="#id21" role="doc-backlink">What preprocessing steps are recommended for EMG?</a><a class="headerlink" href="#what-preprocessing-steps-are-recommended-for-emg" title="Link to this heading"></a></h3>
+<p>Typical pipeline:</p>
+<ol class="arabic simple">
+<li><p><strong>Notch filter</strong> (remove 50/60 Hz powerline)</p></li>
+<li><p><strong>Bandpass filter</strong> (10-500 Hz for EMG)</p></li>
+<li><p><strong>Rectification</strong> (optional, for envelope)</p></li>
+<li><p><strong>Normalization</strong> (for ML applications)</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.processing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">notch_filter</span><span class="p">,</span> <span class="n">filter_emg</span><span class="p">,</span> <span class="n">rectify</span><span class="p">,</span> <span class="n">normalize</span>
+<span class="p">)</span>
+
+<span class="c1"># 1. Remove powerline noise</span>
+<span class="n">emg</span> <span class="o">=</span> <span class="n">notch_filter</span><span class="p">(</span><span class="n">raw_emg</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">f0</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+
+<span class="c1"># 2. Bandpass filter</span>
+<span class="n">emg</span> <span class="o">=</span> <span class="n">filter_emg</span><span class="p">(</span><span class="n">emg</span><span class="p">,</span> <span class="s1">&#39;bandpass&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">lowcut</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">highcut</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+<span class="c1"># 3. Rectify (for envelope/RMS)</span>
+<span class="n">emg_rect</span> <span class="o">=</span> <span class="n">rectify</span><span class="p">(</span><span class="n">emg</span><span class="p">)</span>
+
+<span class="c1"># 4. Normalize (for ML)</span>
+<span class="n">emg_norm</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">emg</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;zscore&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="how-do-i-calculate-rms">
+<h3><a class="toc-backref" href="#id22" role="doc-backlink">How do I calculate RMS?</a><a class="headerlink" href="#how-do-i-calculate-rms" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">window_rms</span>
+
+<span class="c1"># 100ms RMS window</span>
+<span class="n">window_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.1</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)</span>
+<span class="n">rms_emg</span> <span class="o">=</span> <span class="n">window_rms</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="n">window_samples</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="how-do-i-downsample-my-data">
+<h3><a class="toc-backref" href="#id23" role="doc-backlink">How do I downsample my data?</a><a class="headerlink" href="#how-do-i-downsample-my-data" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">downsample</span>
+
+<span class="c1"># Downsample by factor of 4 (e.g., 20kHz → 5kHz)</span>
+<span class="n">emg_downsampled</span> <span class="o">=</span> <span class="n">downsample</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">factor</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="machine-learning">
+<h2><a class="toc-backref" href="#id24" role="doc-backlink">Machine Learning</a><a class="headerlink" href="#machine-learning" title="Link to this heading"></a></h2>
+<section id="how-do-i-train-a-gesture-classifier">
+<h3><a class="toc-backref" href="#id25" role="doc-backlink">How do I train a gesture classifier?</a><a class="headerlink" href="#how-do-i-train-a-gesture-classifier" title="Link to this heading"></a></h3>
+<p>See the complete guide: <a class="reference internal" href="../examples/gesture_classification.html"><span class="doc">Gesture Classification Pipeline</span></a></p>
+<p>Quick summary:</p>
+<ol class="arabic simple">
+<li><p><strong>Prepare training data</strong> from <code class="docutils literal notranslate"><span class="pre">.rhd</span></code> files</p></li>
+<li><p><strong>Train model</strong> with PCA + neural network</p></li>
+<li><p><strong>Real-time prediction</strong> from streaming device</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1. Build dataset</span>
+python<span class="w"> </span>examples/gesture_classifier/1a_build_training_dataset_rhd.py
+
+<span class="c1"># 2. Train model</span>
+python<span class="w"> </span>examples/gesture_classifier/2_train_model.py
+
+<span class="c1"># 3. Predict in real-time</span>
+python<span class="w"> </span>examples/gesture_classifier/3d_predict_from_device_realtime.py
+</pre></div>
+</div>
+</section>
+<section id="what-ml-models-are-supported">
+<h3><a class="toc-backref" href="#id26" role="doc-backlink">What ML models are supported?</a><a class="headerlink" href="#what-ml-models-are-supported" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>CNN</strong> (Convolutional Neural Network) - Default, best for EMG</p></li>
+<li><p><strong>LSTM</strong> (Long Short-Term Memory) - For temporal patterns</p></li>
+<li><p><strong>Dense</strong> (Fully-connected) - Simple baseline</p></li>
+<li><p><strong>Custom models</strong> - Bring your own Keras model</p></li>
+</ul>
+</section>
+<section id="how-much-training-data-do-i-need">
+<h3><a class="toc-backref" href="#id27" role="doc-backlink">How much training data do I need?</a><a class="headerlink" href="#how-much-training-data-do-i-need" title="Link to this heading"></a></h3>
+<p><strong>Minimum:</strong> 5-10 trials per gesture (not recommended)</p>
+<p><strong>Good:</strong> 20-30 trials per gesture</p>
+<p><strong>Better:</strong> 50+ trials per gesture across multiple sessions</p>
+<p><strong>Best practices:</strong></p>
+<ul class="simple">
+<li><p>Collect data across different arm positions</p></li>
+<li><p>Include multiple subjects if building a general model</p></li>
+<li><p>Balance classes (equal trials per gesture)</p></li>
+<li><p>Include “rest” as a class</p></li>
+</ul>
+</section>
+<section id="my-model-accuracy-is-low-how-can-i-improve-it">
+<h3><a class="toc-backref" href="#id28" role="doc-backlink">My model accuracy is low. How can I improve it?</a><a class="headerlink" href="#my-model-accuracy-is-low-how-can-i-improve-it" title="Link to this heading"></a></h3>
+<p><strong>Data quality:</strong>
+1. Check signal quality - are channels noisy?
+2. Ensure consistent gesture execution
+3. Add more training trials
+4. Balance your dataset</p>
+<p><strong>Preprocessing:</strong>
+1. Verify filtering parameters (10-500 Hz bandpass)
+2. Try different normalization methods
+3. Remove bad channels (high impedance/noise)</p>
+<p><strong>Model tuning:</strong>
+1. Increase PCA components (try 20-50)
+2. Add more training epochs
+3. Try data augmentation
+4. Use transfer learning</p>
+<p><strong>Feature engineering:</strong>
+1. Add time-domain features (RMS, MAV)
+2. Include frequency features
+3. Use different window sizes (200-300ms)</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="visualization">
+<h2><a class="toc-backref" href="#id29" role="doc-backlink">Visualization</a><a class="headerlink" href="#visualization" title="Link to this heading"></a></h2>
+<section id="how-do-i-plot-my-data">
+<h3><a class="toc-backref" href="#id30" role="doc-backlink">How do I plot my data?</a><a class="headerlink" href="#how-do-i-plot-my-data" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">waterfall</span><span class="p">,</span> <span class="n">plot_channel_by_index</span>
+
+<span class="c1"># Multi-channel waterfall plot</span>
+<span class="n">waterfall</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span> <span class="n">time</span><span class="o">=</span><span class="n">t</span><span class="p">,</span>
+          <span class="n">plot_title</span><span class="o">=</span><span class="s1">&#39;EMG Activity&#39;</span><span class="p">)</span>
+
+<span class="c1"># Single channel</span>
+<span class="n">plot_channel_by_index</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="how-do-i-create-real-time-plots">
+<h3><a class="toc-backref" href="#id31" role="doc-backlink">How do I create real-time plots?</a><a class="headerlink" href="#how-do-i-create-real-time-plots" title="Link to this heading"></a></h3>
+<p>See <a class="reference internal" href="../examples/live_plotting.html"><span class="doc">Live Plotting of Multiple EMG Channels</span></a> for detailed examples.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealtimePlotter</span>
+
+<span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+<span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
+
+<span class="n">plotter</span> <span class="o">=</span> <span class="n">RealtimePlotter</span><span class="p">(</span><span class="n">n_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">sample_rate</span><span class="o">=</span><span class="mi">4000</span><span class="p">)</span>
+<span class="n">plotter</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+<span class="c1"># Update loop</span>
+<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">n_frames</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="n">plotter</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="can-i-use-the-gui-applications">
+<h3><a class="toc-backref" href="#id32" role="doc-backlink">Can I use the GUI applications?</a><a class="headerlink" href="#can-i-use-the-gui-applications" title="Link to this heading"></a></h3>
+<p>Yes! See <a class="reference internal" href="../examples/gui_applications.html"><span class="doc">GUI Applications</span></a>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># EMG Viewer</span>
+python<span class="w"> </span>examples/applications/run_emg_viewer.py
+
+<span class="c1"># Trial Selector</span>
+python<span class="w"> </span>examples/applications/run_trial_selector.py
+
+<span class="c1"># Gesture Pipeline</span>
+python<span class="w"> </span>examples/applications/gesture_pipeline_gui.py
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="troubleshooting">
+<h2><a class="toc-backref" href="#id33" role="doc-backlink">Troubleshooting</a><a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<section id="importerror-no-module-named-intan">
+<h3><a class="toc-backref" href="#id34" role="doc-backlink">ImportError: No module named ‘intan’</a><a class="headerlink" href="#importerror-no-module-named-intan" title="Link to this heading"></a></h3>
+<p><strong>Solution:</strong></p>
+<ol class="arabic">
+<li><p>Ensure package is installed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>python-intan
+</pre></div>
+</div>
+</li>
+<li><p>Check you’re in the correct environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>activate<span class="w"> </span>intan<span class="w">  </span><span class="c1"># or your env name</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import intan; print(intan.__version__)&quot;</span>
+</pre></div>
+</div>
+</li>
+<li><p>If developing, install in editable mode:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="modulenotfounderror-no-module-named-tensorflow">
+<h3><a class="toc-backref" href="#id35" role="doc-backlink">ModuleNotFoundError: No module named ‘tensorflow’</a><a class="headerlink" href="#modulenotfounderror-no-module-named-tensorflow" title="Link to this heading"></a></h3>
+<p>Install TensorFlow:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">tensorflow</span><span class="o">==</span><span class="m">2</span>.19.0
+</pre></div>
+</div>
+<p>For GPU support:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>tensorflow<span class="o">[</span>and-cuda<span class="o">]</span><span class="w"> </span>nvidia-cudnn-cu12
+</pre></div>
+</div>
+</section>
+<section id="could-not-connect-to-rhx-tcp-server-error">
+<h3><a class="toc-backref" href="#id36" role="doc-backlink">“Could not connect to RHX TCP server” error</a><a class="headerlink" href="#could-not-connect-to-rhx-tcp-server-error" title="Link to this heading"></a></h3>
+<p><strong>Checklist:</strong></p>
+<ol class="arabic simple">
+<li><p>✅ Is Intan RHX software running?</p></li>
+<li><p>✅ Are TCP servers enabled? (Network → Enable TCP Servers)</p></li>
+<li><p>✅ Are you using correct ports? (default: 5000, 5001)</p></li>
+<li><p>✅ Is firewall blocking connection?</p></li>
+<li><p>✅ Try connecting from RHX software’s “Remote Control” panel first</p></li>
+</ol>
+</section>
+<section id="memory-error-when-loading-large-files">
+<h3><a class="toc-backref" href="#id37" role="doc-backlink">Memory error when loading large files</a><a class="headerlink" href="#memory-error-when-loading-large-files" title="Link to this heading"></a></h3>
+<p><strong>Solutions:</strong></p>
+<ol class="arabic">
+<li><p>Use memory-mapped mode:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">(</span><span class="s1">&#39;file.rhd&#39;</span><span class="p">,</span> <span class="n">mmap_mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>Load fewer channels</p></li>
+<li><p>Process file in chunks</p></li>
+<li><p>Increase system RAM or use machine with more memory</p></li>
+</ol>
+</section>
+<section id="pyqt5-errors-in-gui-applications">
+<h3><a class="toc-backref" href="#id38" role="doc-backlink">PyQt5 errors in GUI applications</a><a class="headerlink" href="#pyqt5-errors-in-gui-applications" title="Link to this heading"></a></h3>
+<p>Install PyQt5:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>PyQt5<span class="w"> </span>pyqtgraph
+</pre></div>
+</div>
+<p>If issues persist on Linux:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>python3-pyqt5
+</pre></div>
+</div>
+</section>
+<section id="sampling-rate-mismatch-warnings">
+<h3><a class="toc-backref" href="#id39" role="doc-backlink">Sampling rate mismatch warnings</a><a class="headerlink" href="#sampling-rate-mismatch-warnings" title="Link to this heading"></a></h3>
+<p>This usually means:</p>
+<ol class="arabic">
+<li><p>Expected sample rate doesn’t match file/device</p></li>
+<li><p>Solution: Let the package auto-detect:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">()</span>  <span class="c1"># Auto-detects sample rate</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">get_sample_rate</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="channels-appear-empty-or-zero">
+<h3><a class="toc-backref" href="#id40" role="doc-backlink">Channels appear empty or zero</a><a class="headerlink" href="#channels-appear-empty-or-zero" title="Link to this heading"></a></h3>
+<p><strong>Check:</strong></p>
+<ol class="arabic">
+<li><p>Are channels enabled in RHX software?</p></li>
+<li><p>Are amplifiers connected and powered?</p></li>
+<li><p>Did you enable wide/high/low channels?</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">))</span>
+</pre></div>
+</div>
+</li>
+<li><p>Check impedance values (should be &lt;1 MΩ)</p></li>
+</ol>
+</section>
+</section>
+<hr class="docutils" />
+<section id="performance-optimization">
+<h2><a class="toc-backref" href="#id41" role="doc-backlink">Performance Optimization</a><a class="headerlink" href="#performance-optimization" title="Link to this heading"></a></h2>
+<section id="how-can-i-speed-up-real-time-processing">
+<h3><a class="toc-backref" href="#id42" role="doc-backlink">How can I speed up real-time processing?</a><a class="headerlink" href="#how-can-i-speed-up-real-time-processing" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p><strong>Use fewer channels</strong> - Only enable what you need</p></li>
+<li><p><strong>Downsample display</strong> - Update plot every 50ms, not every sample</p></li>
+<li><p><strong>Use PyQtGraph</strong> instead of Matplotlib for GUI</p></li>
+<li><p><strong>Enable OpenGL</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pyqtgraph</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pg</span>
+<span class="n">pg</span><span class="o">.</span><span class="n">setConfigOption</span><span class="p">(</span><span class="s1">&#39;useOpenGL&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Process in separate thread</strong> - Don’t block data acquisition</p></li>
+</ol>
+</section>
+<section id="how-do-i-optimize-for-low-latency">
+<h3><a class="toc-backref" href="#id43" role="doc-backlink">How do I optimize for low latency?</a><a class="headerlink" href="#how-do-i-optimize-for-low-latency" title="Link to this heading"></a></h3>
+<ol class="arabic">
+<li><p><strong>Reduce buffer size</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span><span class="n">buffer_duration_sec</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Use smaller prediction windows</strong> (100-200ms)</p></li>
+<li><p><strong>Optimize model</strong> - Use smaller networks</p></li>
+<li><p><strong>GPU acceleration</strong> for inference</p></li>
+<li><p><strong>Adjust TCP block size</strong>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">device</span><span class="o">.</span><span class="n">set_blocks_per_write</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+</section>
+<hr class="docutils" />
+<section id="platform-specific">
+<h2><a class="toc-backref" href="#id44" role="doc-backlink">Platform-Specific</a><a class="headerlink" href="#platform-specific" title="Link to this heading"></a></h2>
+<section id="does-this-work-on-macos">
+<h3><a class="toc-backref" href="#id45" role="doc-backlink">Does this work on macOS?</a><a class="headerlink" href="#does-this-work-on-macos" title="Link to this heading"></a></h3>
+<p><strong>Partial support.</strong> The package works on macOS for:</p>
+<ul class="simple">
+<li><p>✅ File loading and processing</p></li>
+<li><p>✅ Machine learning</p></li>
+<li><p>✅ LSL integration</p></li>
+<li><p>⚠️ RHX TCP streaming (if RHX software runs on Mac)</p></li>
+<li><p>❌ Some hardware interfaces (Pico serial)</p></li>
+</ul>
+<p>Best tested on Windows and Linux (WSL2).</p>
+</section>
+<section id="does-this-work-on-linux">
+<h3><a class="toc-backref" href="#id46" role="doc-backlink">Does this work on Linux?</a><a class="headerlink" href="#does-this-work-on-linux" title="Link to this heading"></a></h3>
+<p><strong>Yes!</strong> Fully supported, especially Ubuntu/Debian-based distributions.</p>
+<p>For GUI applications, install Qt:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>python3-pyqt5<span class="w"> </span>python3-pyqt5.qtsvg
+</pre></div>
+</div>
+</section>
+<section id="can-i-use-this-in-wsl2">
+<h3><a class="toc-backref" href="#id47" role="doc-backlink">Can I use this in WSL2?</a><a class="headerlink" href="#can-i-use-this-in-wsl2" title="Link to this heading"></a></h3>
+<p><strong>Yes!</strong> WSL2 is recommended for GPU support on Windows.</p>
+<p><strong>Benefits:</strong></p>
+<ul class="simple">
+<li><p>Native Linux environment</p></li>
+<li><p>Better CUDA support</p></li>
+<li><p>Faster file I/O in some cases</p></li>
+</ul>
+<p><strong>Limitations:</strong></p>
+<ul class="simple">
+<li><p>Serial port access requires special configuration</p></li>
+<li><p>GUI applications need X server (WSLg or VcXsrv)</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="contributing-support">
+<h2><a class="toc-backref" href="#id48" role="doc-backlink">Contributing &amp; Support</a><a class="headerlink" href="#contributing-support" title="Link to this heading"></a></h2>
+<section id="how-can-i-contribute">
+<h3><a class="toc-backref" href="#id49" role="doc-backlink">How can I contribute?</a><a class="headerlink" href="#how-can-i-contribute" title="Link to this heading"></a></h3>
+<p>We welcome contributions! See the <a class="reference external" href="https://github.com/Neuro-Mechatronics-Interfaces/python-intan/blob/main/CONTRIBUTING.md">contribution guide</a>.</p>
+<p>You can contribute by:</p>
+<ul class="simple">
+<li><p>Reporting bugs</p></li>
+<li><p>Submitting pull requests</p></li>
+<li><p>Adding examples</p></li>
+<li><p>Improving documentation</p></li>
+<li><p>Sharing your use cases</p></li>
+</ul>
+</section>
+<section id="where-can-i-get-help">
+<h3><a class="toc-backref" href="#id50" role="doc-backlink">Where can I get help?</a><a class="headerlink" href="#where-can-i-get-help" title="Link to this heading"></a></h3>
+<ol class="arabic simple">
+<li><p><strong>Documentation:</strong> <a class="reference external" href="https://neuro-mechatronics-interfaces.github.io/python-intan/">https://neuro-mechatronics-interfaces.github.io/python-intan/</a></p></li>
+<li><p><strong>GitHub Issues:</strong> <a class="reference external" href="https://github.com/Neuro-Mechatronics-Interfaces/python-intan/issues">https://github.com/Neuro-Mechatronics-Interfaces/python-intan/issues</a></p></li>
+<li><p><strong>Examples:</strong> Check <code class="docutils literal notranslate"><span class="pre">examples/</span></code> directory in the repository</p></li>
+</ol>
+</section>
+<section id="how-do-i-report-a-bug">
+<h3><a class="toc-backref" href="#id51" role="doc-backlink">How do I report a bug?</a><a class="headerlink" href="#how-do-i-report-a-bug" title="Link to this heading"></a></h3>
+<p>Open an issue on GitHub with:</p>
+<ol class="arabic simple">
+<li><p>Python version and OS</p></li>
+<li><p>Package version (<code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">intan;</span> <span class="pre">print(intan.__version__)</span></code>)</p></li>
+<li><p>Minimal code to reproduce the issue</p></li>
+<li><p>Full error traceback</p></li>
+<li><p>Expected vs actual behavior</p></li>
+</ol>
+</section>
+<section id="is-this-package-maintained">
+<h3><a class="toc-backref" href="#id52" role="doc-backlink">Is this package maintained?</a><a class="headerlink" href="#is-this-package-maintained" title="Link to this heading"></a></h3>
+<p>Yes! Active development by the Neuromechatronics Lab at Carnegie Mellon University.</p>
+<p><strong>Version history:</strong></p>
+<ul class="simple">
+<li><p>v0.0.3 (2025-01) - Expanded examples, improved ML pipeline, LSL support</p></li>
+<li><p>v0.0.2 (2024-12) - Added GUI applications, real-time prediction</p></li>
+<li><p>v0.0.1 (2024-05) - Initial release</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="citation-license">
+<h2><a class="toc-backref" href="#id53" role="doc-backlink">Citation &amp; License</a><a class="headerlink" href="#citation-license" title="Link to this heading"></a></h2>
+<section id="how-do-i-cite-this-package">
+<h3><a class="toc-backref" href="#id54" role="doc-backlink">How do I cite this package?</a><a class="headerlink" href="#how-do-i-cite-this-package" title="Link to this heading"></a></h3>
+<div class="highlight-bibtex notranslate"><div class="highlight"><pre><span></span><span class="nc">@software</span><span class="p">{</span><span class="nl">Shulgach_Python_Intan_2025</span><span class="p">,</span>
+<span class="w">  </span><span class="na">author</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{Shulgach, Jonathan, Murphy, Max and Foy, Adrian}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">title</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{{Python Intan Package}}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">year</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{2025}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">month</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{05}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{0.0.3}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">url</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">{https://github.com/Neuro-Mechatronics-Interfaces/python-intan}</span><span class="p">,</span>
+<span class="w">  </span><span class="na">note</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s">&quot;{\tt jshulgac@andrew.cmu.edu}&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="what-license-is-this-under">
+<h3><a class="toc-backref" href="#id55" role="doc-backlink">What license is this under?</a><a class="headerlink" href="#what-license-is-this-under" title="Link to this heading"></a></h3>
+<p>MIT License - Free for academic and commercial use. See LICENSE file for details.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="still-have-questions">
+<h2><a class="toc-backref" href="#id56" role="doc-backlink">Still have questions?</a><a class="headerlink" href="#still-have-questions" title="Link to this heading"></a></h2>
+<p>Check the <a class="reference internal" href="index.html"><span class="doc">Tutorials</span></a> or open an issue on <a class="reference external" href="https://github.com/Neuro-Mechatronics-Interfaces/python-intan/issues">GitHub</a>.</p>
 </section>
 </section>
 

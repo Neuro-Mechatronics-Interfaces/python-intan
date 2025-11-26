@@ -16,10 +16,8 @@ EMG Viewer Application
 
 A comprehensive real-time EMG visualization tool with multiple display modes and filtering options.
 
-.. image:: ../../assets/emg_viewer_screenshot.png
-    :alt: EMG Viewer Application
-    :width: 800
-    :align: center
+.. note::
+   Screenshot available in the `GitHub repository <https://github.com/Neuro-Mechatronics-Interfaces/python-intan/tree/main/examples/applications>`_.
 
 **Launch the application:**
 

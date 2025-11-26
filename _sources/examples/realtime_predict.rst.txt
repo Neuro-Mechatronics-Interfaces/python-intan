@@ -24,7 +24,7 @@ This example demonstrates how to use a pre-trained model to predict gestures in 
     """
     Example: Predict gestures in real-time using a pre-trained model.
     """
-    from intan.rhx_interface import IntanRHXDevice
+    from intan.interface import IntanRHXDevice
     from intan.io import load_labeled_file
     import joblib
     import tensorflow as tf
@@ -87,6 +87,5 @@ This example demonstrates how to use a pre-trained model to predict gestures in 
     finally:
         device.stop_streaming()
         device.close()
-    ```
 
-
+----

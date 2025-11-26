@@ -9,10 +9,11 @@ Subpackages
 
    intan.applications
    intan.decomposition
+   intan.interface
    intan.io
+   intan.ml
    intan.plotting
    intan.processing
-   intan.rhx_interface
    intan.samples
 
 Module contents
