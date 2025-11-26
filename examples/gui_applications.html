@@ -1,0 +1,494 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GUI Applications &mdash; python-intan 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Gesture Classification Pipeline" href="gesture_classification.html" />
+    <link rel="prev" title="Lab Streaming Layer (LSL) Integration" href="lsl_streaming.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            python-intan
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">FAQS</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../info/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="introduction.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#getting-started">Getting Started</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="introduction.html#advanced-topics">Advanced Topics</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="loading_data.html">Loading and Parsing Data Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_loading.html">File Loading and Visualization Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stream_vs_file.html">Comparing RHD File Data to Live TCP Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="live_plotting.html">Live Plotting of Multiple EMG Channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lsl_streaming.html">Lab Streaming Layer (LSL) Integration</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">GUI Applications</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#emg-viewer-application">EMG Viewer Application</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#trial-selector-application">Trial Selector Application</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#gesture-control-pipeline-gui">Gesture Control Pipeline GUI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#application-launcher">Application Launcher</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#customizing-applications">Customizing Applications</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#performance-optimization">Performance Optimization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="gesture_classification.html">Gesture Classification Pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="realtime_predict.html">Realtime gesture prediction from streaming data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hardware_control.html">Hardware Integration and Control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#quick-reference">Quick Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#example-scripts-location">Example Scripts Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#contributing-examples">Contributing Examples</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intan_api/modules.html">intan</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">python-intan</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="introduction.html">Examples</a></li>
+      <li class="breadcrumb-item active">GUI Applications</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/gui_applications.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gui-applications">
+<h1>GUI Applications<a class="headerlink" href="#gui-applications" title="Link to this heading"></a></h1>
+<p>The <cite>intan</cite> package includes several PyQt5-based GUI applications for real-time EMG visualization, data annotation, and gesture control. These provide user-friendly interfaces for common workflows.</p>
+<p><strong>Requirements:</strong></p>
+<ul class="simple">
+<li><p>PyQt5 (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">PyQt5</span></code>)</p></li>
+<li><p>PyQtGraph (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pyqtgraph</span></code>)</p></li>
+<li><p>Intan RHX device with TCP streaming (for real-time apps)</p></li>
+</ul>
+<hr class="docutils" />
+<section id="emg-viewer-application">
+<h2>EMG Viewer Application<a class="headerlink" href="#emg-viewer-application" title="Link to this heading"></a></h2>
+<p>A comprehensive real-time EMG visualization tool with multiple display modes and filtering options.</p>
+<a class="reference internal image-reference" href="../assets/emg_viewer_screenshot.png"><img alt="EMG Viewer Application" class="align-center" src="../assets/emg_viewer_screenshot.png" style="width: 800px;" />
+</a>
+<p><strong>Launch the application:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># From examples directory</span>
+python<span class="w"> </span>examples/applications/run_emg_viewer.py
+</pre></div>
+</div>
+<p><strong>Programmatic usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Launch EMG Viewer from Python script</span>
+<span class="sd">Script: examples/applications/run_emg_viewer.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">EMGViewer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PyQt5.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QApplication</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+
+<span class="c1"># Initialize viewer</span>
+<span class="n">viewer</span> <span class="o">=</span> <span class="n">EMGViewer</span><span class="p">(</span>
+    <span class="n">num_channels</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span>
+    <span class="n">window_duration</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>  <span class="c1"># 3-second display window</span>
+<span class="p">)</span>
+
+<span class="c1"># Optional: Configure channels to display</span>
+<span class="n">viewer</span><span class="o">.</span><span class="n">set_visible_channels</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>  <span class="c1"># Show first 64 channels</span>
+
+<span class="n">viewer</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">())</span>
+</pre></div>
+</div>
+<p><strong>Features:</strong></p>
+<ul class="simple">
+<li><p><strong>Multiple display modes</strong>:</p>
+<ul>
+<li><p>Stacked waveforms</p></li>
+<li><p>Waterfall plot</p></li>
+<li><p>Heatmap view</p></li>
+<li><p>RMS grid</p></li>
+</ul>
+</li>
+<li><p><strong>Real-time filtering</strong>:</p>
+<ul>
+<li><p>Notch filter (50/60 Hz)</p></li>
+<li><p>Bandpass (10-500 Hz)</p></li>
+<li><p>High-pass DC removal</p></li>
+</ul>
+</li>
+<li><p><strong>Channel selection</strong>:</p>
+<ul>
+<li><p>Select/deselect individual channels</p></li>
+<li><p>Group selection by port</p></li>
+<li><p>Custom channel groupings</p></li>
+</ul>
+</li>
+<li><p><strong>Recording</strong>:</p>
+<ul>
+<li><p>Record to <cite>.npz</cite> format</p></li>
+<li><p>Add time-stamped markers</p></li>
+<li><p>Export to CSV</p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Keyboard shortcuts:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Space</span></code>: Pause/Resume streaming</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">R</span></code>: Start/Stop recording</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">M</span></code>: Add marker at current time</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">F</span></code>: Toggle filtering</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">+/-</span></code>: Adjust amplitude scale</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="trial-selector-application">
+<h2>Trial Selector Application<a class="headerlink" href="#trial-selector-application" title="Link to this heading"></a></h2>
+<p>Interactive tool for annotating and segmenting EMG trials from recorded data.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Launch trial selector</span>
+python<span class="w"> </span>examples/applications/run_trial_selector.py
+</pre></div>
+</div>
+<p><strong>Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Script: examples/applications/run_trial_selector.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrialSelector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rhd_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PyQt5.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QApplication</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+
+<span class="c1"># Load data</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">()</span>
+<span class="n">emg_data</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">]</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;frequency_parameters&#39;</span><span class="p">][</span><span class="s1">&#39;amplifier_sample_rate&#39;</span><span class="p">]</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;t_amplifier&#39;</span><span class="p">]</span>
+
+<span class="c1"># Launch selector</span>
+<span class="n">selector</span> <span class="o">=</span> <span class="n">TrialSelector</span><span class="p">(</span>
+    <span class="n">data</span><span class="o">=</span><span class="n">emg_data</span><span class="p">,</span>
+    <span class="n">time_vector</span><span class="o">=</span><span class="n">t</span><span class="p">,</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span>
+    <span class="n">channel_names</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Ch</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emg_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+<span class="p">)</span>
+
+<span class="n">selector</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">())</span>
+</pre></div>
+</div>
+<p><strong>Features:</strong></p>
+<ul class="simple">
+<li><p>Visual trial boundary selection</p></li>
+<li><p>Multi-label annotation</p></li>
+<li><p>Trial quality rating</p></li>
+<li><p>Export selected trials</p></li>
+<li><p>Gesture timing verification</p></li>
+<li><p>Automatic trial detection based on amplitude threshold</p></li>
+</ul>
+<p><strong>Workflow:</strong></p>
+<ol class="arabic simple">
+<li><p>Load recorded EMG file</p></li>
+<li><p>Zoom/pan to find trial boundaries</p></li>
+<li><p>Click to mark trial start/end</p></li>
+<li><p>Label trial with gesture name</p></li>
+<li><p>Rate trial quality (good/bad/uncertain)</p></li>
+<li><p>Export annotated trials for training</p></li>
+</ol>
+<p><strong>Output format:</strong></p>
+<p>Saves annotations as CSV:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">trial_id</span><span class="p">,</span><span class="n">start_time</span><span class="p">,</span><span class="n">end_time</span><span class="p">,</span><span class="n">label</span><span class="p">,</span><span class="n">quality</span><span class="p">,</span><span class="n">notes</span>
+<span class="mi">1</span><span class="p">,</span><span class="mf">5.234</span><span class="p">,</span><span class="mf">7.891</span><span class="p">,</span><span class="n">flex</span><span class="p">,</span><span class="n">good</span><span class="p">,</span><span class="n">clean</span> <span class="n">signal</span>
+<span class="mi">2</span><span class="p">,</span><span class="mf">12.456</span><span class="p">,</span><span class="mf">15.123</span><span class="p">,</span><span class="n">extend</span><span class="p">,</span><span class="n">good</span><span class="p">,</span>
+<span class="mi">3</span><span class="p">,</span><span class="mf">20.001</span><span class="p">,</span><span class="mf">22.567</span><span class="p">,</span><span class="n">rest</span><span class="p">,</span><span class="n">bad</span><span class="p">,</span><span class="n">motion</span> <span class="n">artifact</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="gesture-control-pipeline-gui">
+<h2>Gesture Control Pipeline GUI<a class="headerlink" href="#gesture-control-pipeline-gui" title="Link to this heading"></a></h2>
+<p>Real-time gesture recognition interface with live feedback and control outputs.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Launch gesture pipeline</span>
+python<span class="w"> </span>examples/applications/gesture_pipeline_gui.py
+</pre></div>
+</div>
+<p><strong>Features:</strong></p>
+<ul class="simple">
+<li><p><strong>Live prediction display</strong>: Shows current gesture with confidence</p></li>
+<li><p><strong>Prediction history</strong>: Scrolling timeline of past predictions</p></li>
+<li><p><strong>Performance metrics</strong>: Accuracy, latency, prediction rate</p></li>
+<li><p><strong>Model management</strong>: Load/switch between models on-the-fly</p></li>
+<li><p><strong>Control outputs</strong>: Send commands to external devices</p></li>
+<li><p><strong>Training mode</strong>: Collect labeled data for model improvement</p></li>
+</ul>
+<p><strong>Configuration:</strong></p>
+<p>Uses a profile JSON file for settings:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;model_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/model.keras&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;pca_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/pca_model.pkl&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;norm_path&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;/path/to/norm_params.npz&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;device&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;num_channels&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">128</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;sample_rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4000</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;buffer_duration&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;prediction&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;window_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">250</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;step_sec&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.1</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;confidence_threshold&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">0.7</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;control&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;output_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;serial&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;port&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;COM3&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;baud_rate&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">115200</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Launch with profile:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>gesture_pipeline_gui.py<span class="w"> </span>--profile<span class="w"> </span>gesture_pipeline_profile.json
+</pre></div>
+</div>
+<p><strong>Programmatic usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Custom gesture pipeline with GUI</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">GesturePipelineGUI</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.ml</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelManager</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PyQt5.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QApplication</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+
+<span class="c1"># Initialize components</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+<span class="n">model_manager</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="o">.</span><span class="n">load_from_files</span><span class="p">(</span>
+    <span class="n">model_path</span><span class="o">=</span><span class="s1">&#39;model.keras&#39;</span><span class="p">,</span>
+    <span class="n">pca_path</span><span class="o">=</span><span class="s1">&#39;pca_model.pkl&#39;</span><span class="p">,</span>
+    <span class="n">norm_path</span><span class="o">=</span><span class="s1">&#39;norm_params.npz&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Create GUI</span>
+<span class="n">gui</span> <span class="o">=</span> <span class="n">GesturePipelineGUI</span><span class="p">(</span>
+    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+    <span class="n">model_manager</span><span class="o">=</span><span class="n">model_manager</span><span class="p">,</span>
+    <span class="n">label_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;rest&#39;</span><span class="p">,</span> <span class="s1">&#39;flex&#39;</span><span class="p">,</span> <span class="s1">&#39;extend&#39;</span><span class="p">,</span> <span class="s1">&#39;pinch&#39;</span><span class="p">],</span>
+    <span class="n">update_interval_ms</span><span class="o">=</span><span class="mi">100</span>
+<span class="p">)</span>
+
+<span class="c1"># Optional: Add control callback</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">on_gesture_detected</span><span class="p">(</span><span class="n">gesture</span><span class="p">,</span> <span class="n">confidence</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detected: </span><span class="si">{</span><span class="n">gesture</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+    <span class="c1"># Send command to robot, game, etc.</span>
+
+<span class="n">gui</span><span class="o">.</span><span class="n">gesture_detected</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">on_gesture_detected</span><span class="p">)</span>
+
+<span class="n">gui</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
+
+<span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="application-launcher">
+<h2>Application Launcher<a class="headerlink" href="#application-launcher" title="Link to this heading"></a></h2>
+<p>Unified launcher for all GUI applications.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Launch application selector</span>
+<span class="sd">Script: examples/applications/_launcher.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">launch_application_selector</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PyQt5.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QApplication</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">QApplication</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+<span class="n">launch_application_selector</span><span class="p">()</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">app</span><span class="o">.</span><span class="n">exec_</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>Presents a menu to select which application to run:</p>
+<ul class="simple">
+<li><p>EMG Viewer</p></li>
+<li><p>Trial Selector</p></li>
+<li><p>Gesture Pipeline</p></li>
+<li><p>Signal Quality Monitor</p></li>
+<li><p>Impedance Checker</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="customizing-applications">
+<h2>Customizing Applications<a class="headerlink" href="#customizing-applications" title="Link to this heading"></a></h2>
+<p>All GUI applications are built with extensibility in mind:</p>
+<p><strong>Custom widget integration:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.applications</span><span class="w"> </span><span class="kn">import</span> <span class="n">EMGViewer</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">PyQt5.QtWidgets</span><span class="w"> </span><span class="kn">import</span> <span class="n">QPushButton</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CustomEMGViewer</span><span class="p">(</span><span class="n">EMGViewer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Add custom button</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_button</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">&quot;Custom Action&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_button</span><span class="o">.</span><span class="n">clicked</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_action</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">toolbar</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">custom_button</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">custom_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Implement custom functionality</span>
+        <span class="n">current_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_current_data</span><span class="p">()</span>
+        <span class="c1"># Process data...</span>
+</pre></div>
+</div>
+<p><strong>Custom plot overlays:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">StackedPlot</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pyqtgraph</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pg</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">AnnotatedPlot</span><span class="p">(</span><span class="n">StackedPlot</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_event_marker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">pg</span><span class="o">.</span><span class="n">InfiniteLine</span><span class="p">(</span>
+            <span class="n">pos</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
+            <span class="n">angle</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+            <span class="n">pen</span><span class="o">=</span><span class="n">pg</span><span class="o">.</span><span class="n">mkPen</span><span class="p">(</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="n">label</span><span class="o">=</span><span class="n">label</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot_widget</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="performance-optimization">
+<h2>Performance Optimization<a class="headerlink" href="#performance-optimization" title="Link to this heading"></a></h2>
+<p>For smooth real-time performance:</p>
+<ol class="arabic">
+<li><p><strong>Use downsampling for display:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">viewer</span><span class="o">.</span><span class="n">set_display_downsample_factor</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># Display every 2nd sample</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Limit visible channels:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">viewer</span><span class="o">.</span><span class="n">set_visible_channels</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>  <span class="c1"># Show only 32 channels</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Adjust update rate:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">viewer</span><span class="o">.</span><span class="n">set_update_interval</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>  <span class="c1"># Update every 50ms</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Use OpenGL rendering:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pyqtgraph</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pg</span>
+<span class="n">pg</span><span class="o">.</span><span class="n">setConfigOption</span><span class="p">(</span><span class="s1">&#39;useOpenGL&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">pg</span><span class="o">.</span><span class="n">setConfigOption</span><span class="p">(</span><span class="s1">&#39;enableExperimental&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="live_plotting.html"><span class="doc">Live Plotting of Multiple EMG Channels</span></a> - Real-time plotting techniques</p></li>
+<li><p><a class="reference internal" href="gesture_classification.html"><span class="doc">Gesture Classification Pipeline</span></a> - ML pipeline for gesture control</p></li>
+<li><p><a class="reference internal" href="../info/applications.html"><span class="doc">Applications</span></a> - Application architecture details</p></li>
+<li><p>API Reference: <code class="xref py py-mod docutils literal notranslate"><span class="pre">intan.applications</span></code></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="lsl_streaming.html" class="btn btn-neutral float-left" title="Lab Streaming Layer (LSL) Integration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="gesture_classification.html" class="btn btn-neutral float-right" title="Gesture Classification Pipeline" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonathan Shulgach.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -22,7 +22,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="File Loading and Visualization Example" href="file_loading.html" />
+    <link rel="next" title="Loading and Parsing Data Files" href="loading_data.html" />
     <link rel="prev" title="Advanced" href="../info/advanced.html" /> 
 </head>
 
@@ -58,10 +58,22 @@
 <p class="caption" role="heading"><span class="caption-text">Examples</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="file_loading.html">File Loading and Visualization Example</a></li>
-<li class="toctree-l2"><a class="reference internal" href="live_plotting.html">Live Plotting of Multiple EMG Channels</a></li>
-<li class="toctree-l2"><a class="reference internal" href="stream_vs_file.html">Comparing RHD File Data to Live TCP Stream</a></li>
-<li class="toctree-l2"><a class="reference internal" href="realtime_predict.html">Realtime gesture prediction from streaming data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-topics">Advanced Topics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="loading_data.html">Loading and Parsing Data Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_loading.html">File Loading and Visualization Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stream_vs_file.html">Comparing RHD File Data to Live TCP Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="live_plotting.html">Live Plotting of Multiple EMG Channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lsl_streaming.html">Lab Streaming Layer (LSL) Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui_applications.html">GUI Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gesture_classification.html">Gesture Classification Pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="realtime_predict.html">Realtime gesture prediction from streaming data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hardware_control.html">Hardware Integration and Control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-reference">Quick Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-scripts-location">Example Scripts Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#contributing-examples">Contributing Examples</a></li>
 </ul>
 </li>
 </ul>
@@ -97,15 +109,146 @@
   <section id="examples">
 <h1>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
 <p>Explore hands-on examples for common use-cases with the <cite>intan</cite> package.
-Each example includes a full script, usage notes, and expected outcomes.</p>
+Each example includes full scripts, usage notes, and expected outcomes.</p>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<p>If you’re new to the package, start with these fundamental examples:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="loading_data.html"><span class="doc">Loading and Parsing Data Files</span></a> - Load and parse EMG data from various file formats</p></li>
+<li><p><a class="reference internal" href="file_loading.html"><span class="doc">File Loading and Visualization Example</span></a> - Visualize data from files</p></li>
+<li><p><a class="reference internal" href="live_plotting.html"><span class="doc">Live Plotting of Multiple EMG Channels</span></a> - Real-time streaming visualization</p></li>
+</ul>
+</section>
+<section id="advanced-topics">
+<h2>Advanced Topics<a class="headerlink" href="#advanced-topics" title="Link to this heading"></a></h2>
 <div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Data Handling</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="loading_data.html">Loading and Parsing Data Files</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="loading_data.html#loading-rhd-files">Loading .rhd Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="loading_data.html#loading-dat-files">Loading .dat Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="loading_data.html#loading-csv-files">Loading .csv Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="loading_data.html#segmenting-data-by-events">Segmenting Data by Events</a></li>
+<li class="toctree-l2"><a class="reference internal" href="loading_data.html#working-with-channel-information">Working with Channel Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="loading_data.html#data-structure-reference">Data Structure Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="loading_data.html#performance-tips">Performance Tips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="loading_data.html#see-also">See Also</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="file_loading.html">File Loading and Visualization Example</a></li>
-<li class="toctree-l1"><a class="reference internal" href="live_plotting.html">Live Plotting of Multiple EMG Channels</a></li>
 <li class="toctree-l1"><a class="reference internal" href="stream_vs_file.html">Comparing RHD File Data to Live TCP Stream</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Visualization</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="live_plotting.html">Live Plotting of Multiple EMG Channels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lsl_streaming.html">Lab Streaming Layer (LSL) Integration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lsl_streaming.html#publishing-emg-data-to-lsl">Publishing EMG Data to LSL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lsl_streaming.html#subscribing-to-lsl-markers">Subscribing to LSL Markers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lsl_streaming.html#lsl-waveform-viewer">LSL Waveform Viewer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lsl_streaming.html#lsl-stacked-multi-channel-plot">LSL Stacked Multi-Channel Plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lsl_streaming.html#lsl-rms-bar-plot">LSL RMS Bar Plot</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lsl_streaming.html#synchronized-recording-with-markers">Synchronized Recording with Markers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lsl_streaming.html#lsl-stream-discovery">LSL Stream Discovery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lsl_streaming.html#performance-tips">Performance Tips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lsl_streaming.html#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gui_applications.html">GUI Applications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gui_applications.html#emg-viewer-application">EMG Viewer Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui_applications.html#trial-selector-application">Trial Selector Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui_applications.html#gesture-control-pipeline-gui">Gesture Control Pipeline GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui_applications.html#application-launcher">Application Launcher</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui_applications.html#customizing-applications">Customizing Applications</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui_applications.html#performance-optimization">Performance Optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gui_applications.html#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Machine Learning</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="gesture_classification.html">Gesture Classification Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gesture_classification.html#stage-1-building-training-datasets">Stage 1: Building Training Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gesture_classification.html#stage-2-training-the-model">Stage 2: Training the Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gesture_classification.html#stage-3-prediction">Stage 3: Prediction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gesture_classification.html#additional-tools">Additional Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gesture_classification.html#expected-outcomes">Expected Outcomes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gesture_classification.html#see-also">See Also</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="realtime_predict.html">Realtime gesture prediction from streaming data</a></li>
 </ul>
 </div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Hardware Integration</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="hardware_control.html">Hardware Integration and Control</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="hardware_control.html#d-printed-robotic-arm-control">3D-Printed Robotic Arm Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hardware_control.html#rhx-device-interface-examples">RHX Device Interface Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hardware_control.html#raspberry-pi-pico-imu-integration">Raspberry Pi Pico + IMU Integration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hardware_control.html#wireless-emg-with-rhd2164">Wireless EMG with RHD2164</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hardware_control.html#tcp-command-interface">TCP Command Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hardware_control.html#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="quick-reference">
+<h2>Quick Reference<a class="headerlink" href="#quick-reference" title="Link to this heading"></a></h2>
+<p><strong>By Task:</strong></p>
+<ul class="simple">
+<li><p><strong>Load data from files</strong>: <a class="reference internal" href="loading_data.html"><span class="doc">Loading and Parsing Data Files</span></a></p></li>
+<li><p><strong>Visualize EMG signals</strong>: <a class="reference internal" href="file_loading.html"><span class="doc">File Loading and Visualization Example</span></a>, <a class="reference internal" href="live_plotting.html"><span class="doc">Live Plotting of Multiple EMG Channels</span></a></p></li>
+<li><p><strong>Stream from RHX device</strong>: <a class="reference internal" href="live_plotting.html"><span class="doc">Live Plotting of Multiple EMG Channels</span></a>, <a class="reference internal" href="stream_vs_file.html"><span class="doc">Comparing RHD File Data to Live TCP Stream</span></a></p></li>
+<li><p><strong>Use Lab Streaming Layer</strong>: <a class="reference internal" href="lsl_streaming.html"><span class="doc">Lab Streaming Layer (LSL) Integration</span></a></p></li>
+<li><p><strong>Train gesture classifiers</strong>: <a class="reference internal" href="gesture_classification.html"><span class="doc">Gesture Classification Pipeline</span></a></p></li>
+<li><p><strong>Real-time prediction</strong>: <a class="reference internal" href="realtime_predict.html"><span class="doc">Realtime gesture prediction from streaming data</span></a></p></li>
+<li><p><strong>Control robots/hardware</strong>: <a class="reference internal" href="hardware_control.html"><span class="doc">Hardware Integration and Control</span></a></p></li>
+<li><p><strong>GUI applications</strong>: <a class="reference internal" href="gui_applications.html"><span class="doc">GUI Applications</span></a></p></li>
+</ul>
+<p><strong>By Data Format:</strong></p>
+<ul class="simple">
+<li><p><cite>.rhd files</cite>: <a class="reference internal" href="loading_data.html"><span class="doc">Loading and Parsing Data Files</span></a>, <a class="reference internal" href="file_loading.html"><span class="doc">File Loading and Visualization Example</span></a></p></li>
+<li><p><cite>.dat files</cite>: <a class="reference internal" href="loading_data.html"><span class="doc">Loading and Parsing Data Files</span></a></p></li>
+<li><p><cite>.csv files</cite>: <a class="reference internal" href="loading_data.html"><span class="doc">Loading and Parsing Data Files</span></a></p></li>
+<li><p><cite>.npz files</cite>: <a class="reference internal" href="gesture_classification.html"><span class="doc">Gesture Classification Pipeline</span></a></p></li>
+<li><p>Live TCP streaming: <a class="reference internal" href="live_plotting.html"><span class="doc">Live Plotting of Multiple EMG Channels</span></a>, <a class="reference internal" href="stream_vs_file.html"><span class="doc">Comparing RHD File Data to Live TCP Stream</span></a></p></li>
+</ul>
+<p><strong>By Hardware:</strong></p>
+<ul class="simple">
+<li><p>Intan RHX Controller: <a class="reference internal" href="live_plotting.html"><span class="doc">Live Plotting of Multiple EMG Channels</span></a>, <a class="reference internal" href="stream_vs_file.html"><span class="doc">Comparing RHD File Data to Live TCP Stream</span></a></p></li>
+<li><p>Raspberry Pi Pico: <a class="reference internal" href="hardware_control.html"><span class="doc">Hardware Integration and Control</span></a></p></li>
+<li><p>3D-printed robotic arm: <a class="reference internal" href="hardware_control.html"><span class="doc">Hardware Integration and Control</span></a></p></li>
+<li><p>IMU sensors: <a class="reference internal" href="hardware_control.html"><span class="doc">Hardware Integration and Control</span></a></p></li>
+<li><p>RHD2164 wireless: <a class="reference internal" href="hardware_control.html"><span class="doc">Hardware Integration and Control</span></a></p></li>
+</ul>
+</section>
+<section id="example-scripts-location">
+<h2>Example Scripts Location<a class="headerlink" href="#example-scripts-location" title="Link to this heading"></a></h2>
+<p>All example scripts can be found in the <code class="docutils literal notranslate"><span class="pre">examples/</span></code> directory of the repository:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>examples/
+├── Read_Files/              # File loading examples
+├── RHXDevice/               # Device streaming examples
+├── LSL/                     # Lab Streaming Layer
+├── gesture_classifier/      # ML pipeline (training &amp; prediction)
+├── applications/            # GUI applications
+├── 3D_printed_arm_control/  # Robotic control
+├── interface/               # Hardware interfacing
+├── intan_tcp/               # Low-level TCP examples
+└── RHD2164_wireless/        # Wireless headstage
+</pre></div>
+</div>
+</section>
+<section id="contributing-examples">
+<h2>Contributing Examples<a class="headerlink" href="#contributing-examples" title="Link to this heading"></a></h2>
+<p>Have an interesting use case? We welcome example contributions! See the
+<a class="reference external" href="https://github.com/Neuro-Mechatronics-Interfaces/python-intan/blob/main/CONTRIBUTING.md">contribution guide</a>
+for details on submitting new examples.</p>
+</section>
 </section>
 
 
@@ -113,7 +256,7 @@ Each example includes a full script, usage notes, and expected outcomes.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../info/advanced.html" class="btn btn-neutral float-left" title="Advanced" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="file_loading.html" class="btn btn-neutral float-right" title="File Loading and Visualization Example" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="loading_data.html" class="btn btn-neutral float-right" title="Loading and Parsing Data Files" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

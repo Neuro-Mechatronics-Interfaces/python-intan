@@ -1,0 +1,567 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lab Streaming Layer (LSL) Integration &mdash; python-intan 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="GUI Applications" href="gui_applications.html" />
+    <link rel="prev" title="Live Plotting of Multiple EMG Channels" href="live_plotting.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            python-intan
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">FAQS</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../info/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="introduction.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#getting-started">Getting Started</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="introduction.html#advanced-topics">Advanced Topics</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="loading_data.html">Loading and Parsing Data Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_loading.html">File Loading and Visualization Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stream_vs_file.html">Comparing RHD File Data to Live TCP Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="live_plotting.html">Live Plotting of Multiple EMG Channels</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Lab Streaming Layer (LSL) Integration</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#publishing-emg-data-to-lsl">Publishing EMG Data to LSL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#subscribing-to-lsl-markers">Subscribing to LSL Markers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lsl-waveform-viewer">LSL Waveform Viewer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lsl-stacked-multi-channel-plot">LSL Stacked Multi-Channel Plot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lsl-rms-bar-plot">LSL RMS Bar Plot</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#synchronized-recording-with-markers">Synchronized Recording with Markers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lsl-stream-discovery">LSL Stream Discovery</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#performance-tips">Performance Tips</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="gui_applications.html">GUI Applications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gesture_classification.html">Gesture Classification Pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="realtime_predict.html">Realtime gesture prediction from streaming data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hardware_control.html">Hardware Integration and Control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#quick-reference">Quick Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#example-scripts-location">Example Scripts Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#contributing-examples">Contributing Examples</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intan_api/modules.html">intan</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">python-intan</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="introduction.html">Examples</a></li>
+      <li class="breadcrumb-item active">Lab Streaming Layer (LSL) Integration</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/lsl_streaming.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="lab-streaming-layer-lsl-integration">
+<h1>Lab Streaming Layer (LSL) Integration<a class="headerlink" href="#lab-streaming-layer-lsl-integration" title="Link to this heading"></a></h1>
+<p>Lab Streaming Layer (LSL) is a system for synchronizing streaming data across multiple applications in real-time. These examples demonstrate how to publish Intan EMG data to LSL streams and subscribe to external LSL markers for synchronized recording.</p>
+<p><strong>Requirements:</strong></p>
+<ul class="simple">
+<li><p><cite>pylsl</cite> library (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pylsl</span></code>)</p></li>
+<li><p>Intan RHX device with TCP streaming enabled</p></li>
+<li><p>Optional: LSL applications for marker streaming (e.g., stimulus presentation software)</p></li>
+</ul>
+<hr class="docutils" />
+<section id="publishing-emg-data-to-lsl">
+<h2>Publishing EMG Data to LSL<a class="headerlink" href="#publishing-emg-data-to-lsl" title="Link to this heading"></a></h2>
+<p>Stream EMG data from Intan RHX device to an LSL outlet for consumption by other applications.</p>
+<p><strong>Basic LSL Publisher:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Publish Intan EMG data to LSL stream</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span><span class="p">,</span> <span class="n">LSLPublisher</span>
+
+<span class="c1"># Initialize Intan device</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+<span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">))</span>
+<span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
+
+<span class="c1"># Create LSL outlet</span>
+<span class="n">publisher</span> <span class="o">=</span> <span class="n">LSLPublisher</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;IntanEMG&#39;</span><span class="p">,</span>
+    <span class="n">stream_type</span><span class="o">=</span><span class="s1">&#39;EMG&#39;</span><span class="p">,</span>
+    <span class="n">channel_count</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span>
+    <span class="n">source_id</span><span class="o">=</span><span class="s1">&#39;intan_rhx_001&#39;</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="c1"># Get data from device</span>
+        <span class="n">timestamps</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">n_frames</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>  <span class="c1"># 10ms chunks</span>
+
+        <span class="c1"># Publish to LSL</span>
+        <span class="n">publisher</span><span class="o">.</span><span class="n">push_chunk</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>  <span class="c1"># LSL expects (samples, channels)</span>
+
+<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping...&quot;</span><span class="p">)</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">publisher</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="subscribing-to-lsl-markers">
+<h2>Subscribing to LSL Markers<a class="headerlink" href="#subscribing-to-lsl-markers" title="Link to this heading"></a></h2>
+<p>Receive event markers from external LSL sources (e.g., task cues, stimuli).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Subscribe to LSL marker stream</span>
+<span class="sd">Script: examples/LSL/lsl_marker_sub.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">LSLSubscriber</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="c1"># Connect to marker stream</span>
+<span class="n">subscriber</span> <span class="o">=</span> <span class="n">LSLSubscriber</span><span class="p">(</span>
+    <span class="n">stream_name</span><span class="o">=</span><span class="s1">&#39;TaskMarkers&#39;</span><span class="p">,</span>
+    <span class="n">stream_type</span><span class="o">=</span><span class="s1">&#39;Markers&#39;</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Waiting for markers...&quot;</span><span class="p">)</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="c1"># Pull markers (non-blocking)</span>
+        <span class="n">marker</span><span class="p">,</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">pull_sample</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">marker</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">timestamp</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] Received marker: </span><span class="si">{</span><span class="n">marker</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># 10ms polling</span>
+
+<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping...&quot;</span><span class="p">)</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">subscriber</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="lsl-waveform-viewer">
+<h2>LSL Waveform Viewer<a class="headerlink" href="#lsl-waveform-viewer" title="Link to this heading"></a></h2>
+<p>Real-time visualization of LSL streams with scrolling display.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Real-time LSL waveform viewer</span>
+<span class="sd">Script: examples/LSL/lsl_waveform_viewer.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">LSLSubscriber</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealtimePlotter</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Connect to EMG stream</span>
+<span class="n">subscriber</span> <span class="o">=</span> <span class="n">LSLSubscriber</span><span class="p">(</span>
+    <span class="n">stream_type</span><span class="o">=</span><span class="s1">&#39;EMG&#39;</span><span class="p">,</span>
+    <span class="n">resolve_timeout</span><span class="o">=</span><span class="mf">5.0</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Connected to: </span><span class="si">{</span><span class="n">subscriber</span><span class="o">.</span><span class="n">stream_info</span><span class="o">.</span><span class="n">name</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">n_channels</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">stream_info</span><span class="o">.</span><span class="n">channel_count</span><span class="p">()</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">stream_info</span><span class="o">.</span><span class="n">nominal_srate</span><span class="p">()</span>
+
+<span class="c1"># Initialize plotter</span>
+<span class="n">plotter</span> <span class="o">=</span> <span class="n">RealtimePlotter</span><span class="p">(</span>
+    <span class="n">n_channels</span><span class="o">=</span><span class="n">n_channels</span><span class="p">,</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span>
+    <span class="n">window_sec</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
+    <span class="n">update_interval_ms</span><span class="o">=</span><span class="mi">50</span>
+<span class="p">)</span>
+
+<span class="c1"># Buffer for accumulating samples</span>
+<span class="n">buffer_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># 2 second buffer</span>
+<span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">))</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">plotter</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="c1"># Pull chunk of samples</span>
+        <span class="n">chunk</span><span class="p">,</span> <span class="n">timestamps</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">pull_chunk</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># Shape: (channels, samples)</span>
+            <span class="n">n_new</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="c1"># Update rolling buffer</span>
+            <span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="o">-</span><span class="n">n_new</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">buffer</span><span class="p">[:,</span> <span class="o">-</span><span class="n">n_new</span><span class="p">:]</span> <span class="o">=</span> <span class="n">chunk</span>
+
+            <span class="c1"># Update plot</span>
+            <span class="n">plotter</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping...&quot;</span><span class="p">)</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">plotter</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+    <span class="n">subscriber</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="lsl-stacked-multi-channel-plot">
+<h2>LSL Stacked Multi-Channel Plot<a class="headerlink" href="#lsl-stacked-multi-channel-plot" title="Link to this heading"></a></h2>
+<p>Display multiple LSL channels in a stacked layout.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Stacked plot of multiple LSL channels</span>
+<span class="sd">Script: examples/LSL/lsl_stacked_plot.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">LSLSubscriber</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">StackedPlot</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Connect to stream</span>
+<span class="n">subscriber</span> <span class="o">=</span> <span class="n">LSLSubscriber</span><span class="p">(</span><span class="n">stream_type</span><span class="o">=</span><span class="s1">&#39;EMG&#39;</span><span class="p">)</span>
+<span class="n">n_channels</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">stream_info</span><span class="o">.</span><span class="n">channel_count</span><span class="p">()</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">stream_info</span><span class="o">.</span><span class="n">nominal_srate</span><span class="p">()</span>
+
+<span class="c1"># Select channels to display</span>
+<span class="n">channels_to_plot</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">))</span>  <span class="c1"># First 16 channels</span>
+
+<span class="c1"># Initialize stacked plot</span>
+<span class="n">plot</span> <span class="o">=</span> <span class="n">StackedPlot</span><span class="p">(</span>
+    <span class="n">n_channels</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">channels_to_plot</span><span class="p">),</span>
+    <span class="n">channel_labels</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Ch </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">channels_to_plot</span><span class="p">],</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span>
+    <span class="n">window_sec</span><span class="o">=</span><span class="mf">3.0</span><span class="p">,</span>
+    <span class="n">y_scale</span><span class="o">=</span><span class="mi">200</span>  <span class="c1"># µV scale</span>
+<span class="p">)</span>
+
+<span class="n">buffer_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">channels_to_plot</span><span class="p">),</span> <span class="n">buffer_size</span><span class="p">))</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">chunk</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">pull_chunk</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span>
+            <span class="n">chunk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">channels_to_plot</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">n_new</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="o">-</span><span class="n">n_new</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">buffer</span><span class="p">[:,</span> <span class="o">-</span><span class="n">n_new</span><span class="p">:]</span> <span class="o">=</span> <span class="n">chunk</span>
+
+            <span class="n">plot</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping...&quot;</span><span class="p">)</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+    <span class="n">subscriber</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="lsl-rms-bar-plot">
+<h2>LSL RMS Bar Plot<a class="headerlink" href="#lsl-rms-bar-plot" title="Link to this heading"></a></h2>
+<p>Display real-time RMS values across channels as animated bar chart.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Real-time RMS bar plot from LSL stream</span>
+<span class="sd">Script: examples/LSL/lsl_rms_barplot.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">LSLSubscriber</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">window_rms</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.animation</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">animation</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Connect to stream</span>
+<span class="n">subscriber</span> <span class="o">=</span> <span class="n">LSLSubscriber</span><span class="p">(</span><span class="n">stream_type</span><span class="o">=</span><span class="s1">&#39;EMG&#39;</span><span class="p">)</span>
+<span class="n">n_channels</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">stream_info</span><span class="o">.</span><span class="n">channel_count</span><span class="p">()</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">stream_info</span><span class="o">.</span><span class="n">nominal_srate</span><span class="p">()</span>
+
+<span class="c1"># RMS calculation parameters</span>
+<span class="n">RMS_WINDOW_SEC</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># 100ms RMS window</span>
+<span class="n">UPDATE_INTERVAL_MS</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="c1"># Setup plot</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">channel_labels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;Ch</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)]</span>
+<span class="n">x_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_channels</span><span class="p">)</span>
+<span class="n">bars</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">bar</span><span class="p">(</span><span class="n">x_pos</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_channels</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;cyan&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;black&#39;</span><span class="p">)</span>
+
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Channel&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;RMS Amplitude (µV)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Real-time EMG RMS Activity&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">x_pos</span><span class="p">[::</span><span class="mi">4</span><span class="p">])</span>  <span class="c1"># Show every 4th label</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">channel_labels</span><span class="p">[::</span><span class="mi">4</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+
+<span class="c1"># Buffer for RMS calculation</span>
+<span class="n">window_samples</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="n">RMS_WINDOW_SEC</span><span class="p">)</span>
+<span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">window_samples</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">update_plot</span><span class="p">(</span><span class="n">frame</span><span class="p">):</span>
+    <span class="c1"># Pull new data</span>
+    <span class="n">chunk</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">pull_chunk</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span>
+        <span class="n">chunk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># Shape: (channels, samples)</span>
+        <span class="n">n_new</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">chunk</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">window_samples</span><span class="p">)</span>
+
+        <span class="c1"># Update buffer</span>
+        <span class="n">buffer</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="o">-</span><span class="n">n_new</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">buffer</span><span class="p">[:,</span> <span class="o">-</span><span class="n">n_new</span><span class="p">:]</span> <span class="o">=</span> <span class="n">chunk</span><span class="p">[:,</span> <span class="o">-</span><span class="n">n_new</span><span class="p">:]</span>
+
+    <span class="c1"># Calculate RMS</span>
+    <span class="n">rms_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">buffer</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+    <span class="c1"># Update bars</span>
+    <span class="k">for</span> <span class="n">bar</span><span class="p">,</span> <span class="n">rms</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bars</span><span class="p">,</span> <span class="n">rms_values</span><span class="p">):</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">set_height</span><span class="p">(</span><span class="n">rms</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">bars</span>
+
+<span class="c1"># Animation</span>
+<span class="n">ani</span> <span class="o">=</span> <span class="n">animation</span><span class="o">.</span><span class="n">FuncAnimation</span><span class="p">(</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">update_plot</span><span class="p">,</span>
+    <span class="n">interval</span><span class="o">=</span><span class="n">UPDATE_INTERVAL_MS</span><span class="p">,</span>
+    <span class="n">blit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">cache_frame_data</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping...&quot;</span><span class="p">)</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">subscriber</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="synchronized-recording-with-markers">
+<h2>Synchronized Recording with Markers<a class="headerlink" href="#synchronized-recording-with-markers" title="Link to this heading"></a></h2>
+<p>Record EMG data while synchronizing with external event markers.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Record EMG with synchronized markers</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">LSLSubscriber</span><span class="p">,</span> <span class="n">LSLPublisher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="c1"># Start Intan device</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
+<span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">))</span>
+<span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
+
+<span class="c1"># Subscribe to marker stream</span>
+<span class="n">marker_sub</span> <span class="o">=</span> <span class="n">LSLSubscriber</span><span class="p">(</span><span class="n">stream_type</span><span class="o">=</span><span class="s1">&#39;Markers&#39;</span><span class="p">)</span>
+
+<span class="c1"># Publish EMG to LSL (optional, for other apps to use)</span>
+<span class="n">emg_pub</span> <span class="o">=</span> <span class="n">LSLPublisher</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;IntanEMG&#39;</span><span class="p">,</span>
+    <span class="n">stream_type</span><span class="o">=</span><span class="s1">&#39;EMG&#39;</span><span class="p">,</span>
+    <span class="n">channel_count</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">4000</span>
+<span class="p">)</span>
+
+<span class="c1"># Recording buffers</span>
+<span class="n">emg_buffer</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">emg_timestamps</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">markers</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recording... Press Ctrl+C to stop&quot;</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="c1"># Get EMG data</span>
+        <span class="n">ts</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">n_frames</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+        <span class="n">emg_buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">emg_timestamps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
+
+        <span class="c1"># Publish to LSL</span>
+        <span class="n">emg_pub</span><span class="o">.</span><span class="n">push_chunk</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+        <span class="c1"># Check for markers</span>
+        <span class="n">marker</span><span class="p">,</span> <span class="n">marker_ts</span> <span class="o">=</span> <span class="n">marker_sub</span><span class="o">.</span><span class="n">pull_sample</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">marker</span><span class="p">:</span>
+            <span class="n">markers</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">marker_ts</span><span class="p">,</span> <span class="n">marker</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">marker_ts</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">] Marker: </span><span class="si">{</span><span class="n">marker</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">nStopping recording...&quot;</span><span class="p">)</span>
+
+<span class="k">finally</span><span class="p">:</span>
+    <span class="c1"># Save data</span>
+    <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">_%H%M%S&quot;</span><span class="p">)</span>
+
+    <span class="n">emg_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">emg_buffer</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;recording_</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s1">.npz&#39;</span><span class="p">,</span>
+        <span class="n">emg</span><span class="o">=</span><span class="n">emg_data</span><span class="p">,</span>
+        <span class="n">timestamps</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">emg_timestamps</span><span class="p">),</span>
+        <span class="n">markers</span><span class="o">=</span><span class="n">markers</span><span class="p">,</span>
+        <span class="n">sample_rate</span><span class="o">=</span><span class="mi">4000</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved: recording_</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">.npz&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;EMG shape: </span><span class="si">{</span><span class="n">emg_data</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Markers received: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">markers</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Cleanup</span>
+    <span class="n">emg_pub</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">marker_sub</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="lsl-stream-discovery">
+<h2>LSL Stream Discovery<a class="headerlink" href="#lsl-stream-discovery" title="Link to this heading"></a></h2>
+<p>Find and list all available LSL streams on the network.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Discover all available LSL streams</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pylsl</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_streams</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Searching for LSL streams...&quot;</span><span class="p">)</span>
+<span class="n">streams</span> <span class="o">=</span> <span class="n">resolve_streams</span><span class="p">(</span><span class="n">wait_time</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">streams</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No LSL streams found.&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">streams</span><span class="p">)</span><span class="si">}</span><span class="s2"> stream(s):</span><span class="se">\\</span><span class="s2">n&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">stream</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">streams</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Stream </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Name: </span><span class="si">{</span><span class="n">stream</span><span class="o">.</span><span class="n">name</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Type: </span><span class="si">{</span><span class="n">stream</span><span class="o">.</span><span class="n">type</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Channels: </span><span class="si">{</span><span class="n">stream</span><span class="o">.</span><span class="n">channel_count</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Sample Rate: </span><span class="si">{</span><span class="n">stream</span><span class="o">.</span><span class="n">nominal_srate</span><span class="p">()</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Source: </span><span class="si">{</span><span class="n">stream</span><span class="o">.</span><span class="n">source_id</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="performance-tips">
+<h2>Performance Tips<a class="headerlink" href="#performance-tips" title="Link to this heading"></a></h2>
+<ol class="arabic">
+<li><p><strong>Chunk Size</strong>: Process data in appropriately-sized chunks (10-50ms) to balance latency and efficiency</p></li>
+<li><p><strong>Threading</strong>: Use separate threads for LSL I/O and processing:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">threading</span><span class="w"> </span><span class="kn">import</span> <span class="n">Thread</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">lsl_reader_thread</span><span class="p">():</span>
+    <span class="k">while</span> <span class="n">running</span><span class="p">:</span>
+        <span class="n">chunk</span><span class="p">,</span> <span class="n">ts</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">pull_chunk</span><span class="p">()</span>
+        <span class="n">data_queue</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="n">chunk</span><span class="p">,</span> <span class="n">ts</span><span class="p">))</span>
+</pre></div>
+</div>
+</li>
+<li><p><strong>Buffer Management</strong>: Use circular buffers for efficient memory usage</p></li>
+<li><p><strong>Time Synchronization</strong>: LSL provides automatic clock synchronization across devices</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="live_plotting.html"><span class="doc">Live Plotting of Multiple EMG Channels</span></a> - Real-time plotting techniques</p></li>
+<li><p><a class="reference internal" href="../info/advanced.html"><span class="doc">Advanced</span></a> - Advanced streaming concepts</p></li>
+<li><p><a class="reference external" href="https://labstreaminglayer.readthedocs.io/">LSL Documentation</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="live_plotting.html" class="btn btn-neutral float-left" title="Live Plotting of Multiple EMG Channels" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="gui_applications.html" class="btn btn-neutral float-right" title="GUI Applications" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonathan Shulgach.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

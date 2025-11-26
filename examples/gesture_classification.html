@@ -1,0 +1,377 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gesture Classification Pipeline &mdash; python-intan 0.0.3 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=47de8214"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=f281be69"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Realtime gesture prediction from streaming data" href="realtime_predict.html" />
+    <link rel="prev" title="GUI Applications" href="gui_applications.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            python-intan
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">FAQS</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../info/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="introduction.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#getting-started">Getting Started</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="introduction.html#advanced-topics">Advanced Topics</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="loading_data.html">Loading and Parsing Data Files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="file_loading.html">File Loading and Visualization Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="stream_vs_file.html">Comparing RHD File Data to Live TCP Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="live_plotting.html">Live Plotting of Multiple EMG Channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lsl_streaming.html">Lab Streaming Layer (LSL) Integration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gui_applications.html">GUI Applications</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Gesture Classification Pipeline</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#stage-1-building-training-datasets">Stage 1: Building Training Datasets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stage-2-training-the-model">Stage 2: Training the Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stage-3-prediction">Stage 3: Prediction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#additional-tools">Additional Tools</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#expected-outcomes">Expected Outcomes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="realtime_predict.html">Realtime gesture prediction from streaming data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hardware_control.html">Hardware Integration and Control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#quick-reference">Quick Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#example-scripts-location">Example Scripts Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#contributing-examples">Contributing Examples</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../intan_api/modules.html">intan</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">python-intan</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="introduction.html">Examples</a></li>
+      <li class="breadcrumb-item active">Gesture Classification Pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/examples/gesture_classification.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gesture-classification-pipeline">
+<h1>Gesture Classification Pipeline<a class="headerlink" href="#gesture-classification-pipeline" title="Link to this heading"></a></h1>
+<p>This example demonstrates a complete machine learning pipeline for training gesture classifiers from EMG data. The workflow includes data preprocessing, feature extraction using PCA, and model training with TensorFlow/Keras.</p>
+<p><strong>Requirements:</strong></p>
+<ul class="simple">
+<li><p>TensorFlow 2.19.0</p></li>
+<li><p>scikit-learn (for PCA)</p></li>
+<li><p>CUDA-compatible GPU (recommended for faster training)</p></li>
+<li><p>EMG data files (<cite>.rhd</cite>, <cite>.npz</cite>, or <cite>.csv</cite> formats supported)</p></li>
+</ul>
+<p><strong>Overview:</strong></p>
+<p>The gesture classification pipeline consists of several stages:</p>
+<ol class="arabic simple">
+<li><p><strong>Data Preparation</strong>: Load and preprocess EMG data from multiple file formats</p></li>
+<li><p><strong>Feature Extraction</strong>: Apply PCA for dimensionality reduction</p></li>
+<li><p><strong>Model Training</strong>: Train a neural network classifier</p></li>
+<li><p><strong>Real-time Prediction</strong>: Use trained model for live gesture recognition</p></li>
+</ol>
+<hr class="docutils" />
+<section id="stage-1-building-training-datasets">
+<h2>Stage 1: Building Training Datasets<a class="headerlink" href="#stage-1-building-training-datasets" title="Link to this heading"></a></h2>
+<p>The pipeline supports multiple data sources. Choose the appropriate script based on your data format:</p>
+<p><strong>From single .rhd file:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Build training dataset from a single .rhd file</span>
+<span class="sd">Script: examples/gesture_classifier/1a_build_training_dataset_rhd.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rhd_file</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">filter_emg</span><span class="p">,</span> <span class="n">notch_filter</span><span class="p">,</span> <span class="n">extract_windows</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Load EMG data</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">(</span><span class="s1">&#39;path/to/file.rhd&#39;</span><span class="p">)</span>
+<span class="n">emg_data</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">]</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;frequency_parameters&#39;</span><span class="p">][</span><span class="s1">&#39;amplifier_sample_rate&#39;</span><span class="p">]</span>
+
+<span class="c1"># Preprocess: filter and segment by gesture labels</span>
+<span class="n">emg_filtered</span> <span class="o">=</span> <span class="n">notch_filter</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">f0</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+<span class="n">emg_filtered</span> <span class="o">=</span> <span class="n">filter_emg</span><span class="p">(</span><span class="n">emg_filtered</span><span class="p">,</span> <span class="s1">&#39;bandpass&#39;</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">lowcut</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">highcut</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+<span class="c1"># Extract windows and labels (assumes you have a labels file)</span>
+<span class="c1"># See the full script for complete implementation</span>
+</pre></div>
+</div>
+<p><strong>From multiple .rhd files:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># examples/gesture_classifier/1b_build_training_dataset_multi_rhd.py</span>
+python<span class="w"> </span>1b_build_training_dataset_multi_rhd.py<span class="w"> </span>--data_dir<span class="w"> </span>/path/to/rhd/files
+</pre></div>
+</div>
+<p><strong>From .npz files:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># examples/gesture_classifier/1c_build_training_dataset_npz.py</span>
+python<span class="w"> </span>1c_build_training_dataset_npz.py<span class="w"> </span>--data_dir<span class="w"> </span>/path/to/npz/files
+</pre></div>
+</div>
+<p><strong>From .csv files:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># examples/gesture_classifier/1e_build_training_dataset_multi_csv.py</span>
+python<span class="w"> </span>1e_build_training_dataset_multi_csv.py<span class="w"> </span>--data_dir<span class="w"> </span>/path/to/csv/files
+</pre></div>
+</div>
+<p><strong>From any format (automatic detection):</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># examples/gesture_classifier/1e_build_training_dataset_any.py</span>
+python<span class="w"> </span>1e_build_training_dataset_any.py<span class="w"> </span>--data_dir<span class="w"> </span>/path/to/files
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="stage-2-training-the-model">
+<h2>Stage 2: Training the Model<a class="headerlink" href="#stage-2-training-the-model" title="Link to this heading"></a></h2>
+<p>Once you have prepared your training dataset, train a classifier:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># examples/gesture_classifier/2_train_model.py</span>
+python<span class="w"> </span>2_train_model.py<span class="w"> </span>--data_path<span class="w"> </span>training_data.npz<span class="w"> </span>--model_output<span class="w"> </span>model.keras
+</pre></div>
+</div>
+<p><strong>Example code:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Train a gesture classification model</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.ml</span><span class="w"> </span><span class="kn">import</span> <span class="n">train_classifier</span><span class="p">,</span> <span class="n">ModelManager</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="c1"># Load training data</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;training_data.npz&#39;</span><span class="p">)</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">]</span>
+<span class="n">y_train</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;labels&#39;</span><span class="p">]</span>
+
+<span class="c1"># Initialize model manager</span>
+<span class="n">manager</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="p">()</span>
+
+<span class="c1"># Train model (automatically applies PCA and normalization)</span>
+<span class="n">model</span><span class="p">,</span> <span class="n">pca</span><span class="p">,</span> <span class="n">scaler</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">train_model</span><span class="p">(</span>
+    <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span>
+    <span class="n">model_type</span><span class="o">=</span><span class="s1">&#39;CNN&#39;</span><span class="p">,</span>
+    <span class="n">n_components</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span>
+<span class="p">)</span>
+
+<span class="c1"># Save trained model</span>
+<span class="n">manager</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="s1">&#39;model.keras&#39;</span><span class="p">)</span>
+<span class="n">manager</span><span class="o">.</span><span class="n">save_pca</span><span class="p">(</span><span class="s1">&#39;pca_model.pkl&#39;</span><span class="p">)</span>
+<span class="n">manager</span><span class="o">.</span><span class="n">save_normalization</span><span class="p">(</span><span class="s1">&#39;norm_params.npz&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>GPU Training:</strong></p>
+<p>For faster training, ensure CUDA is installed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Verify GPU availability</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import tensorflow as tf; print(tf.config.list_physical_devices(&#39;GPU&#39;))&quot;</span>
+</pre></div>
+</div>
+<p>See the <a class="reference external" href="https://github.com/Neuro-Mechatronics-Interfaces/python-intan/tree/main/examples/gesture_classifier">gesture_classifier README</a> for detailed GPU setup instructions.</p>
+</section>
+<hr class="docutils" />
+<section id="stage-3-prediction">
+<h2>Stage 3: Prediction<a class="headerlink" href="#stage-3-prediction" title="Link to this heading"></a></h2>
+<p><strong>3a. Predict from .rhd file:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># examples/gesture_classifier/3a_predict_from_rhd.py</span>
+python<span class="w"> </span>3a_predict_from_rhd.py<span class="w"> </span>--file<span class="w"> </span>data.rhd<span class="w"> </span>--model<span class="w"> </span>model.keras
+</pre></div>
+</div>
+<p><strong>3b. Batch predict from multiple .rhd files:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># examples/gesture_classifier/3b_batch_predict_from_rhd.py</span>
+python<span class="w"> </span>3b_batch_predict_from_rhd.py<span class="w"> </span>--data_dir<span class="w"> </span>/path/to/rhd/files
+</pre></div>
+</div>
+<p><strong>3c. Predict from recorded device data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Predict gestures from a recorded RHX session</span>
+<span class="sd">Script: examples/gesture_classifier/3c_predict_from_device_record.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.ml</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelManager</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
+
+<span class="c1"># Load model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s1">&#39;model.keras&#39;</span><span class="p">)</span>
+<span class="n">manager</span> <span class="o">=</span> <span class="n">ModelManager</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+<span class="n">manager</span><span class="o">.</span><span class="n">load_pca</span><span class="p">(</span><span class="s1">&#39;pca_model.pkl&#39;</span><span class="p">)</span>
+<span class="n">manager</span><span class="o">.</span><span class="n">load_normalization</span><span class="p">(</span><span class="s1">&#39;norm_params.npz&#39;</span><span class="p">)</span>
+
+<span class="c1"># Load recorded data and predict</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">(</span><span class="s1">&#39;recorded_session.rhd&#39;</span><span class="p">)</span>
+<span class="n">predictions</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p><strong>3d. Real-time prediction from live stream:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Real-time gesture prediction from streaming device</span>
+<span class="sd">Script: examples/gesture_classifier/3d_predict_from_device_realtime.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.ml</span><span class="w"> </span><span class="kn">import</span> <span class="n">EMGRealTimePredictor</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
+
+<span class="c1"># Initialize device</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">buffer_duration_sec</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">128</span><span class="p">))</span>
+<span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
+
+<span class="c1"># Load model and create predictor</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s1">&#39;model.keras&#39;</span><span class="p">)</span>
+<span class="n">predictor</span> <span class="o">=</span> <span class="n">EMGRealTimePredictor</span><span class="p">(</span>
+    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">pca</span><span class="o">=</span><span class="n">pca</span><span class="p">,</span>
+    <span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span>
+    <span class="n">std</span><span class="o">=</span><span class="n">std</span><span class="p">,</span>
+    <span class="n">label_names</span><span class="o">=</span><span class="n">label_names</span><span class="p">,</span>
+    <span class="n">window_ms</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>
+    <span class="n">buffer_sec</span><span class="o">=</span><span class="mi">1</span>
+<span class="p">)</span>
+
+<span class="c1"># Run prediction loop</span>
+<span class="n">predictor</span><span class="o">.</span><span class="n">run_prediction_loop</span><span class="p">()</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">predictor</span><span class="o">.</span><span class="n">get_prediction</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">prediction</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Detected: </span><span class="si">{</span><span class="n">prediction</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+    <span class="n">predictor</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+    <span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="additional-tools">
+<h2>Additional Tools<a class="headerlink" href="#additional-tools" title="Link to this heading"></a></h2>
+<p><strong>Cross-orientation analysis:</strong></p>
+<p>Analyze model performance across different arm orientations:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># examples/gesture_classifier/plot_cross_orientation.py</span>
+python<span class="w"> </span>plot_cross_orientation.py<span class="w"> </span>--results_dir<span class="w"> </span>/path/to/results
+</pre></div>
+</div>
+<p><strong>Alternative training script:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># examples/gesture_classifier/2b_train_model.py</span>
+python<span class="w"> </span>2b_train_model.py<span class="w"> </span>--config<span class="w"> </span>config.json
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="expected-outcomes">
+<h2>Expected Outcomes<a class="headerlink" href="#expected-outcomes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Stage 1</strong>: <cite>training_data.npz</cite> file containing preprocessed EMG features and labels</p></li>
+<li><p><strong>Stage 2</strong>: Trained model files (<cite>model.keras</cite>, <cite>pca_model.pkl</cite>, <cite>norm_params.npz</cite>)</p></li>
+<li><p><strong>Stage 3</strong>: Gesture predictions with confidence scores</p></li>
+</ul>
+<p><strong>Performance Tips:</strong></p>
+<ol class="arabic simple">
+<li><p>Use GPU acceleration for training (20-50x speedup)</p></li>
+<li><p>Experiment with different PCA components (10-50 typically work well)</p></li>
+<li><p>Balance your training dataset across gesture classes</p></li>
+<li><p>Use data augmentation for small datasets</p></li>
+<li><p>Fine-tune window size (200-300ms works well for EMG)</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="realtime_predict.html"><span class="doc">Realtime gesture prediction from streaming data</span></a> - Real-time prediction details</p></li>
+<li><p><a class="reference internal" href="../info/signal_processing.html"><span class="doc">Signal Processing and Feature Extraction</span></a> - Signal processing techniques</p></li>
+<li><p>API Reference: <code class="xref py py-mod docutils literal notranslate"><span class="pre">intan.ml</span></code></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="gui_applications.html" class="btn btn-neutral float-left" title="GUI Applications" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="realtime_predict.html" class="btn btn-neutral float-right" title="Realtime gesture prediction from streaming data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Jonathan Shulgach.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
