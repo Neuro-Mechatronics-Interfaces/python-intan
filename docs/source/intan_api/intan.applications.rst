@@ -8,17 +8,20 @@ GUI applications and launchers for EMG analysis and trial labeling.
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: intan.applications._emg_viewer_gui
-   :members:
-   :undoc-members:
-   :show-inheritance:
+Submodules
+----------
 
-.. automodule:: intan.applications._emg_launcher
+.. automodule:: intan.applications._emg_viewer
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: intan.applications._emg_trial_selector
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: intan.applications._launcher
    :members:
    :undoc-members:
    :show-inheritance:

@@ -8,12 +8,15 @@ This module contains all the I/O utilities for loading, saving, and managing Int
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: intan.io._block_parser
+Submodules
+----------
+
+.. automodule:: intan.io._canonicalizer
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: intan.io._channel_utils
+.. automodule:: intan.io._csv_utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -28,17 +31,32 @@ This module contains all the I/O utilities for loading, saving, and managing Int
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: intan.io._header_parsing
+.. automodule:: intan.io._npz_utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: intan.io._metadata_utils
+.. automodule:: intan.io._rhd_block_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: intan.io._rhd_channel_utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: intan.io._rhd_header_parsing
    :members:
    :undoc-members:
    :show-inheritance:
 
 .. automodule:: intan.io._rhd_loader
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: intan.io._utilities
    :members:
    :undoc-members:
    :show-inheritance:

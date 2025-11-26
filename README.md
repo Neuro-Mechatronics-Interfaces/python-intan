@@ -3,76 +3,47 @@
 # Python Intan
 
 [![Docs](https://img.shields.io/badge/docs-online-blue.svg)](https://neuro-mechatronics-interfaces.github.io/python-intan/)
-[![Python](https://img.shields.io/badge/python-3.10-blue)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![PyPI version](https://badge.fury.io/py/python-intan.svg)](https://badge.fury.io/py/python-intan)
+[![Downloads](https://pepy.tech/badge/python-intan)](https://pepy.tech/project/python-intan)
 
-
-
-**python-intan** is a Python package for working with RHX Controller devices and EMG data acquired from Intan Technologies systems. It provides utilities for:
-
-- Reading `.rhd` and `.dat` data files
-- Preprocessing and feature extraction
-- Integration with external hardware for closed-loop applications
-
-Whether you're analyzing offline data or streaming real-time EMG from the RHX system, `python-intan` aims to make the workflow seamless and modular.
+**python-intan** is a comprehensive Python package for working with Intan Technologies RHX systems and electrophysiology data. From file loading to real-time streaming, signal processing to machine learning, hardware integration to GUI applications—everything you need for EMG/neural data analysis in one package.
 
 ---
 
-## Contents
-- [Contributions](#contributions)
-- [Installation](#installation)
-- [Getting Started](#getting-started)
-- [Project Structure](#project-structure)
-- [Future Improvements](#future-improvements)
-- [License](#license)
+## ✨ Key Features
+
+- 📁 **File I/O**: Load `.rhd`, `.rhs`, `.dat`, `.csv`, and `.npz` files with ease
+- 🔴 **Real-time Streaming**: TCP interface for live data acquisition from RHX devices
+- 🎛️ **Signal Processing**: Filtering, normalization, RMS, feature extraction
+- 🤖 **Machine Learning**: Complete gesture classification pipeline with TensorFlow
+- 📊 **Visualization**: Waterfall plots, real-time plotting, GUI applications
+- 🔌 **Hardware Integration**: LSL support, Raspberry Pi Pico, robotic control
+- 🖥️ **GUI Applications**: EMG viewer, trial selector, gesture pipeline interface
+- 🚀 **Performance**: GPU acceleration, optimized for real-time applications
 
 ---
 
-## Contributions
+## 📚 Quick Links
 
-We welcome contributions to the `python-intan` package! If you have ideas for new features, bug fixes, or improvements, please feel free to submit a pull request or open an issue. Have a look at our [contribution guide](CONTRIBUTING.md) for further guidance. Writing code isn't the only way you can contribute:
-* review pull requests
-* develop tutorials, presentations, and other educational materials
-* help with outreach or onboarding new contributors
-
-If you’re unsure where to start or how your skills fit in, reach out! You can ask on the forum or here, on GitHub, by leaving a comment on a relevant issue that is already open.
-
-If you are new to contributing to open source, this guide helps explain why, what, and how to get involved.
+- [**Documentation**](https://neuro-mechatronics-interfaces.github.io/python-intan/) - Full guides and API reference
+- [**Examples**](https://github.com/Neuro-Mechatronics-Interfaces/python-intan/tree/main/examples) - 60+ code examples
+- [**FAQ**](https://neuro-mechatronics-interfaces.github.io/python-intan/info/faqs.html) - Frequently asked questions
+- [**Contributing**](CONTRIBUTING.md) - How to contribute
+- [**Changelog**](CHANGELOG.md) - Version history
 
 ---
 
-## Installation
-Create a virtual environment using conda or venv:
+## 📦 Installation
 
-```bash
-conda create -n intan python=3.10
-conda activate intan
-```
-or
-
-```bash
-python -m venv intan
-source intan/bin/activate  # On Windows use: intan\Scripts\activate
-```
-(Optional) Enable CUDA support for GPU acceleration (if available):
-
-```bash
-conda install cudatoolkit cudnn=11
-```
-or 
-```bash
-sudo apt-get install cuda
-pip install tensorflow[and-cuda] nvidia-cudnn-cu12 # CUDA 12.5 latest pip option as of 5/13/25
-```
-
-This repo can be installed from PyPi using `pip`:
+### From PyPI (Recommended)
 
 ```bash
 pip install python-intan
 ```
 
-or clone & install the repository from GitHub for the latest features:
+### From Source (Latest Features)
 
 ```bash
 git clone https://github.com/Neuro-Mechatronics-Interfaces/python-intan.git
@@ -80,119 +51,359 @@ cd python-intan
 pip install -e .
 ```
 
+### With Virtual Environment
+
+```bash
+# Using conda
+conda create -n intan python=3.10
+conda activate intan
+pip install python-intan
+
+# Or using venv
+python -m venv intan
+source intan/bin/activate  # Windows: intan\Scripts\activate
+pip install python-intan
+```
+
+### GPU Support (Optional)
+
+For faster machine learning training:
+
+```bash
+pip install tensorflow[and-cuda] nvidia-cudnn-cu12
+```
+
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
-We can quickly load EMG signals from an Intan `.rhd` file. 
+### Load and Visualize EMG Data
 
 ```python
 import intan
-result = intan.io.load_rhd_file() # Opens Popup window to select file, or pass filepath
-```
-`.dat` files are also supported
-```python
-dat_folderpath = "path/to/your/dat/files"
-result = intan.io.load_dat_file(dat_folderpath)
-```
-The `result` dictionary contains:
-- `amplifier_data`: Raw EMG data (shape: channels x samples)
-- `amplifier_channels`: Channel metadata (names, gain, etc.)
-- `frequency_parameters`: Sampling rate information for the amplifier, aux, and digital inputs
-- `t_amplifier`: Time vector for the amplifier data
-- `board_adc_data`: ADC data from the board
 
-Loading multiple `.rhd` files with the option to concatenate can be done with:
-```python
-result_list = intan.io.load_rhd_files(concatenate=True)
-```
-Some quick filtering to remove DC offset and noise:
-```python
+# Load .rhd file (opens file picker)
+result = intan.io.load_rhd_file()
+
+# Or specify path directly
+result = intan.io.load_rhd_file('path/to/file.rhd')
+
+# Access data
+emg_data = result['amplifier_data']  # Shape: (channels, samples)
 fs = result['frequency_parameters']['amplifier_sample_rate']
-emg = result['amplifier_data']  # Shape: (channels, samples)
+t = result['t_amplifier']
 
-notch_emg = intan.processing.notch_filter(emg, fs, f0=60) # 60Hz notch filter
-filt_emg = intan.processing.filter_emg(notch_emg, 'bandpass', fs, lowcut=10, highcut=500) # 10-500Hz bandpass filter
+# Quick filtering
+emg_filtered = intan.processing.notch_filter(emg_data, fs, f0=60)
+emg_filtered = intan.processing.filter_emg(emg_filtered, 'bandpass', fs,
+                                            lowcut=10, highcut=500)
+
+# Visualize
+intan.plotting.waterfall(emg_filtered, range(64), t,
+                         plot_title='Filtered EMG Data')
 ```
 
-
-We can visualize the raw EMG data using the `plotting` module. Let's use a waterfall plot to look at the raw activity across a subset of channels:
+### Real-time Streaming from RHX Device
 
 ```python
-t_s = result['t_amplifier']
-chans = range(0, 64)  # Selecting channels to plot
-intan.plotting.waterfall(filt_emg, chans, t_s, plot_title='Intan EMG data')
+from intan.interface import IntanRHXDevice
+
+# Connect to device
+device = IntanRHXDevice()
+device.enable_wide_channel(range(64))
+device.start_streaming()
+
+# Stream data
+timestamps, data = device.stream(duration_sec=1.0)
+print(f"Acquired data shape: {data.shape}")
+
+device.close()
 ```
 
-If there is a single channel of interest, we can plot it directly by name or index:
+### Train a Gesture Classifier
+
 ```python
-intan.plotting.plot_channel_by_name('A-005', result)  # By name (Be sure the channel name exists)
-intan.plotting.plot_channel_by_index(8, result)  # By index
+from intan.ml import ModelManager
+import numpy as np
+
+# Load training data
+data = np.load('training_data.npz')
+X_train, y_train = data['features'], data['labels']
+
+# Train model
+manager = ModelManager()
+model, pca, scaler = manager.train_model(X_train, y_train,
+                                          model_type='CNN', epochs=50)
+
+# Save for later use
+manager.save_model('gesture_model.keras')
 ```
 
-Some other processing features:
+### Real-time Gesture Recognition
+
 ```python
-# Normalize the EMG data
-norm_emg = intan.processing.normalize(filt_emg, method='zscore')  # Z-score normalization
+from intan.interface import IntanRHXDevice
+from intan.ml import EMGRealTimePredictor
+import tensorflow as tf
 
-# Downsample the EMG data
-downsampled_emg = intan.processing.downsample(filt_emg, factor=2)  # Downsample by a factor of 2
+# Load trained model
+model = tf.keras.models.load_model('gesture_model.keras')
 
-# Rectify
-rectified_emg = intan.processing.rectify(filt_emg)  # Rectify the EMG data
+# Initialize device
+device = IntanRHXDevice(num_channels=128)
+device.start_streaming()
 
-# Rolling RMS window
-samples = int(0.1 * fs)  # 100ms window
-rms_emg = intan.processing.window_rms(filt_emg, window_size=samples)  # 100ms RMS window
+# Create predictor
+predictor = EMGRealTimePredictor(device, model, pca, mean, std, label_names)
+predictor.run_prediction_loop()
+
+# Get predictions
+while True:
+    prediction = predictor.get_prediction()
+    if prediction:
+        print(f"Gesture: {prediction['label']} ({prediction['confidence']:.1%})")
 ```
 
+### Lab Streaming Layer (LSL) Integration
+
+```python
+from intan.interface import IntanRHXDevice, LSLPublisher
+
+# Start device
+device = IntanRHXDevice(num_channels=64)
+device.start_streaming()
+
+# Publish to LSL
+publisher = LSLPublisher(name='IntanEMG', stream_type='EMG',
+                         channel_count=64, sample_rate=4000)
+
+while True:
+    _, data = device.stream(n_frames=40)
+    publisher.push_chunk(data.T)
+```
 
 ---
 
-## Project Structure
+## 🗂️ Package Structure
 
 ```text
 intan/
-├── io/                 # Load and parse Intan .rhd or .rhs files
-├── processing/         # Filtering, normalization, and segmentation
-├── control/            # Real-time control scripts for robot arm or other peripherals
-├── plotting/      # Plotting and GUI scripts
+├── io/                     # File loading (.rhd, .dat, .csv, .npz)
+├── interface/              # RHX device, LSL, hardware interfaces
+├── processing/             # Signal processing and filtering
+├── ml/                     # Machine learning pipeline
+├── plotting/               # Visualization utilities
+├── applications/           # GUI applications
+├── decomposition/          # PCA, ICA decomposition
+└── samples/                # Sample data utilities
 
-load_rhd_demo.py        # Quick-start script for plotting waveform data
-requirements.txt
-README.md
+examples/
+├── Read_Files/             # File loading examples
+├── RHXDevice/              # Device streaming examples
+├── LSL/                    # Lab Streaming Layer examples
+├── gesture_classifier/     # ML training and prediction
+├── applications/           # GUI application demos
+├── 3D_printed_arm_control/ # Robotic control integration
+└── interface/              # Hardware interfacing examples
 ```
 
 ---
 
-## Future Improvements
+## 🎯 Use Cases
 
-- [x] Real-time gesture decoding via TCP from RHX
-- [x] Serial control for wearable robotics (e.g. grippers, arms)
-- [x] CNN feature pipeline support
-- [ ] GUI for real-time signal monitoring
-- [ ] Public datasets with training/testing support
-- [ ] Cross-platform support for macOS/Linux (currently optimized for Windows)
+### 📊 Data Analysis
+- Load and analyze `.rhd` recordings
+- Batch process multiple files
+- Extract specific time segments
+- Generate publication-quality figures
+
+### 🔴 Real-time Applications
+- Live EMG visualization
+- Online gesture recognition
+- Closed-loop control systems
+- Synchronized multi-modal recording
+
+### 🤖 Machine Learning
+- Train gesture classifiers
+- Real-time prediction
+- Cross-session validation
+- Transfer learning
+
+### 🔬 Research
+- Impedance testing
+- Signal quality monitoring
+- Protocol automation
+- Custom experimental setups
 
 ---
 
-## Citation
+## 📖 Documentation
 
-This package can be cited as follows:
+Comprehensive documentation is available at [neuro-mechatronics-interfaces.github.io/python-intan](https://neuro-mechatronics-interfaces.github.io/python-intan/)
+
+**Key Sections:**
+- [Installation Guide](https://neuro-mechatronics-interfaces.github.io/python-intan/info/installation.html)
+- [Loading Files](https://neuro-mechatronics-interfaces.github.io/python-intan/examples/loading_data.html)
+- [Real-time Streaming](https://neuro-mechatronics-interfaces.github.io/python-intan/examples/live_plotting.html)
+- [Signal Processing](https://neuro-mechatronics-interfaces.github.io/python-intan/info/signal_processing.html)
+- [Gesture Classification](https://neuro-mechatronics-interfaces.github.io/python-intan/examples/gesture_classification.html)
+- [LSL Integration](https://neuro-mechatronics-interfaces.github.io/python-intan/examples/lsl_streaming.html)
+- [GUI Applications](https://neuro-mechatronics-interfaces.github.io/python-intan/examples/gui_applications.html)
+- [Hardware Control](https://neuro-mechatronics-interfaces.github.io/python-intan/examples/hardware_control.html)
+- [FAQ](https://neuro-mechatronics-interfaces.github.io/python-intan/info/faqs.html)
+- [API Reference](https://neuro-mechatronics-interfaces.github.io/python-intan/intan_api/modules.html)
+
+---
+
+## 🎓 Examples
+
+The `examples/` directory contains 60+ working examples organized by category:
+
+```bash
+# File loading
+python examples/Read_Files/load_rhd_demo.py
+
+# Real-time streaming
+python examples/RHXDevice/scrolling_live.py
+
+# Gesture classification pipeline
+python examples/gesture_classifier/1a_build_training_dataset_rhd.py
+python examples/gesture_classifier/2_train_model.py
+python examples/gesture_classifier/3d_predict_from_device_realtime.py
+
+# GUI applications
+python examples/applications/run_emg_viewer.py
+python examples/applications/gesture_pipeline_gui.py
+
+# LSL streaming
+python examples/LSL/lsl_waveform_viewer.py
+python examples/LSL/lsl_rms_barplot.py
+```
+
+See the [Examples Documentation](https://neuro-mechatronics-interfaces.github.io/python-intan/examples/introduction.html) for complete guides.
+
+---
+
+## 🛠️ Supported Hardware
+
+- **Intan RHX Controllers**: RHD USB Interface Board, RHD Recording Controller
+- **Amplifiers**: RHD2000 series (RHD2132, RHD2164, RHD2216, etc.)
+- **Stimulation**: RHS2000 series amplifiers
+- **Peripherals**: Raspberry Pi Pico, servo controllers, IMU sensors
+- **Integration**: Lab Streaming Layer (LSL) compatible devices
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Whether it's:
+
+- 🐛 Bug reports
+- ✨ Feature requests
+- 📝 Documentation improvements
+- 🧪 New examples
+- 🔧 Code contributions
+
+Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+**Ways to contribute:**
+- Report bugs or request features via [GitHub Issues](https://github.com/Neuro-Mechatronics-Interfaces/python-intan/issues)
+- Submit pull requests with improvements
+- Share your use cases and examples
+- Help answer questions in discussions
+- Improve documentation
+
+---
+
+## 📝 Citation
+
+If you use this package in your research, please cite:
 
 ```bibtex
 @software{Shulgach_Python_Intan_2025,
-  author = {Shulgach, Jonathan, Murphy, Max and Foy, Adrian},
+  author = {Shulgach, Jonathan and Murphy, Max and Foy, Adrian},
   title = {{Python Intan Package}},
   year = {2025},
-  month = {05},
+  month = {01},
   version = {0.0.3},
   url = {https://github.com/Neuro-Mechatronics-Interfaces/python-intan},
-  note = "{\tt jshulgac@andrew.cmu.edu}"
+  note = {Neuromechatronics Lab, Carnegie Mellon University}
 }
 ```
 
+---
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License — see the [License File](LICENSE) for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**MIT License means:**
+- ✅ Commercial use
+- ✅ Modification
+- ✅ Distribution
+- ✅ Private use
+
+---
+
+## 🙏 Acknowledgments
+
+Developed by the [Neuromechatronics Lab](https://www.meche.engineering.cmu.edu/faculty/neuromechatronics-lab.html) at Carnegie Mellon University.
+
+**Core Contributors:**
+- Jonathan Shulgach
+- Max Murphy
+- Adrian Foy
+
+**Special Thanks:**
+- Intan Technologies for hardware and support
+- The open-source neuroscience community
+
+---
+
+## 📧 Contact & Support
+
+- **Documentation**: [neuro-mechatronics-interfaces.github.io/python-intan](https://neuro-mechatronics-interfaces.github.io/python-intan/)
+- **Issues**: [GitHub Issues](https://github.com/Neuro-Mechatronics-Interfaces/python-intan/issues)
+- **Email**: jshulgac@andrew.cmu.edu
+- **Lab Website**: [Neuromechatronics Lab](https://www.meche.engineering.cmu.edu/faculty/neuromechatronics-lab.html)
+
+---
+
+## 🚦 Status & Roadmap
+
+**Current Version: 0.0.3** (January 2025)
+
+### Completed ✅
+- [x] File loading (.rhd, .dat, .csv, .npz)
+- [x] Real-time TCP streaming from RHX
+- [x] Signal processing pipeline
+- [x] Machine learning (CNN, LSTM, Dense models)
+- [x] Real-time gesture recognition
+- [x] Lab Streaming Layer integration
+- [x] GUI applications (EMG viewer, trial selector, gesture pipeline)
+- [x] Hardware integration (Pico, robotic arms, IMU)
+- [x] Comprehensive documentation and examples
+
+### In Progress 🚧
+- [ ] Performance benchmarking suite
+- [ ] Extended LSL marker synchronization
+- [ ] Additional ML model architectures
+- [ ] Mobile device integration
+
+### Planned 📋
+- [ ] Public training datasets
+- [ ] Cloud integration for distributed processing
+- [ ] Advanced impedance testing tools
+- [ ] Multi-language support (MATLAB, Julia wrappers)
+
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
+
+---
+
+<p align="center">
+  <b>⭐ If you find this package useful, please consider giving it a star on GitHub! ⭐</b>
+</p>
+
+<p align="center">
+  Made with ❤️ by the Neuromechatronics Lab
+</p>
