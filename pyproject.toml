@@ -43,6 +43,3 @@ docs = [
 [tool.setuptools]
 packages = ["intan"]
 
-[tool.setuptools.dynamic]
-version = {attr = "pyoephys.__version__"}
-

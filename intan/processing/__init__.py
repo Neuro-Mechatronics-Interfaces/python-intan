@@ -16,7 +16,7 @@ from ._features import (
     common_average_reference,
     compute_grid_average,
     z_score_norm,
-    #apply_pca,
+    #apply_pca, # To-Do: enable after testing
     orthogonalize,
     normalize,
     extract_features,
@@ -32,3 +32,4 @@ from ._transformations import (
     align_multichannel_by_lag,
 )
 from ._fill import FillStats, fix_missing_emg
+from ._channel_qc import ChannelQC, QCParams

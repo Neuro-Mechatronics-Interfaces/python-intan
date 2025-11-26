@@ -35,6 +35,32 @@ from intan.io import (
 
 CHAN_RE = re.compile(r'^\s*([A-Da-d])\s*[-_ ]?\s*(\d{1,3})\s*$')
 
+def normalize_to_1based(names):
+    """
+    Accepts names like 'B-000' or 'B-0' or 'b_17' and returns canonical 1-based 'B-###'.
+    If any '000' is seen, we treat the set as zero-indexed and shift +1.
+    """
+    parsed = []
+    saw_zero = False
+    for nm in names:
+        m = CHAN_RE.match(str(nm))
+        if not m:
+            continue
+        port = m.group(1).upper()
+        num = int(m.group(2))
+        if num == 0:
+            saw_zero = True
+        parsed.append((port, num))
+
+    # If any zero present, interpret the whole set as zero-indexed and shift +1
+    shift = 1 if saw_zero else 0
+
+    canon = []
+    for port, num in parsed:
+        n1 = num + shift
+        canon.append(f"{port}-{n1:03d}")
+    return canon, bool(saw_zero)
+
 def enable_trained_channels(dev, trained_names):
     """
     Enable Intan wideband channels based on names like 'A-003'.
@@ -42,11 +68,16 @@ def enable_trained_channels(dev, trained_names):
     """
     by_port = defaultdict(list)
 
+    print(f"Trained names: {trained_names}")
+
+
     for nm in trained_names:
         m = CHAN_RE.match(str(nm))
         if not m:
             logging.warning(f"skip unrecognized channel name: {nm!r}")
             continue
+
+        print("Matched ", nm)
         port = m.group(1).lower()             # 'a' / 'b' / 'c' / 'd'
         ch_1b = int(m.group(2))               # e.g. 3
         idx0  = ch_1b - 1                     # 0-based index
@@ -139,28 +170,20 @@ def run(root_dir: str, label: str = "", window_ms: int | None = None, step_ms: i
     )
 
     # Get training channel names
-    trained_names = _training_names_from_meta(root_dir, label, meta, data_meta)
-    trained_names = [str(x).strip() for x in trained_names]
-    print(f"Trained channel names: {trained_names}")
-    if not trained_names:
-        raise RuntimeError("No training channel_names found in metadata.")
+    trained_names_raw = _training_names_from_meta(root_dir, label, meta, data_meta)
+    trained_names_raw = [str(x).strip() for x in trained_names_raw]
+    print(f"Trained channel names: {trained_names_raw}")
+    trained_names, was_zero = normalize_to_1based(trained_names_raw)
+    if was_zero:
+        print("[INFO] Detected 0-based trained names; normalized to 1-based (X-###).")
     logging.info(f"Training channel count: {len(trained_names)}")
 
     # Optional LSL publisher
-    lsl = None
-    if use_lsl:
-        lsl = LSLMessagePublisher(name="EMGGesture", stream_type="Markers", only_on_change=False)
+    lsl = LSLMessagePublisher(name="EMGGesture", stream_type="Markers", only_on_change=False) if use_lsl else None
 
     # --- Device setup ---
     dev = IntanRHXDevice()
     fs = float(getattr(dev, "sample_rate", data_meta.get("sample_rate_hz", 4000.0)))
-    #device_names_full = _get_device_channel_names(dev)
-
-    # Map trained names -> device indices and enable only those
-    #idxs = []
-    #for i, nm in enumerate(trained_names):
-    #    idxs.append(i)
-    #dev.enable_wide_channel(idxs, port=trained_names[0][0]) # Port as first char of first name
     dev.clear_all_data_outputs()
     enabled = enable_trained_channels(dev, trained_names)
 
@@ -183,7 +206,6 @@ def run(root_dir: str, label: str = "", window_ms: int | None = None, step_ms: i
             dev._update_read_size()
 
     dev.start_streaming()
-    #device_active_names = trained_names
 
     # --- Model & preprocessing reused at each tick ---
     manager = ModelManager(root_dir=root_dir, label=label, model_cls=EMGClassifier, config={"verbose": verbose})

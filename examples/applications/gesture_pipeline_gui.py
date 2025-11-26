@@ -350,9 +350,30 @@ class ChannelViewWidget(QtWidgets.QWidget):
         self.cmbMode = QtWidgets.QComboBox();
         self.cmbMode.addItems(["RMS Bars", "RMS Grid"])
 
+        # --- Threshold UI (same row as RMS window) ---
+        self.dsbThresh = QtWidgets.QDoubleSpinBox()
+        self.dsbThresh.setRange(0.0, 5000.0)
+        self.dsbThresh.setDecimals(2)
+        self.dsbThresh.setSingleStep(5.0)
+        self.dsbThresh.setValue(30.0)
+        self.dsbThresh.setSuffix(" µV")
+
+        self.btnEnableCross = QtWidgets.QPushButton("Enable > threshold")
+        self.btnDisableCross = QtWidgets.QPushButton("Disable > threshold")
+
+        thr_row = QtWidgets.QHBoxLayout()
+        thr_row.setContentsMargins(0, 0, 0, 0)
+        thr_row.setSpacing(8)
+        thr_row.addWidget(self.dsbThresh)
+        thr_row.addWidget(self.btnEnableCross)
+        thr_row.addWidget(self.btnDisableCross)
+        thr_wrap = QtWidgets.QWidget();
+        thr_wrap.setLayout(thr_row)
+
         grid.addWidget(_cell("Source", self.cmbSource, maxw=220), r, 0)
         grid.addWidget(_cell("Channels", self.spnCh, maxw=140), r, 1)
         grid.addWidget(_cell("RMS window", self.dsbWin, maxw=160), r, 2)
+        grid.addWidget(_cell("Threshold", thr_wrap, maxw=360), 0, 3)
         r += 1
 
         # Row 1: LSL fields (shown for 'LSL stream')
@@ -421,6 +442,8 @@ class ChannelViewWidget(QtWidgets.QWidget):
         grid.addWidget(QtWidgets.QLabel("Select channels"), r, 0, QtCore.Qt.AlignTop)
         grid.addWidget(self.listCh, r, 1, 1, 2)
         r += 1
+        grid.addLayout(mini_btns, r, 1, 1, 2)
+        r += 1
 
         self.btnCarry = QtWidgets.QPushButton("Use selection in Dataset")
         grid.addWidget(self.btnCarry, r, 0, 1, 3)
@@ -436,6 +459,17 @@ class ChannelViewWidget(QtWidgets.QWidget):
         self._imgPlot.addItem(self._imgItem);
         self._imgPlot.invertY(True);
         self._imgPlot.showGrid(x=True, y=True)
+
+        # Threshold line for bar plot
+        # self._thLine = pg.InfiniteLine(pos=self.dsbThresh.value(), angle=0)
+        # self._barPlot.addItem(self._thLine)
+        # self.dsbThresh.valueChanged.connect(lambda v: self._thLine.setPos(float(v)))
+
+        # scratch buffers for last window
+        self._last_rms = None  # np.ndarray, shape (n_selected,)
+        self._last_sel_idx = None  # np.ndarray of selected channel indices (global)
+        self._barBarsLo = None
+        self._barBarsHi = None
 
         self.stackW = QtWidgets.QWidget();
         self.stackW.setLayout(self.stack)
@@ -461,6 +495,8 @@ class ChannelViewWidget(QtWidgets.QWidget):
         self.btnEven.clicked.connect(lambda: self._quick_select("even"))
         self.btnOdd.clicked.connect(lambda: self._quick_select("odd"))
         self.listCh.itemChanged.connect(lambda _=None: self._emit_selection())
+        self.btnEnableCross.clicked.connect(lambda: self._apply_threshold_to_checks(enable=True))
+        self.btnDisableCross.clicked.connect(lambda: self._apply_threshold_to_checks(enable=False))
 
         # toggle LSL/Device rows
         def _toggle_rows(i):
@@ -612,22 +648,65 @@ class ChannelViewWidget(QtWidgets.QWidget):
         # RMS per channel
         rms = np.sqrt(np.mean(Y * Y, axis=1) + 1e-12)
 
+        # Remember for threshold actions outside draw loop
+        self._last_rms = rms
+        self._last_sel_idx = C  # global channel indices for current selection
+
         if self.stack.currentIndex() == 0:
             self._draw_bars(rms, C)
         else:
             self._draw_grid(rms, len(idx))
 
+    # def _draw_bars(self, rms, chan_idx):
+    #     x = np.arange(rms.size)
+    #     if self._barBars is None:
+    #         bg = pg.BarGraphItem(x=x, height=rms, width=0.8, brush=pg.mkBrush("#74A9FF"))
+    #         self._barBars = bg
+    #         self._barPlot.addItem(bg)
+    #         self._barPlot.setLabel("bottom", "channel")
+    #         self._barPlot.setLabel("left", "RMS (µV)")
+    #         self._barPlot.setXRange(-1, rms.size+1, padding=0)
+    #     else:
+    #         self._barBars.setOpts(x=x, height=rms)
     def _draw_bars(self, rms, chan_idx):
-        x = np.arange(rms.size)
-        if self._barBars is None:
-            bg = pg.BarGraphItem(x=x, height=rms, width=0.8, brush=pg.mkBrush("#74A9FF"))
-            self._barBars = bg
-            self._barPlot.addItem(bg)
+        x = np.arange(rms.size, dtype=float)
+        thr = float(self.dsbThresh.value())
+
+        lo_mask = rms <= thr
+        hi_mask = ~lo_mask
+
+        # --- low (≤ threshold) series ---
+        if self._barBarsLo is None:
+            bg_lo = pg.BarGraphItem(
+                x=x[lo_mask],
+                height=rms[lo_mask],
+                width=0.8,
+                brush=pg.mkBrush("#74A9FF"),
+            )
+            self._barBarsLo = bg_lo
+            self._barPlot.addItem(bg_lo)
             self._barPlot.setLabel("bottom", "channel")
             self._barPlot.setLabel("left", "RMS (µV)")
-            self._barPlot.setXRange(-1, rms.size+1, padding=0)
+            self._barPlot.setXRange(-1, rms.size + 1, padding=0)
         else:
-            self._barBars.setOpts(x=x, height=rms)
+            self._barBarsLo.setOpts(x=x[lo_mask], height=rms[lo_mask])
+
+        # --- high (> threshold) series ---
+        if self._barBarsHi is None:
+            bg_hi = pg.BarGraphItem(
+                x=x[hi_mask],
+                height=rms[hi_mask],
+                width=0.8,
+                brush=pg.mkBrush("#FF6B6B"),
+            )
+            self._barBarsHi = bg_hi
+            self._barPlot.addItem(bg_hi)
+        else:
+            self._barBarsHi.setOpts(x=x[hi_mask], height=rms[hi_mask])
+
+        ymax = float(np.percentile(rms, 99.0)) * 1.1 + 1e-6
+        self._barPlot.setYRange(0, ymax)
+
 
     def _draw_grid(self, rms, nsel):
         # build approximately square grid that fits all selected channels
@@ -637,6 +716,31 @@ class ChannelViewWidget(QtWidgets.QWidget):
         flat = rms.astype(np.float32)
         A.flat[:flat.size] = flat  # pad rest with 0
         self._imgItem.setImage(A.T, autoLevels=True)  # transpose just for nicer aspect
+
+    def _apply_threshold_to_checks(self, enable: bool):
+        """
+        enable=True  -> check channels with RMS > threshold
+        enable=False -> uncheck channels with RMS > threshold
+        Uses the most recent window and current selection mapping.
+        """
+        if self._last_rms is None or self._last_sel_idx is None:
+            return
+
+        thr = float(self.dsbThresh.value())
+        over = (self._last_rms > thr)
+
+        # Map local index in the selection → global channel id used by the checkbox list
+        for local_i, is_over in enumerate(over):
+            if not is_over:
+                continue
+            global_ch = int(self._last_sel_idx[local_i])
+            if 0 <= global_ch < self.spnCh.value():
+                it = self.listCh.item(global_ch)
+                if it is not None:
+                    it.setCheckState(QtCore.Qt.Checked if enable else QtCore.Qt.Unchecked)
+
+        # propagate selection change
+        self._emit_selection()
 
 
 # ---------------------------------------------------------------------------

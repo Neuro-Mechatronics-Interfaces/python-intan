@@ -186,7 +186,7 @@ This package can be cited as follows:
   title = {{Python Intan Package}},
   year = {2025},
   month = {05},
-  version = {0.1.0},
+  version = {0.0.3},
   url = {https://github.com/Neuro-Mechatronics-Interfaces/python-intan},
   note = "{\tt jshulgac@andrew.cmu.edu}"
 }

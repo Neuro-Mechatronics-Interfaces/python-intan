@@ -52,6 +52,7 @@ def build_training_dataset(root_dir: str, events_file: str | None = None, file_d
 
     # Load raw EMG
     #data = load_npz_file(find_npz_by_label(os.path.join(root_dir,'emg'), label=label)[0], verbose=verbose)
+    print(f"Loading raw EMG from: {file_dir}")
     data = load_npz_file(file_dir, verbose=verbose)
     emg_fs = float(data["sample_rate"])
     emg = data["amplifier_data"]         # (C, N)

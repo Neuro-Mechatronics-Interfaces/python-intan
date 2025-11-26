@@ -9,10 +9,44 @@ Compatible with datasets produced by 1_build_training_dataset_from_npz.py
 import os
 import json
 import argparse
+import logging
 import numpy as np
 from intan.io import load_config_file
 from intan.ml import ModelManager, EMGClassifier
 from sklearn.metrics import classification_report, confusion_matrix
+
+
+def load_npz_list(npz_paths):
+    Xs, ys, metas = [], [], []
+    for p in npz_paths:
+        d = np.load(p, allow_pickle=True)
+        Xs.append(d["X"])
+        ys.append(d["y"])
+        metas.append({
+            "path": p,
+            "class_names": d["class_names"].tolist(),
+            "label_to_id": json.loads(str(d["label_to_id_json"].item())),
+            "window_ms": int(d["window_ms"]),
+            "step_ms": int(d["step_ms"]),
+            "modality": str(d["modality"].item()),
+        })
+    # sanity: feature dims must match
+    fdim = {x.shape[1] for x in Xs}
+    if len(fdim) != 1:
+        raise ValueError(f"Feature dims differ across inputs: {fdim} for {npz_paths}")
+    X = np.vstack(Xs)
+    y = np.concatenate(ys)
+    return X, y, metas
+
+def unify_labels(y, metas):
+    # Build a stable label order from the union (sorted for reproducibility)
+    all_classes = set()
+    for m in metas:
+        all_classes.update(m["class_names"])
+    classes = sorted(all_classes)
+    to_id = {c:i for i,c in enumerate(classes)}
+    # y is string array already → remap to new ids later by sklearn LabelEncoder if you prefer
+    return np.array(classes, dtype=object), to_id
 
 
 def _find_dataset_path(root_dir: str, label: str | None) -> str:
@@ -97,11 +131,8 @@ def _infer_label_classes(y, class_names, label_to_id):
 def train_model(cfg: dict, save_eval: bool = False):
     label = cfg.get("label", "")
 
-    # if dataset_dir is provided, override root_dir for dataset search
-    data_path = None
-    if cfg.get("dataset_dir") is not None:
-        data_path = cfg["dataset_dir"]
 
+    # if dataset_dir is provided, override root_dir for dataset search
     data_path = _find_dataset_path(cfg["root_dir"], label)
     if not os.path.exists(data_path):
         raise FileNotFoundError(f"Dataset file not found. Looked for: {data_path}")
@@ -232,12 +263,14 @@ def main():
     p.add_argument("--config_file", type=str, default=None)
     p.add_argument("--root_dir",   type=str, required=True)
     p.add_argument("--dataset_dir", type=str, default=None)
-    p.add_argument("--label",      type=str, default="")
-    p.add_argument("--kfold",      action="store_true")
-    p.add_argument("--overwrite",  action="store_true")
-    p.add_argument("--verbose",    action="store_true")
-    p.add_argument("--save_eval", action="store_true",
-                   help="After training, save the validation-set predictions/metrics to JSON for plotting.")
+    p.add_argument("--train_npz", nargs="+", default=None, help="One or more training .npz files (instead of --root_dir).")
+    p.add_argument("--test_npz", type=str, default=None, help="Optional external test .npz. If set, skip internal split.")
+    p.add_argument("--save_tag", type=str, default="", help="Extra tag for model/metrics filenames.")
+    p.add_argument("--label",      type=str, default="", help="Label prefix for model/dataset files.")
+    p.add_argument("--kfold",      action="store_true", help="Use k-fold cross-validation instead of train/test split.")
+    p.add_argument("--overwrite",  action="store_true", help="Retrain model even if one exists.")
+    p.add_argument("--verbose",    action="store_true", help="Enable verbose logging.")
+    p.add_argument("--save_eval", action="store_true", help="After training, save the validation-set predictions/metrics to JSON for plotting.")
     args = p.parse_args()
 
     cfg = {}

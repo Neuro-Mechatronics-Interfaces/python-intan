@@ -135,7 +135,7 @@ class EMGTrialSelector:
         """
         Load EMG data from a .rhd file and initialize the GUI with the first channel.
         """
-        from intan.io import load_rhd_file
+        from intan.io import load_rhd_file, load_csv_file
 
         path = filedialog.askopenfilename(filetypes=[
             ("RHD files", "*.rhd"),
@@ -148,20 +148,23 @@ class EMGTrialSelector:
         if path.endswith('.csv'):
             # Load CSV file. first column has timestamp data in milliseconds elapsed, the rest are EMG channels if
             # they have "EMG" in the name. The first row has only header information
-            data = np.loadtxt(path, delimiter=',', skiprows=1)
-            self.time_vector = data[:, 0] / 1000.0
+            # data = np.loadtxt(path, delimiter=',', skiprows=1)
+            data = load_csv_file(path)
+            self.time_vector = data['t_amplifier']
+            self.emg_data = data["amplifier_data"]
+            # append imu data if present
+            imu = data.get("board_adc_data", None)
+            self.emg_data = self.emg_data.astype(float, copy=False)
+            if imu is not None:
+                imu = imu.astype(float, copy=False)
+                self.emg_data = np.vstack((self.emg_data, imu))
 
-            # Find the columns that contain "EMG" in their header
-            with open(path, 'r') as f:
-                header = f.readline().strip().split(',')
-            emg_columns = [i for i, col in enumerate(header) if "EMG" in col]
-            self.emg_data = data[:, emg_columns].T
-
-            dt = float(self.time_vector[1] - self.time_vector[0])
-            if dt <= 0:
-                messagebox.showerror("Error", "Non-positive timestep in CSV.")
-                return
-            self.sampling_rate = 1.0 / dt  # Hz (seconds already)
+            # dt = float(self.time_vector[1] - self.time_vector[0])
+            # if dt <= 0:
+            #     messagebox.showerror("Error", "Non-positive timestep in CSV.")
+            #     return
+            # self.sampling_rate = 1.0 / dt  # Hz (seconds already)
+            self.sampling_rate = float(data['frequency_parameters']['amplifier_sample_rate'])
 
         elif path.endswith('.npz'):
             # Load NPZ file. Should have 'emg_data' or 'emg', 'time_vector' or 't', and 'sampling_rate' or 'fs' keys

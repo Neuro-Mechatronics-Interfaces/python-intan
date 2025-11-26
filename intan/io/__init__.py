@@ -107,3 +107,8 @@ from ._utilities import (
     trained_channel_names_from_dataset_npz,
     get_trained_channel_names,
 )
+from ._csv_utils import (
+    load_csv_file,
+    load_csv_files,
+    find_csv_dir,
+)
