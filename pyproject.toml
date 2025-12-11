@@ -1,6 +1,6 @@
 [project]
 name = "python-intan"
-version = "0.0.3"
+version = "0.1.0"
 description = "Python interface and utilities for working with Intan RHX devices and electrophysiology data"
 authors = [
     { name = "Jonathan Shulgach", email = "jshulgac@andrew.cmu.edu" },
@@ -17,6 +17,7 @@ dependencies = [
     "PySerial",
     "scikit-learn",
     "tqdm",
+    "torch>=2.0.0",
     # "nvidia-cuda-toolkit", # This is not a Python package, but a system package
     "tensorflow==2.19.0",
     "seaborn",
@@ -38,6 +39,11 @@ docs = [
     "sphinx",
     "sphinx-autodoc-typehints",
     "myst-parser",
+]
+video = [
+    "opencv-python>=4.5.0",
+    "mediapipe>=0.10.0",
+    "handtrack @ git+https://github.com/Jshulgach/Hand-Landmark-Tracker.git",
 ]
 
 [tool.setuptools]

@@ -1,41 +1,76 @@
+#!/usr/bin/env python3
+"""
+Record EMG data from Intan RHX device and display a sample channel.
+
+Demonstrates basic device connection, channel configuration, data recording,
+and visualization using matplotlib.
+
+Usage:
+    python record_demo.py
+"""
+import sys
 import numpy as np
-
+import matplotlib.pyplot as plt
 from intan.interface import IntanRHXDevice
-#from intan.plotting import plot_figure
 
-if __name__ == "__main__":
-    SAMPLE_RATE = 4000.0
+
+def main():
+    """Main recording demonstration."""
     DURATION_SEC = 10
     NUM_CHANNELS = 128
+    DISPLAY_CHANNEL = 5
 
-    # Initialize the RHX device
-    device = IntanRHXDevice(sample_rate=SAMPLE_RATE, num_channels=NUM_CHANNELS)
-
-    # Configure the device channels
-    device.enable_wide_channel(range(NUM_CHANNELS))
-    device.set_blocks_per_write(8)
-
+    print(f"[INIT] Connecting to RHX device...")
+    
+    # Use context manager for proper cleanup
     try:
-        # Start the RHX device and collect data for the specified duration
-        emg = device.record(duration_sec=DURATION_SEC)
+        with IntanRHXDevice(num_channels=NUM_CHANNELS) as device:
+            if not device.connected:
+                print("[ERROR] Failed to connect to RHX device.")
+                print("Ensure RHX software is running with TCP server enabled.")
+                return 1
 
-    except KeyboardInterrupt:
-        print("\n[✋] Streaming interrupted by user.")
-        emg = None
+            SAMPLE_RATE = float(device.sample_rate)
+            print(f"[OK] Connected. Sample rate: {SAMPLE_RATE:.1f} Hz")
 
-    finally:
-        # Stop the RHX device and close the connection
-        device.set_run_mode("stop")
-        device.close()
+            # Configure channels
+            print(f"[SETUP] Enabling {NUM_CHANNELS} channels...")
+            device.enable_wide_channel(range(NUM_CHANNELS))
+            device.set_blocks_per_write(8)
 
-        # Plot the EMG data
-        if emg is not None:
+            # Record data
+            print(f"[RECORD] Recording {DURATION_SEC}s of data...")
+            try:
+                emg = device.record(duration_sec=DURATION_SEC)
+            except KeyboardInterrupt:
+                print("\n[STOP] Recording interrupted by user.")
+                return 1
+
+            if emg is None or emg.shape[1] == 0:
+                print("[ERROR] No data recorded.")
+                return 1
+
+            print(f"[OK] Recorded {emg.shape[1]} samples across {emg.shape[0]} channels")
+
+            # Plot sample channel
             t = np.arange(emg.shape[1]) / SAMPLE_RATE
-            #plot_figure(emg[5], t, title="EMG Signal", x_label="Time (s)", y_label="Amplitude (uV)", legend=False)
+            
+            plt.figure(figsize=(12, 4))
+            plt.plot(t, emg[DISPLAY_CHANNEL])
+            plt.title(f"EMG Signal - Channel {DISPLAY_CHANNEL}")
+            plt.xlabel("Time (s)")
+            plt.ylabel("Amplitude (µV)")
+            plt.grid(True, alpha=0.3)
+            plt.tight_layout()
+            plt.show()
+            
+            print("[DONE] Recording complete.")
+            return 0
 
-        import matplotlib.pyplot as plt
-        plt.plot(t, emg[5])
-        plt.title("EMG Signal")
-        plt.xlabel("Time (s)")
-        plt.ylabel("Amplitude (uV)")
-        plt.show()
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

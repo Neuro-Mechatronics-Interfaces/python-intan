@@ -1,12 +1,12 @@
 {
-  "python": "C:\\Users\\NML\\Documents\\Github\\python-intan\\.venv\\Scripts\\python.exe",
+  "python": "python",
   "root_dir": "",
   "label": "gestures",
   "verbose": false,
   "scripts": {
-    "build": "C:\\Users\\NML\\Documents\\Github\\python-intan\\examples\\gesture_classifier\\1a_build_training_dataset_rhd.py",
-    "train": "C:\\Users\\NML\\Documents\\Github\\python-intan\\examples\\gesture_classifier\\2_train_model.py",
-    "realtime": "C:\\Users\\NML\\Documents\\Github\\python-intan\\examples\\gesture_classifier\\3d_predict_from_device_realtime.py"
+    "build": "../gesture_classifier/1a_build_training_dataset_rhd.py",
+    "train": "../gesture_classifier/2_train_model.py",
+    "realtime": "../gesture_classifier/3d_predict_from_device_realtime.py"
   },
   "dataset": {
     "file_path": "",

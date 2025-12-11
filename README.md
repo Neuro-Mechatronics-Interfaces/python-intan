@@ -65,13 +65,18 @@ source intan/bin/activate  # Windows: intan\Scripts\activate
 pip install python-intan
 ```
 
-### GPU Support (Optional)
+### Optional Features
 
-For faster machine learning training:
-
+**GPU Support** - For faster machine learning training:
 ```bash
 pip install tensorflow[and-cuda] nvidia-cudnn-cu12
 ```
+
+**Video Processing** - For hand landmark tracking and finger kinematics:
+```bash
+pip install 'python-intan[video]'
+```
+Includes: opencv-python, mediapipe, and [handtrack](https://github.com/Jshulgach/Hand-Landmark-Tracker) package.
 
 ---
 

@@ -90,6 +90,48 @@ A comprehensive real-time EMG visualization tool with multiple display modes and
 
 ----
 
+Dataset Builder GUI Application
+--------------------------------
+
+**New in v0.1.0**: A comprehensive GUI for building EMG gesture classification datasets with full parameter control.
+
+.. code-block:: bash
+
+    # Launch dataset builder GUI
+    python examples/applications/dataset_builder_gui.py
+
+**Features:**
+
+- **7 Configuration Sections**:
+
+  - Project setup (root directory, label, output path)
+  - File discovery (automatic detection of data and event files)
+  - Channel selection (ranges, mappings, grid layouts)
+  - Preprocessing (filtering, envelope extraction, paper-style mode)
+  - Feature extraction (window/step size, feature types)
+  - Label management (ignore patterns, trial numbers)
+  - Advanced options (orientation remapping, IMU features)
+
+- **Visual Pipeline Display**: Real-time 7-step workflow visualization
+- **Smart File Discovery**:
+
+  - Separate panels for data files (blue) and event files (yellow)
+  - Automatic search in ``raw/`` and ``events/`` subdirectories
+  - Support for RHD, NPZ, CSV, and Poly5 formats
+  - Pattern matching for event files (``*_events.txt``, ``*_event.txt``, etc.)
+
+- **Profile Management**: Save/load configurations as JSON profiles
+- **Multi-File Support**: Process entire directories with pattern filtering
+- **Channel Mapping**: Support for HD-EMG grid layouts with spatial transforms
+- **Multi-Modal Features**: Optional IMU feature extraction (mean or rich statistics)
+
+**See Also:**
+
+- Full documentation: ``examples/applications/DATASET_BUILDER_GUI.md``
+- Example configurations in ``examples/gesture_classifier/``
+
+----
+
 Trial Selector Application
 ----------------------------
 

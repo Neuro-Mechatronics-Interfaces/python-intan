@@ -33,3 +33,20 @@ from ._transformations import (
 )
 from ._fill import FillStats, fix_missing_emg
 from ._channel_qc import ChannelQC, QCParams
+from ._imu_features import aggregate_imu_features, append_imu_features
+from ._sync import (
+    compute_landmark_movement_signal,
+    compute_emg_envelope_signal,
+    find_sync_offset,
+    load_sync_offset,
+    save_sync_offset,
+)
+from ._temporal_filters import (
+    smooth_predictions,
+    moving_average,
+    lowpass_filter as temporal_lowpass,
+    savitzky_golay,
+    gaussian_smooth,
+    exponential_smooth,
+    adaptive_smooth,
+)

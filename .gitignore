@@ -27,6 +27,7 @@ gesture_classifier/*.pth
 
 # Temporary files used for debugging 
 /temp/
+/tests/
 temp/*
 /old/
 
@@ -79,3 +80,6 @@ docs/build/*
 pip-log.txt
 pip-delete-this-directory.txt
 /examples/temp/
+
+# Personal copilot files
+ .github/copilot-instructions.md

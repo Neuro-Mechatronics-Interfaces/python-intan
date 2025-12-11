@@ -1,4 +1,13 @@
 from ._canonicalizer import CANON, SYNONYMS, canonical_label
+from ._config_utils import (
+    load_simple_config,
+    save_simple_config,
+    prompt_directory,
+    prompt_file,
+    prompt_text,
+    prompt_yes_no,
+    get_or_prompt_value,
+)
 from ._rhd_channel_utils import (
     print_all_channel_names,
     find_channel_in_header,
@@ -30,6 +39,11 @@ from ._file_utils import (
     load_config_file,
     labels_from_events,
     last_event_index,
+    stem_without_timestamp,
+    glob_first,
+    find_event_file,
+    discover_data_files,
+    find_dataset_file,
 )
 
 from ._rhd_block_parser import (
@@ -92,6 +106,9 @@ from ._npz_utils import (
     save_as_npz,
     load_npz_file,
     load_npz_files,
+    load_training_dataset,
+    load_and_merge_datasets,
+    save_training_dataset,
 )
 from ._utilities import (
     parse_event_file,
@@ -106,9 +123,31 @@ from ._utilities import (
     trained_channel_names_from_meta,
     trained_channel_names_from_dataset_npz,
     get_trained_channel_names,
+    parse_channel_spec,
+    load_channel_mapping,
+    resolve_channel_selection,
+    normalize_channel_name_1based,
+    parse_channels_spec,
+    find_event_for_file,
+    file_stem,
+    discover_and_group_files,
+    load_single_file,
+    load_files_merged,
+)
+from ._dataset_utils import (
+    select_channels,
+    process_recording,
+    save_dataset,
 )
 from ._csv_utils import (
     load_csv_file,
     load_csv_files,
     find_csv_dir,
+)
+from ._grid_utils import (
+    infer_grid_dimensions,
+    apply_grid_permutation,
+    parse_orientation_from_filename,
+    orientation_to_permutation_mode,
+    remap_grid_channels,
 )

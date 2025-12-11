@@ -18,14 +18,18 @@ of data from local or mounted environments.
 import sys
 import os
 import json
+import glob
 import numpy as np
-from typing import Optional
+from typing import Optional, List, Tuple, Dict, Any, Sequence, Callable
 from pathlib import Path
 import yaml
 import platform
 import pathlib
 import pandas as pd
-from tkinter import filedialog
+try:
+    from tkinter import filedialog
+except ImportError:
+    filedialog = None  # tkinter not available (e.g., headless environment)
 from intan.io._exceptions import FileSizeError
 
 
@@ -409,3 +413,246 @@ def last_event_index(path: str) -> Optional[int]:
                 pass
     return last
 
+
+# =============================================================================
+# File Discovery Utilities
+# =============================================================================
+
+def stem_without_timestamp(path: str) -> str:
+    """
+    Extract the base name from a file path, stripping any timestamp suffix.
+    
+    Common patterns handled:
+        - "IndexExtension_241112_170737.npz" -> "IndexExtension"
+        - "WristFlexion_2024-01-15_143052.rhd" -> "WristFlexion"
+        - "recording.rhd" -> "recording"
+    
+    Args:
+        path: File path or filename
+    
+    Returns:
+        Base name without extension or timestamp suffix
+    
+    Example:
+        >>> stem_without_timestamp("IndexExtension_241112_170737.npz")
+        'IndexExtension'
+    """
+    import re
+    
+    # Handle numpy object arrays
+    if hasattr(path, "item"):
+        try:
+            path = path.item()
+        except Exception:
+            pass
+    
+    # Get filename without extension
+    stem = os.path.splitext(os.path.basename(str(path)))[0]
+    
+    # Strip timestamp suffixes like _YYMMDD_HHMMSS or _YYYY-MM-DD_HHMMSS
+    stem = re.sub(r'_\d{6}_\d{6}$', '', stem)  # _YYMMDD_HHMMSS
+    stem = re.sub(r'_\d{4}-\d{2}-\d{2}_\d{6}$', '', stem)  # _YYYY-MM-DD_HHMMSS
+    stem = re.sub(r'_\d{8}_\d{6}$', '', stem)  # _YYYYMMDD_HHMMSS
+    
+    return stem
+
+
+def glob_first(pattern: str) -> Optional[str]:
+    """
+    Return the first file matching a glob pattern, or None if no matches.
+    
+    Args:
+        pattern: Glob pattern (e.g., "/data/events/*.event")
+    
+    Returns:
+        First matching file path (sorted), or None
+    
+    Example:
+        >>> glob_first("/data/events/trial*.event")
+        '/data/events/trial1_emg.event'
+    """
+    import glob as glob_module
+    if not pattern:
+        return None
+    matches = sorted(glob_module.glob(pattern))
+    return matches[0] if matches else None
+
+
+def find_event_file(
+    root_dir: str,
+    data_file_path: str,
+    label: str = "",
+    extensions: tuple = (".event", ".txt"),
+) -> Optional[str]:
+    """
+    Auto-discover the event file corresponding to a data recording.
+    
+    Search order:
+        1. <root>/events/<stem>_emg.{event,txt}
+        2. <root>/events/<stem>.{event,txt}
+        3. <root>/events/<stem_base>_emg.{event,txt}  (without timestamp)
+        4. <root>/events/<stem_base>.{event,txt}
+        5. Sibling to data file: <parent>/<stem>*.{event,txt}
+        6. If only one event file exists in events/, use it
+    
+    Args:
+        root_dir: Root directory of the experiment
+        data_file_path: Path to the data file (.rhd, .npz, etc.)
+        label: Optional label prefix to try
+        extensions: File extensions to search for
+    
+    Returns:
+        Path to event file, or None if not found
+    
+    Example:
+        >>> find_event_file("/data/exp1", "/data/exp1/emg/trial1_241112.rhd")
+        '/data/exp1/events/trial1_emg.event'
+    """
+    import glob as glob_module
+    
+    # Extract stems
+    full_stem = os.path.splitext(os.path.basename(str(data_file_path)))[0]
+    base_stem = stem_without_timestamp(data_file_path)
+    
+    events_dir = os.path.join(root_dir, "events")
+    data_parent = os.path.dirname(data_file_path)
+    
+    # Helper to try multiple extensions
+    def _try_with_extensions(base_path: str) -> Optional[str]:
+        for ext in extensions:
+            path = base_path + ext
+            if os.path.isfile(path):
+                return path
+            matches = sorted(glob_module.glob(path))
+            if matches:
+                return matches[0]
+        return None
+    
+    # 1-4: Try various patterns in events directory
+    candidates = []
+    for stem in [full_stem, base_stem]:
+        candidates.append(os.path.join(events_dir, f"{stem}_emg"))
+        candidates.append(os.path.join(events_dir, f"{stem}"))
+    
+    # Add label-prefixed variants if label provided
+    if label:
+        candidates.insert(0, os.path.join(events_dir, f"{label}_emg"))
+        candidates.insert(1, os.path.join(events_dir, f"{label}"))
+    
+    for base in candidates:
+        result = _try_with_extensions(base)
+        if result:
+            return result
+    
+    # 5: Glob next to data file
+    for ext in extensions:
+        matches = sorted(glob_module.glob(os.path.join(data_parent, f"{full_stem}*{ext}")))
+        if matches:
+            return matches[0]
+        matches = sorted(glob_module.glob(os.path.join(data_parent, f"{base_stem}*{ext}")))
+        if matches:
+            return matches[0]
+    
+    # 6: If only one event file in events dir, use it
+    if os.path.isdir(events_dir):
+        all_events = []
+        for ext in extensions:
+            all_events.extend(glob_module.glob(os.path.join(events_dir, f"*{ext}")))
+        all_events = sorted(set(all_events))
+        if len(all_events) == 1:
+            return all_events[0]
+    
+    return None
+
+
+def discover_data_files(
+    root_dir: str,
+    extensions: tuple = (".rhd", ".npz"),
+    subdir: Optional[str] = None,
+    recursive: bool = True,
+) -> list:
+    """
+    Discover all data files in a directory tree.
+    
+    Args:
+        root_dir: Root directory to search
+        extensions: File extensions to find (e.g., (".rhd", ".npz"))
+        subdir: Optional subdirectory to search (e.g., "emg", "raw")
+        recursive: If True, search subdirectories
+    
+    Returns:
+        Sorted list of file paths
+    
+    Example:
+        >>> discover_data_files("/data/exp1", extensions=(".rhd",))
+        ['/data/exp1/raw/trial1.rhd', '/data/exp1/raw/trial2.rhd']
+    """
+    import glob as glob_module
+    
+    search_dir = os.path.join(root_dir, subdir) if subdir else root_dir
+    
+    if not os.path.isdir(search_dir):
+        # Try common subdirectory names
+        for fallback in ["emg", "raw", "data"]:
+            alt = os.path.join(root_dir, fallback)
+            if os.path.isdir(alt):
+                search_dir = alt
+                break
+    
+    if not os.path.isdir(search_dir):
+        return []
+    
+    files = []
+    pattern = "**/*" if recursive else "*"
+    
+    for ext in extensions:
+        glob_pattern = os.path.join(search_dir, pattern + ext)
+        files.extend(glob_module.glob(glob_pattern, recursive=recursive))
+    
+    return sorted(set(files))
+
+
+def find_dataset_file(
+    root_dir: str,
+    label: str = "",
+    candidates: list = None,
+) -> Optional[str]:
+    """
+    Find a training dataset NPZ file in common locations.
+    
+    Args:
+        root_dir: Root directory to search
+        label: Optional label prefix
+        candidates: Additional candidate filenames to try
+    
+    Returns:
+        Path to dataset file, or None if not found
+    
+    Example:
+        >>> find_dataset_file("/data/exp1", label="sleeve")
+        '/data/exp1/sleeve_training_dataset.npz'
+    """
+    search_paths = []
+    
+    # Label-specific first
+    if label:
+        search_paths.append(os.path.join(root_dir, f"{label}_training_dataset.npz"))
+    
+    # Common names
+    search_paths.extend([
+        os.path.join(root_dir, "training_dataset.npz"),
+        os.path.join(root_dir, "dataset_emg_windows.npz"),
+        os.path.join(root_dir, "dataset.npz"),
+        os.path.join(root_dir, "emg", "dataset_emg_windows.npz"),
+        os.path.join(root_dir, "emg", "training_dataset.npz"),
+    ])
+    
+    # User-provided candidates
+    if candidates:
+        search_paths.extend(candidates)
+    
+    for path in search_paths:
+        if os.path.isfile(path):
+            return path
+    
+    return None

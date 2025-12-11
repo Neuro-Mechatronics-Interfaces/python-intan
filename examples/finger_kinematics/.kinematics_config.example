@@ -1,0 +1,12 @@
+{
+  "root_dir": "/path/to/your/experiment",
+  "window_ms": 200,
+  "step_ms": 50,
+  "use_pca": true,
+  "pca_variance": 0.95,
+  "epochs": 100,
+  "batch_size": 64,
+  "learning_rate": 0.001,
+  "patience": 10,
+  "test_size": 0.2
+}

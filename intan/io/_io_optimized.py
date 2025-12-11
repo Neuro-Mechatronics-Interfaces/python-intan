@@ -213,7 +213,7 @@ def load_npz_file(
     
     pbar.close()
     
-    print(f"✓ Loaded {len(result)} fields from NPZ file")
+    print(f"[OK] Loaded {len(result)} fields from NPZ file")
     
     # Print summary of loaded data
     print("\nData summary:")
@@ -261,11 +261,11 @@ def compare_file_sizes(dat_dir: str, npz_path: str) -> None:
     ratio = npz_size / total_dat_size
     print(f"\nCompression result:")
     if ratio < 1:
-        print(f"  ✓ NPZ is {(1-ratio)*100:.1f}% SMALLER than original")
-        print(f"  ✓ Compression ratio: {1/ratio:.2f}x")
+        print(f"  [OK] NPZ is {(1-ratio)*100:.1f}% SMALLER than original")
+        print(f"  [OK] Compression ratio: {1/ratio:.2f}x")
     else:
-        print(f"  ✗ NPZ is {(ratio-1)*100:.1f}% LARGER than original")
-        print(f"  ✗ Expansion ratio: {ratio:.2f}x")
+        print(f"  [!] NPZ is {(ratio-1)*100:.1f}% LARGER than original")
+        print(f"  [!] Expansion ratio: {ratio:.2f}x")
     
     print("="*60)
 
@@ -305,6 +305,6 @@ if __name__ == "__main__":
     print("DATA INTEGRITY CHECK")
     print("="*60)
     if np.array_equal(dummy_data['amplifier_data'], loaded_data['amplifier_data']):
-        print("✓ Data integrity verified: Arrays match!")
+        print("[OK] Data integrity verified: Arrays match!")
     else:
-        print("✗ Warning: Data mismatch detected")
+        print("[!] Warning: Data mismatch detected")

@@ -150,7 +150,7 @@ class ModelManager:
         prefix = f"{self.label}_" if label else ""
         self.scaler_path = os.path.join(self.model_dir, f"{prefix}scaler.pkl")
         self.model_path = os.path.join(self.model_dir, f"{prefix}model.pth")
-        self.pca_path = os.path.join(self.model_dir, f"{prefix}pca.pkl") if self.config.get('use_pca', False) else None
+        self.pca_path = os.path.join(self.model_dir, f"{prefix}pca.pkl")  # Always set path, check existence during load
         self.encoder_path = os.path.join(self.model_dir, f"{prefix}label_encoder.pkl")
         self.metadata_path = os.path.join(self.model_dir, f"{prefix}metadata.json")
         self.metrics_path = os.path.join(self.model_dir, f"{prefix}metrics.json")
@@ -184,8 +184,20 @@ class ModelManager:
 
         # PCA
         if self.config.get('use_pca', False):
-            self.pca = PCA(n_components=self.config.get('pca_variance', 0.95))
+            # Support both n_components (int) and variance (float)
+            if 'pca_components' in self.config:
+                n_comp = self.config['pca_components']
+            else:
+                n_comp = self.config.get('pca_variance', 0.95)
+            
+            self.pca = PCA(n_components=n_comp)
             X_scaled = self.pca.fit_transform(X_scaled)
+            
+            # Log explained variance
+            explained_var = self.pca.explained_variance_ratio_.sum()
+            n_kept = self.pca.n_components_
+            self.logger.info(f"PCA: {X.shape[1]} → {n_kept} components (explained variance: {explained_var:.2%})")
+            
             with open(self.pca_path, 'wb') as f:
                 pickle.dump(self.pca, f)
             self.logger.info(f"PCA saved to {self.pca_path}")
@@ -272,8 +284,10 @@ class ModelManager:
         y_train_t = torch.tensor(y_train, dtype=torch.long if self.encoder else torch.float32)
         X_val_t = torch.tensor(X_val, dtype=torch.float32)
         y_val_t = torch.tensor(y_val, dtype=torch.long if self.encoder else torch.float32)
-        if self.verbose:
-            print("Starting training...")
+        
+        logging.info(f"Starting training loop: {num_epochs} epochs...")
+        import sys
+        sys.stdout.flush()
 
         loss_curve = []
         best_val_loss = np.inf
@@ -295,6 +309,7 @@ class ModelManager:
                     val_out = self.model(X_val_t)
                     val_loss = criterion(val_out, y_val_t).item()
                 logging.info(f"Epoch {epoch+1}/{num_epochs} | Train Loss: {loss.item():.8f} | Val Loss: {val_loss:.8f}")
+                sys.stdout.flush()
 
                 # Early stopping
                 if val_loss < best_val_loss:
@@ -337,7 +352,7 @@ class ModelManager:
                     'classification_report': classification_report(true_labels, pred_labels, output_dict=True),
                 }
             else:
-                pred_vals = y_pred.numpy().ravel()
+                pred_vals = y_pred.numpy()
                 self.y_val_true = np.asarray(y_val)
                 self.y_val_pred = np.asarray(pred_vals)
                 self.eval_metrics = {
@@ -408,7 +423,7 @@ class ModelManager:
                 idx = torch.argmax(out, axis=1).numpy()
                 return self.encoder.inverse_transform(idx)
             else:
-                return out.numpy().ravel()
+                return out.numpy()
             #    predictions = out.numpy()
             #if self.label_encoder is not None:
             #    # Classification, return string

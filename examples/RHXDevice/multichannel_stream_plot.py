@@ -1,26 +1,51 @@
+#!/usr/bin/env python3
+"""
+Real-time multichannel waveform visualization using matplotlib animation.
+
+Displays multiple EMG channels in stacked subplots with scrolling time window.
+Uses matplotlib's blitting for efficient updates.
+
+Usage:
+    python multichannel_stream_plot.py
+    
+Configuration (edit script):
+    CHANNELS: List of channel indices to display
+    WINDOW_SEC: Display window duration in seconds
+    PLOT_UPDATE_HZ: Refresh rate (lower = less CPU)
+"""
 import time
+import sys
 import numpy as np
 import matplotlib
 matplotlib.use("Qt5Agg")  # Ensure fast, responsive backend
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from intan.rhx_interface import IntanRHXDevice
+from intan.interface import IntanRHXDevice
 
 # === Configuration ===
 CHANNELS = [10, 11, 12, 13, 14, 15]
-SAMPLING_RATE = 4000
 WINDOW_SEC = 1.0
 PLOT_UPDATE_HZ = 5  # Refresh every 200 ms
 
-SAMPLES_PER_WINDOW = int(SAMPLING_RATE * WINDOW_SEC)
 PLOT_INTERVAL_SEC = 1 / PLOT_UPDATE_HZ
-x_data = np.linspace(-WINDOW_SEC, 0, SAMPLES_PER_WINDOW)
 
 # === Initialize RHX Device ===
+print("[INIT] Connecting to RHX device...")
 device = IntanRHXDevice()
 if not device.connected:
-    raise RuntimeError("Could not connect to RHX TCP server. Make sure it's running.")
-device.configure(channels=CHANNELS, blocks_per_write=1, enable_wide=True)
+    print("[ERROR] Could not connect to RHX TCP server.")
+    print("Ensure RHX software is running with TCP server enabled.")
+    sys.exit(1)
+
+device.enable_wide_channel(CHANNELS)
+device.set_blocks_per_write(1)
+
+# Get actual sampling rate from device
+SAMPLING_RATE = float(device.sample_rate)
+print(f"[OK] Connected. Sampling rate: {SAMPLING_RATE:.1f} Hz")
+
+SAMPLES_PER_WINDOW = int(SAMPLING_RATE * WINDOW_SEC)
+x_data = np.linspace(-WINDOW_SEC, 0, SAMPLES_PER_WINDOW)
 
 # === Setup Plotting ===
 fig, axs = plt.subplots(len(CHANNELS), 1, figsize=(10, 6), sharex=True)
@@ -45,12 +70,16 @@ fig.tight_layout(rect=[0, 0, 1, 0.96])
 
 # === Update Function ===
 def update_plot(_):
-    n_frames = int(SAMPLING_RATE * PLOT_INTERVAL_SEC)
+    """Update plot with new streaming data."""
+    window_ms = int(PLOT_INTERVAL_SEC * 1000)
     start_time = time.time()
     try:
-        _, channel_array = device.stream(n_frames=n_frames)
+        # Use get_latest_window instead of deprecated stream method
+        channel_array = device.get_latest_window(window_ms=window_ms)
+        if channel_array is None or channel_array.shape[1] == 0:
+            return lines.values()
     except Exception as e:
-        print(f"[Stream Error] {e}")
+        print(f"[ERROR] Stream failed: {e}")
         return lines.values()
 
     elapsed = time.time() - start_time
@@ -73,10 +102,16 @@ ani = animation.FuncAnimation(
 )
 
 try:
-    print(f"🧠 Streaming Channels: {', '.join([f'A-{ch:03d}' for ch in CHANNELS])}")
+    print(f"[RUN] Streaming channels: {', '.join([f'A-{ch:03d}' for ch in CHANNELS])}")
+    print("[RUN] Press Ctrl+C or close window to stop.")
+    device.start_streaming()  # Ensure streaming is started
     plt.show()
 except KeyboardInterrupt:
-    print("🛑 Interrupted.")
+    print("\n[STOP] Interrupted.")
 finally:
-    device.close()
-    print("✅ RHX device connection closed.")
+    try:
+        device.stop_streaming()
+        device.close()
+    except Exception:
+        pass
+    print("[DONE] Connection closed.")
