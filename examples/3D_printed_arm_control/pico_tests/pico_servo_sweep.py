@@ -1,5 +1,6 @@
 """
-Simple sweep code for testing 
+Simple sweep code for testing
+Moved from `tests/pico_servo_sweep.py` to keep hardware demos in examples.
 """
 import time
 import busio

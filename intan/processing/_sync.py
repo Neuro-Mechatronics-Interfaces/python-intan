@@ -113,7 +113,7 @@ def compute_emg_envelope_signal(
         >>> fs = data['frequency_parameters']['amplifier_sample_rate']
         >>> envelope, times = compute_emg_envelope_signal(emg, fs)
     """
-    from .filters import bandpass_filter, notch_filter
+    from ._filters import bandpass_filter, notch_filter
     
     # Preprocess: remove line noise and bandpass filter
     if notch_freq > 0:

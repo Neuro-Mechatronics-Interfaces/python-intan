@@ -12,6 +12,17 @@ This example demonstrates how to visualize live EMG data from multiple channels 
 
 - Intan RHX Controller with TCP servers enabled (Remote Control)
 - `matplotlib` (with Qt5Agg backend; `pip install matplotlib pyqt5`)
+ - `matplotlib` (with Qt5Agg backend). Install GUI dependencies with:
+
+    .. code-block:: bash
+
+        pip install 'python-intan[gui]'
+
+    or manually:
+
+    .. code-block:: bash
+
+        pip install matplotlib PyQt5
 - A running RHX TCP server
 
 You’ll see how to:
@@ -130,5 +141,6 @@ You’ll see how to:
 **Troubleshooting:**
 - Make sure the Intan RHX TCP server is running and channels are enabled for streaming.
 - If you see “Could not connect to RHX TCP server”, open the Remote Control GUI in RHX and enable both servers.
-- Install PyQt5 if you see backend errors: `pip install pyqt5`
+- Install GUI dependencies if you see backend errors: ``pip install 'python-intan[gui]'``
+    or install manually: ``pip install PyQt5``
 

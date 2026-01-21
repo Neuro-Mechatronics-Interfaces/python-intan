@@ -41,7 +41,7 @@ You’ll see how to:
         print_all_channel_names(result)
 
         # ==== Multi-channel visualization: Waterfall plot ====
-        waterfall(emg_data, range(64, 128), t_s, plot_title='Intan EMG data (Channels 64-127)')
+        waterfall(data=emg_data, channel_indices=range(64, 128), time_vector=t_s, plot_title='Intan EMG data (Channels 64-127)')
 
         # ==== Single channel visualization ====
         ch_info = result.get('amplifier_channels')

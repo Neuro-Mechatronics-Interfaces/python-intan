@@ -31,6 +31,13 @@ gesture_classifier/*.pth
 temp/*
 /old/
 
+# Plotly / Plot debug dumps and temp HTML produced during development
+_last_rms_*
+_rms_plotly_debug.html
+
+# Archive folder for moved examples
+/archive/examples_applications_archive/
+
 # Distribution / packaging
 .Python
 env/

@@ -64,20 +64,20 @@ def calibrate_chip():
     for _ in range(9):
         send_read_command(40)
 
-# Main test execution
-print("Starting Intan SPI test (single chip)...")
+if __name__ == '__main__':
+    print("Starting Intan SPI test (single chip)...")
 
-try:
-    calibrate_chip()
-    time.sleep(0.01)  # Short delay after calibration
+    try:
+        calibrate_chip()
+        time.sleep(0.01)  # Short delay after calibration
 
-    reg_40_response = send_read_command(40)
-    print(f"Response from Register 40: {reg_40_response}")
+        reg_40_response = send_read_command(40)
+        print(f"Response from Register 40: {reg_40_response}")
 
-    send_write_command(14, 0x01)
-    print("Successfully wrote to Register 14.")
+        send_write_command(14, 0x01)
+        print("Successfully wrote to Register 14.")
 
-except Exception as e:
-    print(f"SPI communication error: {e}")
+    except Exception as e:
+        print(f"SPI communication error: {e}")
 
-print("Test complete.")
+    print("Test complete.")

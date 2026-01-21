@@ -27,16 +27,16 @@ Joint Angle Definition:
     
 Examples:
     # Interactive mode - file dialog will open
-    python 1_extract_joint_angles.py
-    
+    python 2_extract_joint_angles.py
+
     # Specify video path directly
-    python 1_extract_joint_angles.py --video_path /path/to/video.mp4
-    
+    python 2_extract_joint_angles.py --video_path /path/to/video.mp4
+
     # With live visualization during processing
-    python 1_extract_joint_angles.py --video_path video.mp4 --visualize --save_video
-    
+    python 2_extract_joint_angles.py --video_path video.mp4 --visualize --save_video
+
     # Custom output directory for landmarks/
-    python 1_extract_joint_angles.py --video_path video.mp4 --output_dir /path/to/output/
+    python 2_extract_joint_angles.py --video_path video.mp4 --output_dir /path/to/output/
 """
 
 import os
@@ -50,6 +50,22 @@ import pandas as pd
 
 # Import python-intan file dialog utilities
 from intan.io import prompt_file
+
+# Make the package importable when running examples from the repo root
+try:
+    import intan  # noqa: F401
+except Exception:
+    from pathlib import Path
+    repo_root = Path(__file__).resolve().parents[1]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    try:
+        import intan  # noqa: F401
+    except Exception:
+        print('\n[ERROR] Cannot import `intan`.')
+        print('Install the package in editable mode from the repository root:')
+        print('  pip install -e .')
+        sys.exit(1)
 
 
 def safe_relpath(path: str, start: str = None) -> str:
@@ -79,8 +95,8 @@ except ImportError as e:
     print("\n[ERROR] Hand-Landmark-Tracker package not found.")
     print("\nThis script requires the 'handtrack' package and its dependencies.")
     print("\nInstallation options:")
-    print("  1. Install video extras (recommended):")
-    print("     pip install 'python-intan[video]'")
+    print("  1. Install video extras (recommended, editable install):")
+    print('     pip install -e "[video]"  # run from the repository root')
     print("\n  2. Install manually:")
     print("     pip install opencv-python mediapipe")
     print("     pip install git+https://github.com/Jshulgach/Hand-Landmark-Tracker.git")
@@ -223,18 +239,18 @@ def main():
         description="Extract hand landmarks and compute joint angles from video",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
+        Examples:
     # Interactive mode - file dialog opens for video selection
-    python 1_extract_joint_angles.py
-    
+    python 2_extract_joint_angles.py
+
     # Direct path specification (skips dialog)
-    python 1_extract_joint_angles.py --video_path recording.mp4
-    
+    python 2_extract_joint_angles.py --video_path recording.mp4
+
     # With live visualization of landmark tracking
-    python 1_extract_joint_angles.py --video_path recording.mp4 --visualize
-    
+    python 2_extract_joint_angles.py --video_path recording.mp4 --visualize
+
     # Custom output directory for landmarks/ folder
-    python 1_extract_joint_angles.py --video_path recording.mp4 --output_dir /data/landmarks/
+    python 2_extract_joint_angles.py --video_path recording.mp4 --output_dir /data/landmarks/
         """
     )
     
@@ -306,8 +322,8 @@ Examples:
         )
         
         logging.info(f"\n[OK] Processing complete!")
-        logging.info(f"     Use the angles CSV file with 2_build_dataset.py:")
-        logging.info(f"     python 2_build_dataset.py --angles_file {safe_relpath(angles_path)}")
+        logging.info(f"     Use the angles CSV file with 4_build_dataset.py:")
+        logging.info(f"     python 4_build_dataset.py --angles_file {safe_relpath(angles_path)}")
         
     except KeyboardInterrupt:
         logging.info("\n[CANCELLED] Processing interrupted by user.")

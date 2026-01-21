@@ -25,7 +25,10 @@ from pathlib import Path
 import yaml
 import platform
 import pathlib
-import pandas as pd
+try:
+    import pandas as pd
+except Exception:
+    pd = None
 try:
     from tkinter import filedialog
 except ImportError:

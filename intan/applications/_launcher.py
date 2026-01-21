@@ -15,6 +15,21 @@ from intan.samples import findFile
 
 
 def launch_emg_viewer():
+    # Prefer PyQt5-based viewer when available; otherwise fall back to Tkinter splash + Tk EMGViewer
+    try:
+        from PyQt5 import QtWidgets
+        import importlib
+        mod = importlib.import_module('intan.applications._emg_viewer')
+        EMGViewer = getattr(mod, 'EMGViewer', None)
+        if EMGViewer is not None:
+            app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+            viewer = EMGViewer()
+            viewer.show()
+            app.exec_()
+            return
+    except Exception:
+        pass
+
     def center_window(window, width, height):
         screen_width = window.winfo_screenwidth()
         screen_height = window.winfo_screenheight()
@@ -25,7 +40,11 @@ def launch_emg_viewer():
     def launch_main():
         splash.destroy()  # Close the splash screen
 
-        from intan.applications import EMGViewer
+        import importlib
+        mod = importlib.import_module('intan.applications._emg_viewer')
+        EMGViewer = getattr(mod, 'EMGViewer', None)
+        if EMGViewer is None:
+            raise RuntimeError('EMGViewer backend not available')
         main_root = tk.Tk()
         main_root.title("EMG Viewer")
         app = EMGViewer(main_root)

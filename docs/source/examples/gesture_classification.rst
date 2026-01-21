@@ -179,7 +179,11 @@ Previous prediction scripts are still available but deprecated:
 - ``3b_batch_predict_from_rhd.py`` - Batch processing
 - ``3c_predict_from_device_record.py`` - Device recording
 - ``3d_predict_from_device_realtime.py`` - Real-time streaming
+
+.. code-block:: python
+
     import numpy as np
+    from intan.ml import ModelManager
 
     # Load training data
     data = np.load('training_data.npz')
@@ -195,7 +199,7 @@ Previous prediction scripts are still available but deprecated:
         model_type='CNN',
         n_components=20,
         epochs=50,
-        batch_size=32
+        batch_size=32,
     )
 
     # Save trained model

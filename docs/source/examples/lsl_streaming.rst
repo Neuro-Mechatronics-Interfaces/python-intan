@@ -118,41 +118,22 @@ Real-time visualization of LSL streams with scrolling display.
     n_channels = subscriber.stream_info.channel_count()
     fs = subscriber.stream_info.nominal_srate()
 
-    # Initialize plotter
-    plotter = RealtimePlotter(
-        n_channels=n_channels,
-        sample_rate=fs,
-        window_sec=2.0,
-        update_interval_ms=50
-    )
+    # Initialize an LSL client and the RealtimePlotter which pulls data via
+    # the client's `get_samples(channel, n_samples)` API.
+    from intan.interface import LSLClient
 
-    # Buffer for accumulating samples
-    buffer_size = int(fs * 2)  # 2 second buffer
-    buffer = np.zeros((n_channels, buffer_size))
+    client = LSLClient(stream_type='EMG', auto_start=True)
+    n_channels = client.n_channels
+    fs = client.fs
+
+    plotter = RealtimePlotter(client, sampling_rate=fs, channels_to_plot=list(range(min(8, n_channels))))
 
     try:
-        plotter.start()
-
-        while True:
-            # Pull chunk of samples
-            chunk, timestamps = subscriber.pull_chunk()
-
-            if chunk:
-                chunk = np.array(chunk).T  # Shape: (channels, samples)
-                n_new = chunk.shape[1]
-
-                # Update rolling buffer
-                buffer = np.roll(buffer, -n_new, axis=1)
-                buffer[:, -n_new:] = chunk
-
-                # Update plot
-                plotter.update(buffer)
-
+        plotter.run()  # Blocks and updates automatically via FuncAnimation
     except KeyboardInterrupt:
         print("Stopping...")
     finally:
-        plotter.stop()
-        subscriber.close()
+        client.close()
 
 ----
 

@@ -10,6 +10,6 @@ authors:
     given-names: Adrian
     affiliation: Intan Technologies
 date-released: 2025-05-02
-version: 0.1.0
+version: 0.0.3
 license: MIT
 repository-code: https://github.com/Neuro-Mechatronics-Interfaces/python-intan

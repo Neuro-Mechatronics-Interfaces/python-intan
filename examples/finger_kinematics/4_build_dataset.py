@@ -29,13 +29,13 @@ Joint angle CSV format:
     
 Examples:
     # Single file with explicit paths
-    python 1_build_dataset.py --root_dir /data --file_path recording.rhd --angles_file angles.csv
+    python 4_build_dataset.py --root_dir /data --file_path recording.rhd --angles_file angles.csv
     
     # Multi-file auto-discovery
-    python 1_build_dataset.py --root_dir /data --multi_file
+    python 4_build_dataset.py --root_dir /data --multi_file
     
     # With channel selection
-    python 1_build_dataset.py --root_dir /data --multi_file --channels 0:64 --overwrite
+    python 4_build_dataset.py --root_dir /data --multi_file --channels 0:64 --overwrite
 """
 
 import os
@@ -67,6 +67,22 @@ from intan.io import (
 from intan.processing import extract_features_sliding_window, bandpass_filter, notch_filter, extract_features, FEATURE_REGISTRY
 from tqdm import tqdm
 import re
+
+# Make the package importable when running examples from the repo root
+try:
+    import intan  # noqa: F401
+except Exception:
+    from pathlib import Path
+    repo_root = Path(__file__).resolve().parents[1]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    try:
+        import intan  # noqa: F401
+    except Exception:
+        print('\n[ERROR] Cannot import `intan`.')
+        print('Install the package in editable mode from the repository root:')
+        print('  pip install -e .')
+        sys.exit(1)
 
 
 def strip_timestamp_suffix(filename: str) -> str:

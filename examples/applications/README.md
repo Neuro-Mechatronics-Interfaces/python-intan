@@ -1,6 +1,9 @@
 # GUI Applications
 
-PyQt5-based graphical interfaces for EMG data visualization, dataset building, and real-time prediction pipelines.
+Graphical interfaces for EMG data visualization, dataset building, and real-time prediction pipelines.
+
+Note: The package provides a Tkinter-based viewer by default; a PyQt5-based viewer is available in `examples/applications` and
+the launcher will prefer PyQt5 when it is installed.
 
 ## Applications
 

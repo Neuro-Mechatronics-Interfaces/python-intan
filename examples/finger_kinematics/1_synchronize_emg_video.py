@@ -85,6 +85,23 @@ from intan.processing import (
     save_sync_offset
 )
 
+# Make the package importable when running examples from the repo root
+try:
+    import intan  # noqa: F401
+except Exception:
+    from pathlib import Path
+    repo_root = Path(__file__).resolve().parents[1]
+    if str(repo_root) not in sys.path:
+        sys.path.insert(0, str(repo_root))
+    try:
+        import intan  # noqa: F401
+    except Exception:
+        print('\n[ERROR] Cannot import `intan`.')
+        print('Either install the package in editable mode:')
+        print('  pip install -e .')
+        print('or run this script from the repository after installing dependencies.')
+        sys.exit(1)
+
 
 def synchronize_pair(
     root_dir: str,

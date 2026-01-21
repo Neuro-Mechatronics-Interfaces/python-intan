@@ -28,8 +28,8 @@ if __name__ == "__main__":
     # ==== Display names of all available channels ====
     print(result['channel_names'])
 
-    # ==== For multi-chqannel visualization, we can do a waterfall plot ====
-    waterfall(None, emg, range(0, 127), t_s, plot_title='Intan EMG data')
+    # ==== For multi-channel visualization, we can do a waterfall plot ====
+    waterfall(data=emg, channel_indices=range(0, 127), time_vector=t_s, plot_title='Intan EMG data')
 
     if args.save_npz:
         save_as_npz(result, os.path.join(result['export_basepath'], f"{result['export_basename']}.npz"))

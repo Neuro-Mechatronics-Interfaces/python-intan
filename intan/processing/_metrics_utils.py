@@ -13,7 +13,10 @@ and EMG signal segments.
 """
 
 import os
-import pandas as pd
+try:
+    import pandas as pd
+except Exception:
+    pd = None
 
 
 def load_metrics_data(metrics_filepath, verbose=True):
@@ -27,6 +30,8 @@ def load_metrics_data(metrics_filepath, verbose=True):
         tuple: A tuple containing the metrics data as a pandas DataFrame and the gesture mapping as a dictionary.
 
     """
+    if pd is None:
+        raise RuntimeError('pandas is required for metrics utilities; install pandas to use this function')
     if not os.path.isfile(metrics_filepath):
         print(f"Metrics file not found: {metrics_filepath}. Please correct file path or generate the metrics file.")
         return None
@@ -55,6 +60,8 @@ def get_metrics_file(metrics_filepath, verbose=False):
     Returns:
         pd.DataFrame: The loaded metrics data as a pandas DataFrame.
     """
+    if pd is None:
+        raise RuntimeError('pandas is required for metrics utilities; install pandas to use this function')
     if os.path.isfile(metrics_filepath):
         if verbose:
             print("Metrics file found.")

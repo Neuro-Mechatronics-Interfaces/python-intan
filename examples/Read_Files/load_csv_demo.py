@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # Apply CAR referencing across EMG channels
     emg = emg - emg.mean(axis=0)  # Common Average Referencing
 
-    waterfall(None, emg, range(0,emg.shape[0]), t,
+    waterfall(data=emg, channel_indices=range(0, emg.shape[0]), time_vector=t,
               offset_increment=400,
               plot_title='EMG data',
               downsampling_factor=10,
