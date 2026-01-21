@@ -5,9 +5,17 @@ The `intan` package includes several PyQt5-based GUI applications for real-time 
 
 **Requirements:**
 
-- PyQt5 (``pip install PyQt5``)
-- PyQtGraph (``pip install pyqtgraph``)
+- GUI dependencies: install the package GUI extras with
+
+    ``pip install 'python-intan[gui]'``
+
+    or install the GUI libraries manually:
+
+    ``pip install PyQt5 pyqtgraph``
+
 - Intan RHX device with TCP streaming (for real-time apps)
+
+Note: The package includes a Tkinter-based EMG viewer by default; when PyQt5 is installed the launcher will prefer a PyQt5 viewer.
 
 ----
 

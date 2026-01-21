@@ -15,7 +15,6 @@ This example demonstrates how to use a pre-trained model to predict gestures in 
 - Preprocess the streamed data
 - Use the model to predict gestures in real-time
 
-----
 
 **Example code:**
 

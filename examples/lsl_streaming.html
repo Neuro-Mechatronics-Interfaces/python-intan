@@ -142,41 +142,22 @@
 <span class="n">n_channels</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">stream_info</span><span class="o">.</span><span class="n">channel_count</span><span class="p">()</span>
 <span class="n">fs</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">stream_info</span><span class="o">.</span><span class="n">nominal_srate</span><span class="p">()</span>
 
-<span class="c1"># Initialize plotter</span>
-<span class="n">plotter</span> <span class="o">=</span> <span class="n">RealtimePlotter</span><span class="p">(</span>
-    <span class="n">n_channels</span><span class="o">=</span><span class="n">n_channels</span><span class="p">,</span>
-    <span class="n">sample_rate</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span>
-    <span class="n">window_sec</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
-    <span class="n">update_interval_ms</span><span class="o">=</span><span class="mi">50</span>
-<span class="p">)</span>
+<span class="c1"># Initialize an LSL client and the RealtimePlotter which pulls data via</span>
+<span class="c1"># the client&#39;s `get_samples(channel, n_samples)` API.</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">LSLClient</span>
 
-<span class="c1"># Buffer for accumulating samples</span>
-<span class="n">buffer_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fs</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># 2 second buffer</span>
-<span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">))</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">LSLClient</span><span class="p">(</span><span class="n">stream_type</span><span class="o">=</span><span class="s1">&#39;EMG&#39;</span><span class="p">,</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">n_channels</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">n_channels</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">fs</span>
+
+<span class="n">plotter</span> <span class="o">=</span> <span class="n">RealtimePlotter</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="o">=</span><span class="n">fs</span><span class="p">,</span> <span class="n">channels_to_plot</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">))))</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="n">plotter</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="c1"># Pull chunk of samples</span>
-        <span class="n">chunk</span><span class="p">,</span> <span class="n">timestamps</span> <span class="o">=</span> <span class="n">subscriber</span><span class="o">.</span><span class="n">pull_chunk</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span>
-            <span class="n">chunk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># Shape: (channels, samples)</span>
-            <span class="n">n_new</span> <span class="o">=</span> <span class="n">chunk</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-
-            <span class="c1"># Update rolling buffer</span>
-            <span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="o">-</span><span class="n">n_new</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">buffer</span><span class="p">[:,</span> <span class="o">-</span><span class="n">n_new</span><span class="p">:]</span> <span class="o">=</span> <span class="n">chunk</span>
-
-            <span class="c1"># Update plot</span>
-            <span class="n">plotter</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
-
+    <span class="n">plotter</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>  <span class="c1"># Blocks and updates automatically via FuncAnimation</span>
 <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping...&quot;</span><span class="p">)</span>
 <span class="k">finally</span><span class="p">:</span>
-    <span class="n">plotter</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-    <span class="n">subscriber</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>
 </section>

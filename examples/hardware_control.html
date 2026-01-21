@@ -288,30 +288,29 @@ python<span class="w"> </span>examples/RHXDevice/tcp_benchmark.py<span class="w"
 <span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
 <span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
 
-<span class="n">plotter</span> <span class="o">=</span> <span class="n">RealtimePlotter</span><span class="p">(</span>
-    <span class="n">n_channels</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span>
-    <span class="n">window_sec</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span>
-    <span class="n">update_interval_ms</span><span class="o">=</span><span class="mi">50</span>
-<span class="p">)</span>
+<span class="c1"># RealtimePlotter expects a `client` that implements</span>
+<span class="c1"># `get_samples(channel, n_samples)`. IntanRHXDevice does not provide this</span>
+<span class="c1"># directly, so we wrap it in a small adapter.</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeviceAdapter</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">):</span>
+        <span class="c1"># Use the device circular buffer to obtain the latest window</span>
+        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">get_latest_window</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_samples</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">win</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">win</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="n">win</span><span class="p">[</span><span class="n">channel</span><span class="p">,</span> <span class="o">-</span><span class="n">n_samples</span><span class="p">:]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">DeviceAdapter</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="n">plotter</span> <span class="o">=</span> <span class="n">RealtimePlotter</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="o">=</span><span class="n">device</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">channels_to_plot</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)))</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="n">plotter</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-    <span class="n">buffer_size</span> <span class="o">=</span> <span class="mi">8000</span>
-    <span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">8</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">))</span>
-
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">n_frames</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
-
-        <span class="n">buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span> <span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">buffer</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">200</span><span class="p">:]</span> <span class="o">=</span> <span class="n">data</span>
-
-        <span class="n">plotter</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
-
+    <span class="n">plotter</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping...&quot;</span><span class="p">)</span>
 <span class="k">finally</span><span class="p">:</span>
-    <span class="n">plotter</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
     <span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
 </div>

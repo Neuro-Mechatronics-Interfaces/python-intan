@@ -40,11 +40,17 @@
 <h1>GUI Applications<a class="headerlink" href="#gui-applications" title="Link to this heading">¶</a></h1>
 <p>The <cite>intan</cite> package includes several PyQt5-based GUI applications for real-time EMG visualization, data annotation, and gesture control. These provide user-friendly interfaces for common workflows.</p>
 <p><strong>Requirements:</strong></p>
-<ul class="simple">
-<li><p>PyQt5 (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">PyQt5</span></code>)</p></li>
-<li><p>PyQtGraph (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">pyqtgraph</span></code>)</p></li>
+<ul>
+<li><p>GUI dependencies: install the package GUI extras with</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'python-intan[gui]'</span></code></p>
+<p>or install the GUI libraries manually:</p>
+<p><code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">PyQt5</span> <span class="pre">pyqtgraph</span></code></p>
+</div></blockquote>
+</li>
 <li><p>Intan RHX device with TCP streaming (for real-time apps)</p></li>
 </ul>
+<p>Note: The package includes a Tkinter-based EMG viewer by default; when PyQt5 is installed the launcher will prefer a PyQt5 viewer.</p>
 <hr class="docutils" />
 <section id="emg-viewer-application">
 <h2>EMG Viewer Application<a class="headerlink" href="#emg-viewer-application" title="Link to this heading">¶</a></h2>
@@ -418,7 +424,7 @@ python<span class="w"> </span>examples/applications/gesture_pipeline_gui.py
 <li><p><a class="reference internal" href="live_plotting.html"><span class="doc">Live Plotting of Multiple EMG Channels</span></a> - Real-time plotting techniques</p></li>
 <li><p><a class="reference internal" href="gesture_classification.html"><span class="doc">Gesture Classification Pipeline</span></a> - ML pipeline for gesture control</p></li>
 <li><p><a class="reference internal" href="../info/applications.html"><span class="doc">Applications</span></a> - Application architecture details</p></li>
-<li><p>API Reference: <code class="xref py py-mod docutils literal notranslate"><span class="pre">intan.applications</span></code></p></li>
+<li><p>API Reference: <a class="reference internal" href="../intan_api/intan.applications.html#module-intan.applications" title="intan.applications"><code class="xref py py-mod docutils literal notranslate"><span class="pre">intan.applications</span></code></a></p></li>
 </ul>
 </section>
 </section>

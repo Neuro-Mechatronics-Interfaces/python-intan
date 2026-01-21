@@ -22,8 +22,15 @@ Anaconda can be installed by downloading the installer from the official website
 
 Alternatively, you can use Miniconda (a minimal version): https://docs.conda.io/en/latest/miniconda.html
 
-How do I install the python-intan package?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. code-block:: python
+
+    from intan.plotting import RealtimePlotter
+    from intan.interface import LSLClient
+
+    # Use LSLClient which exposes `get_samples(channel, n_samples)` used by the plotter
+    client = LSLClient(stream_type='EMG')
+    plotter = RealtimePlotter(client, sampling_rate=client.fs, channels_to_plot=list(range(8)))
+    plotter.run()
 
 **From PyPI (recommended):**
 
@@ -57,8 +64,9 @@ How do I enable GPU support for TensorFlow?
        # WSL2
        sudo apt-get install cuda
 
-       # Or via pip
-       pip install tensorflow[and-cuda] nvidia-cudnn-cu12
+       # Follow the official TensorFlow install guide for the correct
+       # pip wheel and system CUDA/CuDNN versions:
+       # https://www.tensorflow.org/install
 
 3. Verify GPU availability:
 
@@ -254,8 +262,8 @@ How do I filter my EMG data?
     emg_notched = notch_filter(emg_data, fs, f0=60)
 
     # Bandpass filter (10-500 Hz typical for EMG)
-    emg_filtered = filter_emg(emg_notched, 'bandpass', fs,
-                               lowcut=10, highcut=500)
+    emg_filtered = filter_emg(emg_notched, filter_type='bandpass',
+                               lowcut=10, highcut=500, fs=fs)
 
     # High-pass to remove DC offset
     emg_hp = filter_emg(emg_data, 'highpass', fs, lowcut=20)
@@ -280,7 +288,7 @@ Typical pipeline:
     emg = notch_filter(raw_emg, fs, f0=60)
 
     # 2. Bandpass filter
-    emg = filter_emg(emg, 'bandpass', fs, lowcut=20, highcut=500)
+    emg = filter_emg(emg, filter_type='bandpass', lowcut=20, highcut=500, fs=fs)
 
     # 3. Rectify (for envelope/RMS)
     emg_rect = rectify(emg)
@@ -398,7 +406,7 @@ How do I plot my data?
     from intan.plotting import waterfall, plot_channel_by_index
 
     # Multi-channel waterfall plot
-    waterfall(emg_data, channels=range(64), time=t,
+    waterfall(data=emg_data, channel_indices=range(64), time_vector=t,
               plot_title='EMG Activity')
 
     # Single channel
@@ -411,19 +419,17 @@ See :doc:`../examples/live_plotting` for detailed examples.
 
 .. code-block:: python
 
-    from intan.interface import IntanRHXDevice
+    # Preferred: use an LSL client (or any client exposing `get_samples(channel, n_samples)`)
+    from intan.interface import LSLClient
     from intan.plotting import RealtimePlotter
 
-    device = IntanRHXDevice(num_channels=64)
-    device.start_streaming()
+    client = LSLClient(stream_type='EMG', auto_start=True)
+    plotter = RealtimePlotter(client, sampling_rate=client.fs, channels_to_plot=list(range(8)))
+    plotter.run()
 
-    plotter = RealtimePlotter(n_channels=64, sample_rate=4000)
-    plotter.start()
-
-    # Update loop
-    while True:
-        _, data = device.stream(n_frames=200)
-        plotter.update(data)
+    # If you need to plot directly from an IntanRHXDevice, wrap it with a small adapter
+    # that provides `get_samples(channel, n_samples)` using `get_latest_window()`.
+    # See the examples in docs/source/examples/hardware_control.rst for a pattern.
 
 Can I use the GUI applications?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -479,11 +485,12 @@ Install TensorFlow:
 
     pip install tensorflow==2.19.0
 
-For GPU support:
+For GPU support follow the official TensorFlow installation guide for the
+correct pip wheel and system CUDA/CuDNN versions:
 
-.. code-block:: bash
+.. code-block:: text
 
-    pip install tensorflow[and-cuda] nvidia-cudnn-cu12
+    https://www.tensorflow.org/install
 
 "Could not connect to RHX TCP server" error
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -514,7 +521,13 @@ Memory error when loading large files
 PyQt5 errors in GUI applications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Install PyQt5:
+Install GUI dependencies (PyQt5 + PyQtGraph):
+
+.. code-block:: bash
+
+    pip install 'python-intan[gui]'
+
+Or install GUI libraries manually:
 
 .. code-block:: bash
 

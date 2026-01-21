@@ -45,6 +45,23 @@
 <ul class="simple">
 <li><p>Intan RHX Controller with TCP servers enabled (Remote Control)</p></li>
 <li><p><cite>matplotlib</cite> (with Qt5Agg backend; <cite>pip install matplotlib pyqt5</cite>)</p></li>
+</ul>
+<blockquote>
+<div><ul>
+<li><p><cite>matplotlib</cite> (with Qt5Agg backend). Install GUI dependencies with:</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;python-intan[gui]&#39;</span>
+</pre></div>
+</div>
+<p>or manually:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>matplotlib<span class="w"> </span>PyQt5
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+<ul class="simple">
 <li><p>A running RHX TCP server</p></li>
 </ul>
 <p>You’ll see how to:
@@ -156,7 +173,10 @@
 <p><strong>Troubleshooting:</strong>
 - Make sure the Intan RHX TCP server is running and channels are enabled for streaming.
 - If you see “Could not connect to RHX TCP server”, open the Remote Control GUI in RHX and enable both servers.
-- Install PyQt5 if you see backend errors: <cite>pip install pyqt5</cite></p>
+- Install GUI dependencies if you see backend errors: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">'python-intan[gui]'</span></code></p>
+<blockquote>
+<div><p>or install manually: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">PyQt5</span></code></p>
+</div></blockquote>
 </section>
 
 

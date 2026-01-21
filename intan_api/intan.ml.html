@@ -39,6 +39,11 @@
   <section id="intan-ml-package">
 <h1>intan.ml package<a class="headerlink" href="#intan-ml-package" title="Link to this heading">¶</a></h1>
 <p>This module contains all the machine learning utilities for Intan data.</p>
+<p id="module-intan.ml">Top-level <cite>intan.ml</cite> package.</p>
+<p>This module uses lazy imports so importing <cite>intan.ml</cite> does not immediately
+load heavy ML libraries (PyTorch/TensorFlow). Accessing symbols (e.g.
+<cite>EMGRealTimePredictor</cite>, <cite>ModelManager</cite>) will import their defining modules on
+first use.</p>
 </section>
 
 

@@ -96,7 +96,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">waterfall</span>
 
 <span class="c1"># Plot channels 64 to 127 in a waterfall plot</span>
-<span class="n">waterfall</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">t_s</span><span class="p">,</span> <span class="n">plot_title</span><span class="o">=</span><span class="s1">&#39;Intan EMG data&#39;</span><span class="p">)</span>
+<span class="n">waterfall</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">channel_indices</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">time_vector</span><span class="o">=</span><span class="n">t_s</span><span class="p">,</span> <span class="n">plot_title</span><span class="o">=</span><span class="s1">&#39;Intan EMG data&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

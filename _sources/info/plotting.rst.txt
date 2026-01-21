@@ -78,7 +78,7 @@ To visualize activity across many EMG channels simultaneously, use ``waterfall``
     from intan.plotting import waterfall
 
     # Plot channels 64 to 127 in a waterfall plot
-    waterfall(emg_data, range(64, 128), t_s, plot_title='Intan EMG data')
+    waterfall(data=emg_data, channel_indices=range(64, 128), time_vector=t_s, plot_title='Intan EMG data')
 
 ----
 

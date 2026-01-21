@@ -71,7 +71,7 @@
     <span class="n">print_all_channel_names</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 
     <span class="c1"># ==== Multi-channel visualization: Waterfall plot ====</span>
-    <span class="n">waterfall</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">t_s</span><span class="p">,</span> <span class="n">plot_title</span><span class="o">=</span><span class="s1">&#39;Intan EMG data (Channels 64-127)&#39;</span><span class="p">)</span>
+    <span class="n">waterfall</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">channel_indices</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">time_vector</span><span class="o">=</span><span class="n">t_s</span><span class="p">,</span> <span class="n">plot_title</span><span class="o">=</span><span class="s1">&#39;Intan EMG data (Channels 64-127)&#39;</span><span class="p">)</span>
 
     <span class="c1"># ==== Single channel visualization ====</span>
     <span class="n">ch_info</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;amplifier_channels&#39;</span><span class="p">)</span>
