@@ -1,0 +1,9 @@
+{
+  "offset_sec": 2.068,
+  "offset_samples_emg": 2068,
+  "offset_samples_landmarks": 41,
+  "correlation_peak": 1702.1348296013452,
+  "confidence": 0.448616374919356,
+  "emg_fs": 1000.0,
+  "landmark_fs": 20.0
+}

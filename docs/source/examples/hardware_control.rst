@@ -277,30 +277,29 @@ Low-level examples for interfacing with Intan RHX hardware.
     device.enable_wide_channel(range(8))
     device.start_streaming()
 
-    plotter = RealtimePlotter(
-        n_channels=8,
-        sample_rate=4000,
-        window_sec=2.0,
-        update_interval_ms=50
-    )
+    # RealtimePlotter expects a `client` that implements
+    # `get_samples(channel, n_samples)`. IntanRHXDevice does not provide this
+    # directly, so we wrap it in a small adapter.
+    class DeviceAdapter:
+        def __init__(self, device):
+            self.device = device
+            self.fs = float(self.device.sample_rate)
+
+        def get_samples(self, channel, n_samples):
+            # Use the device circular buffer to obtain the latest window
+            win = self.device.get_latest_window(int(n_samples / self.fs * 1000))
+            if win is None or win.size == 0:
+                return []
+            return win[channel, -n_samples:].tolist()
+
+    client = DeviceAdapter(device)
+    plotter = RealtimePlotter(client, sampling_rate=device.sample_rate, channels_to_plot=list(range(8)))
 
     try:
-        plotter.start()
-        buffer_size = 8000
-        buffer = np.zeros((8, buffer_size))
-
-        while True:
-            _, data = device.stream(n_frames=200)
-
-            buffer = np.roll(buffer, -200, axis=1)
-            buffer[:, -200:] = data
-
-            plotter.update(buffer)
-
+        plotter.run()
     except KeyboardInterrupt:
         print("Stopping...")
     finally:
-        plotter.stop()
         device.close()
 
 ----

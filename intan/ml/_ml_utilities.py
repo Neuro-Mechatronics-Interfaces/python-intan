@@ -132,13 +132,13 @@ class EMGRealTimePredictor:
 
                 if true_idx is not None and gesture_idx == true_idx:
                     self.correct += 1
-                    status = "✅"
+                    status = "[OK]"
                 else:
-                    status = "❌"
+                    status = "[X]"
                 msg = (f"{status} [{start / self.fs:.2f}-{end / self.fs:.2f}s] → {gesture_name} | True: "
                        f"{self.label_names[true_idx] if true_idx is not None else label} | Conf: {confidence:.2f}")
             else:
-                msg = (f"⚠️  [{start / self.fs:.2f}-{end / self.fs:.2f}s] → {gesture_name} | No ground truth | Conf: {confidence:.2f}")
+                msg = (f"[WARN] [{start / self.fs:.2f}-{end / self.fs:.2f}s] → {gesture_name} | No ground truth | Conf: {confidence:.2f}")
 
             self.print_queue.put(msg)
         # On exit

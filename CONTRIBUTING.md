@@ -305,8 +305,8 @@ def filter_emg(data, filter_type, sample_rate, lowcut=None, highcut=None):
 
     Examples
     --------
-    >>> emg_filtered = filter_emg(emg_data, 'bandpass', 4000,
-    ...                            lowcut=20, highcut=500)
+    >>> emg_filtered = filter_emg(emg_data, filter_type='bandpass',
+    ...                            lowcut=20, highcut=500, fs=4000)
     """
     # Implementation
 ```

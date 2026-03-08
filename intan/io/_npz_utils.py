@@ -1,6 +1,6 @@
 import os
 import glob
-from typing import Union, Sequence, List, Dict, Any
+from typing import Union, Sequence, List, Dict, Any, Tuple, Optional
 import numpy as np
 from tqdm import tqdm
 
@@ -463,3 +463,286 @@ def load_npz_files(paths: Union[str, Sequence[str]], verbose: bool = False) -> L
     if len(files) == 0:
         raise FileNotFoundError(f"No NPZ files found for: {paths}")
     return [load_npz_file(fp, verbose=verbose) for fp in files]
+
+
+# =============================================================================
+# Training Dataset Utilities
+# =============================================================================
+
+def load_training_dataset(
+    npz_path: str,
+    verbose: bool = False,
+) -> Dict[str, Any]:
+    """
+    Load a training dataset NPZ with standardized field extraction.
+    
+    Handles various field naming conventions and returns a normalized dict.
+    
+    Args:
+        npz_path: Path to training dataset NPZ file
+        verbose: Print loading info
+    
+    Returns:
+        Dict with standardized keys:
+            - X: Feature matrix (n_windows, n_features)
+            - y: Labels as strings (n_windows,)
+            - y_id: Labels as integers (n_windows,) if available
+            - class_names: Sorted unique class names
+            - label_to_id: Dict mapping class name → integer ID
+            - emg_fs: Sampling frequency (Hz)
+            - window_ms: Feature window size (ms)
+            - step_ms: Window step size (ms)
+            - channel_names: List of channel names
+            - selected_channels: List of channel indices used
+            - feature_spec: Feature specification dict
+            - metadata: Any additional metadata
+    
+    Example:
+        >>> data = load_training_dataset("training_dataset.npz")
+        >>> X, y = data["X"], data["y"]
+        >>> print(f"Loaded {X.shape[0]} samples, {len(data['class_names'])} classes")
+    """
+    import json
+    
+    with np.load(npz_path, allow_pickle=True) as d:
+        result = {}
+        
+        # Core data
+        result["X"] = d["X"]
+        
+        # Labels: prefer y_id if available, else y
+        if "y_id" in d.files:
+            result["y_id"] = d["y_id"]
+            result["y"] = d["y"] if "y" in d.files else None
+        else:
+            result["y"] = d["y"]
+            result["y_id"] = None
+        
+        # Class information
+        if "class_names" in d.files:
+            cn = d["class_names"]
+            result["class_names"] = cn.tolist() if hasattr(cn, "tolist") else list(cn)
+        else:
+            # Derive from y
+            y_vals = result["y"] if result["y"] is not None else result["y_id"]
+            result["class_names"] = sorted(set(y_vals)) if y_vals is not None else []
+        
+        # Label mapping
+        if "label_to_id_json" in d.files:
+            raw = d["label_to_id_json"]
+            try:
+                raw = raw.item() if getattr(raw, "shape", ()) == () else str(raw)
+                result["label_to_id"] = json.loads(str(raw))
+            except Exception:
+                result["label_to_id"] = {c: i for i, c in enumerate(result["class_names"])}
+        else:
+            result["label_to_id"] = {c: i for i, c in enumerate(result["class_names"])}
+        
+        # Preprocessing parameters
+        result["emg_fs"] = float(d["emg_fs"]) if "emg_fs" in d.files else None
+        result["window_ms"] = int(d["window_ms"]) if "window_ms" in d.files else None
+        result["step_ms"] = int(d["step_ms"]) if "step_ms" in d.files else None
+        
+        # Channel information
+        if "channel_names" in d.files:
+            cn = d["channel_names"]
+            result["channel_names"] = cn.tolist() if hasattr(cn, "tolist") else list(cn)
+        else:
+            result["channel_names"] = []
+        
+        if "selected_channels" in d.files:
+            sc = d["selected_channels"]
+            result["selected_channels"] = sc.tolist() if hasattr(sc, "tolist") else list(sc)
+        else:
+            result["selected_channels"] = []
+        
+        # Feature specification
+        if "feature_spec" in d.files:
+            raw = d["feature_spec"]
+            try:
+                raw = raw.item() if getattr(raw, "shape", ()) == () else raw
+                result["feature_spec"] = json.loads(str(raw))
+            except Exception:
+                result["feature_spec"] = None
+        else:
+            result["feature_spec"] = None
+        
+        # Additional metadata
+        result["metadata"] = {
+            "file_path": os.path.abspath(npz_path),
+            "modality": str(d["modality"].item()) if "modality" in d.files else "emg",
+        }
+    
+    if verbose:
+        print(f"[load_training_dataset] Loaded: {npz_path}")
+        print(f"  X shape: {result['X'].shape}")
+        print(f"  Classes: {result['class_names']}")
+        print(f"  Window: {result['window_ms']}ms, Step: {result['step_ms']}ms")
+    
+    return result
+
+
+def load_and_merge_datasets(
+    npz_paths: Sequence[str],
+    verbose: bool = False,
+) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+    """
+    Load and concatenate multiple training datasets.
+    
+    Validates that all datasets have compatible feature dimensions
+    and merges class labels appropriately.
+    
+    Args:
+        npz_paths: List of paths to training dataset NPZ files
+        verbose: Print loading info
+    
+    Returns:
+        Tuple of (X, y, metadata) where:
+            - X: Concatenated feature matrix (total_windows, n_features)
+            - y: Concatenated string labels (total_windows,)
+            - metadata: Merged metadata dict
+    
+    Raises:
+        ValueError: If feature dimensions don't match across datasets
+    
+    Example:
+        >>> X, y, meta = load_and_merge_datasets([
+        ...     "session1_dataset.npz",
+        ...     "session2_dataset.npz",
+        ... ])
+    """
+    if not npz_paths:
+        raise ValueError("No dataset paths provided")
+    
+    all_X = []
+    all_y = []
+    all_classes = set()
+    metadata_list = []
+    feature_dim = None
+    
+    for i, path in enumerate(npz_paths):
+        data = load_training_dataset(path, verbose=verbose)
+        
+        # Validate feature dimension consistency
+        if feature_dim is None:
+            feature_dim = data["X"].shape[1]
+        elif data["X"].shape[1] != feature_dim:
+            raise ValueError(
+                f"Feature dimension mismatch: {path} has {data['X'].shape[1]} features, "
+                f"expected {feature_dim}"
+            )
+        
+        all_X.append(data["X"])
+        
+        # Use string labels
+        y = data["y"] if data["y"] is not None else data["y_id"]
+        all_y.append(np.asarray(y, dtype=object))
+        
+        all_classes.update(data["class_names"])
+        metadata_list.append(data)
+    
+    # Concatenate
+    X = np.concatenate(all_X, axis=0)
+    y = np.concatenate(all_y, axis=0)
+    
+    # Build unified class mapping
+    class_names = sorted(all_classes)
+    label_to_id = {c: i for i, c in enumerate(class_names)}
+    
+    # Merge metadata (use first file's params, note all sources)
+    first = metadata_list[0]
+    merged_metadata = {
+        "class_names": class_names,
+        "label_to_id": label_to_id,
+        "emg_fs": first["emg_fs"],
+        "window_ms": first["window_ms"],
+        "step_ms": first["step_ms"],
+        "channel_names": first["channel_names"],
+        "selected_channels": first["selected_channels"],
+        "feature_spec": first["feature_spec"],
+        "source_files": list(npz_paths),
+        "n_sources": len(npz_paths),
+    }
+    
+    if verbose:
+        print(f"[load_and_merge_datasets] Merged {len(npz_paths)} datasets")
+        print(f"  Total samples: {X.shape[0]}")
+        print(f"  Unified classes: {class_names}")
+    
+    return X, y, merged_metadata
+
+
+def save_training_dataset(
+    save_path: str,
+    X: np.ndarray,
+    y: np.ndarray,
+    emg_fs: float,
+    window_ms: int,
+    step_ms: int,
+    channel_names: List[str],
+    selected_channels: List[int] = None,
+    feature_spec: Dict = None,
+    channel_map: str = None,
+    channel_map_file: str = None,
+    modality: str = "emg",
+) -> None:
+    """
+    Save a training dataset to NPZ with standardized format.
+    
+    Args:
+        save_path: Output file path
+        X: Feature matrix (n_windows, n_features)
+        y: String labels (n_windows,)
+        emg_fs: Sampling frequency (Hz)
+        window_ms: Feature window size (ms)
+        step_ms: Window step size (ms)
+        channel_names: List of channel names in order used
+        selected_channels: Original channel indices (if subset)
+        feature_spec: Feature specification dict
+        channel_map: Name of channel mapping used (for reproducibility)
+        channel_map_file: Path to channel mapping file
+        modality: Data modality (default: "emg")
+    
+    Example:
+        >>> save_training_dataset(
+        ...     "training_dataset.npz",
+        ...     X=features, y=labels,
+        ...     emg_fs=2000, window_ms=200, step_ms=50,
+        ...     channel_names=["A-001", "A-002", ...],
+        ... )
+    """
+    import json
+    
+    # Ensure output directory exists
+    out_dir = os.path.dirname(save_path)
+    if out_dir and not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    
+    # Build label mappings
+    class_names = sorted(set(y))
+    label_to_id = {c: i for i, c in enumerate(class_names)}
+    y_id = np.array([label_to_id[lab] for lab in y], dtype=np.int32)
+    
+    np.savez(
+        save_path,
+        # Core data
+        X=X,
+        y=y,
+        y_id=y_id,
+        # Label info
+        class_names=np.array(class_names, dtype=object),
+        label_to_id_json=np.array(json.dumps(label_to_id), dtype=object),
+        # Preprocessing params
+        emg_fs=emg_fs,
+        window_ms=window_ms,
+        step_ms=step_ms,
+        # Channel info
+        channel_names=np.array(channel_names, dtype=object),
+        selected_channels=np.array(selected_channels if selected_channels else [], dtype=int),
+        # Feature info
+        feature_spec=json.dumps(feature_spec) if feature_spec else "",
+        # Metadata
+        modality=np.array(modality, dtype=object),
+        channel_mapping_name=np.array(channel_map or "", dtype=object),
+        channel_mapping_file=np.array(channel_map_file or "", dtype=object),
+    )

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Dependencies**: Added `torch>=2.0.0` to dependencies in `pyproject.toml` (required by ML models)
+
+### Fixed
+- **Installation**: Fixed missing PyTorch dependency that caused `ModuleNotFoundError` when using ML features
+- **IO**: Fixed event file discovery for multi-file dataset building - now correctly strips timestamps when matching event files to data files
+- **Dataset Building**: Added interactive prompts for multi-file mode with exclude pattern support
+- **Dataset Building**: Added comprehensive error reporting showing missing event files and suggesting solutions
+
 ### Planned
 - Performance benchmarking suite
 - Extended LSL marker synchronization features
@@ -17,6 +26,111 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced impedance testing tools
 
 ---
+
+## [0.1.0] - 2025-12-11
+
+### Added
+- **Configuration System**: New `intan.io._config_utils` module with GUI/terminal prompts
+  - `load_simple_config()`, `save_simple_config()` for key=value config files
+  - `prompt_directory()`, `prompt_file()`, `prompt_text()` with fallback to terminal
+  - `get_or_prompt_value()` for CLI/config/prompt priority handling
+- **Dataset Building**: New `intan.io._dataset_utils` module for ML workflows
+  - `select_channels()` with channel mapping support
+  - `process_recording()` for complete EMG→features→labels pipeline
+  - `save_dataset()` with comprehensive metadata
+- **HD-EMG Grid Support**: New `intan.io._grid_utils` module
+  - `infer_grid_dimensions()` from channel names
+  - `apply_grid_permutation()` for spatial transforms (rotation, flip, transpose)
+  - `parse_orientation_from_filename()` for auto-detection
+  - `remap_grid_channels()` for orientation correction
+- **Device Channel Management**: New `intan.interface._device_utils` module
+  - `normalize_channel_names()` for 0-based→1-based conversion
+  - `parse_channel_spec()` for port-indexed dictionaries
+  - `enable_channels_by_name()` for canonical naming
+  - `build_active_channel_order()` for stream alignment
+- **IMU Features**: New `intan.processing._imu_features` module
+  - `aggregate_imu_features()` for multi-modal EMG+IMU datasets
+  - `append_imu_features()` with zscore/robust normalization
+  - Support for 'mean' and 'rich' (5-stat) feature modes
+- **Prediction Pipelines**: New `intan.ml._prediction_modes` module
+  - `predict_file()` for offline RHD file prediction
+  - `predict_batch()` for multi-file aggregated metrics
+  - `predict_from_device()` for fixed-duration recording
+  - `predict_realtime_stream()` for continuous streaming
+- **Prediction Utilities**: New `intan.ml._prediction_utils` module
+  - `extract_features_from_emg()` with training-locked parameters
+  - `compute_window_starts()` for event alignment
+  - `predict_with_model()` with dimension validation
+  - `predict_rhd_file()` for complete pipeline
+- **Synchronization**: New `intan.processing._sync` module
+  - `compute_landmark_movement_signal()` from MediaPipe hand tracking
+  - `compute_emg_envelope_signal()` for alignment
+  - `find_sync_offset()` via cross-correlation
+  - `load_sync_offset()`, `save_sync_offset()` for persistence
+- **Temporal Filters**: New `intan.processing._temporal_filters` module
+  - `moving_average()`, `lowpass_filter()`, `savitzky_golay()`
+  - `gaussian_smooth()`, `exponential_smooth()`, `adaptive_smooth()`
+  - `smooth_predictions()` unified interface
+
+- **Examples**: Finger Kinematics Pipeline Documentation
+  - `CALIBRATION.md` - EMG normalization guide (session-to-session variability)
+  - `SYNCHRONIZATION.md` - EMG-video alignment (cross-correlation based)
+  - `WORKFLOW.md` - Complete 8-step pipeline reference
+  - `README.md` - Streamlined quick start (reduced from 511→262 lines)
+
+- **Examples**: Gesture Classifier Enhancements
+  - `.gesture_config.example` - Shared config template for all scripts
+  - `1_build_dataset.py` - Unified builder (RHD/NPZ/CSV, single/multi-file, 29+ params)
+  - `3_predict.py` - Unified prediction CLI with 4 modes (file/batch/record/stream)
+  - Interactive prompts with directory/file pickers
+  - Poly5 file format support
+
+- **Examples**: Interface Documentation
+  - `examples/interface/README.md` - Hardware integration overview
+  - LSL streaming examples
+  - Raspberry Pi Pico firmware references
+
+### Changed
+- **Dataset Building**: Enhanced `1_build_dataset.py` with:
+  - Smart event file discovery (checks `events/` subdirectory)
+  - Visual separation of data (blue) and event (yellow) files in GUI
+  - Improved error reporting for missing event files
+  - Support for poly5 format alongside rhd/npz/csv
+  - Channel mapping and orientation remapping
+  - Multi-modal EMG+IMU features
+
+- **Prediction**: Unified CLI in `3_predict.py`:
+  - Single entry point for all prediction modes
+  - Config file support (`.gesture_config`)
+  - Interactive prompts when arguments missing
+  - Shared parameter locking with training metadata
+
+- **Documentation**: Finger kinematics workflow
+  - Removed 6 redundant files (REFACTORING.md, QUICK_REFERENCE.md, demo scripts)
+  - Consolidated step-by-step details into WORKFLOW.md
+  - Added synchronization as critical first step (prevents 9s misalignment)
+
+### Fixed
+- **Event File Discovery**: Multi-file dataset building now correctly finds event files
+  - Strips timestamps before matching (e.g., `file_251110_125854.rhd` → `file.event`)
+  - Searches multiple patterns (`*_events.txt`, `*_event.txt`, `*.events`)
+  - Prioritizes `events/` subdirectory structure
+
+- **GUI**: Dataset builder file discovery improvements
+  - Separate panels for data files (blue) vs event files (yellow)
+  - Smart directory search (raw/ for data, events/ for labels)
+  - Color-coded status (red=0 found, blue/brown=found)
+
+- **Documentation**: Example organization
+  - Removed test files and demos from finger_kinematics
+  - Streamlined READMEs for clarity
+  - Fixed hardcoded paths in gesture_pipeline_profile.json
+
+### Removed
+- Redundant documentation files from `examples/finger_kinematics/`:
+  - `REFACTORING.md`, `REFACTORING_SUMMARY.md`, `QUICK_REFERENCE.md`
+  - `demo_video_overlay.py`, `test_predict.py`
+  - `finger_angle_display_demo.png`
 
 ## [0.0.3] - 2025-01-26
 

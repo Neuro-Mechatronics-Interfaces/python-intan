@@ -15,3 +15,10 @@ from ._rhx_device import IntanRHXDevice, FRAMES_PER_BLOCK
 # import intan.interface._config_options as config_options
 #import intan.interface._playback_options as playback_options
 from ._rhx_config import RHXConfig
+from ._device_utils import (
+    normalize_channel_names,
+    parse_channel_spec,
+    enable_channels_by_name,
+    get_device_channel_names,
+    build_active_channel_order,
+)

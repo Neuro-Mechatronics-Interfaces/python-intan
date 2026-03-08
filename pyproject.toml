@@ -11,18 +11,18 @@ license = {text = "MIT"}
 keywords = ["intan", "emg", "neurotech", "signal processing", "biomedical"]
 dependencies = [
     "numpy>=1.26.0",
-    "scipy==1.14.1",
+    "scipy>=1.14.1",
     "matplotlib",
     "pandas",
-    "PySerial",
+    "pyserial",
     "scikit-learn",
     "tqdm",
+    "torch>=2.0.0",
     # "nvidia-cuda-toolkit", # This is not a Python package, but a system package
     "tensorflow==2.19.0",
     "seaborn",
-	"pyyaml",
-    "PyQt5",
-    "pyqtgraph",
+    "PyYAML",
+    
     "pylsl",
 ]
 
@@ -39,7 +39,19 @@ docs = [
     "sphinx-autodoc-typehints",
     "myst-parser",
 ]
+video = [
+    "opencv-python>=4.5.0",
+    "mediapipe>=0.10.0",
+    "handtrack @ git+https://github.com/Jshulgach/Hand-Landmark-Tracker.git",
+]
+
+gui = [
+    "PyQt5",
+    "pyqtgraph",
+]
 
 [tool.setuptools]
-packages = ["intan"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["intan*"]
 

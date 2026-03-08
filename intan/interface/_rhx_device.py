@@ -462,7 +462,7 @@ class IntanRHXDevice(RHXConfig):
                 now = time.time()
                 if now - last_print >= 1.0 and verbose:
                     rate = sample_counter / (now - last_print)
-                    print(f"[📊] Rate: {rate:.2f} samples/sec")
+                    print(f"[Rate] {rate:.2f} samples/sec")
                     last_print = now
                     sample_counter = 0
 

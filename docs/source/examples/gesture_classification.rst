@@ -24,59 +24,76 @@ The gesture classification pipeline consists of several stages:
 Stage 1: Building Training Datasets
 -------------------------------------
 
-The pipeline supports multiple data sources. Choose the appropriate script based on your data format:
+**New in v0.1.0**: Unified dataset builder with GUI prompts and support for all file formats.
 
-**From single .rhd file:**
+The pipeline uses a single script ``1_build_dataset.py`` that supports RHD, NPZ, CSV, and Poly5 formats.
 
-.. code-block:: python
-
-    """
-    Build training dataset from a single .rhd file
-    Script: examples/gesture_classifier/1a_build_training_dataset_rhd.py
-    """
-    from intan.io import load_rhd_file
-    from intan.processing import filter_emg, notch_filter, extract_windows
-    import numpy as np
-
-    # Load EMG data
-    result = load_rhd_file('path/to/file.rhd')
-    emg_data = result['amplifier_data']
-    fs = result['frequency_parameters']['amplifier_sample_rate']
-
-    # Preprocess: filter and segment by gesture labels
-    emg_filtered = notch_filter(emg_data, fs, f0=60)
-    emg_filtered = filter_emg(emg_filtered, 'bandpass', fs, lowcut=20, highcut=500)
-
-    # Extract windows and labels (assumes you have a labels file)
-    # See the full script for complete implementation
-
-**From multiple .rhd files:**
+**Interactive Mode (Recommended):**
 
 .. code-block:: bash
 
-    # examples/gesture_classifier/1b_build_training_dataset_multi_rhd.py
-    python 1b_build_training_dataset_multi_rhd.py --data_dir /path/to/rhd/files
+    # Launch with interactive prompts
+    python examples/gesture_classifier/1_build_dataset.py
 
-**From .npz files:**
+    # You'll be prompted for:
+    # - Project root directory
+    # - Single file or multi-file mode
+    # - Files to exclude (optional)
 
-.. code-block:: bash
-
-    # examples/gesture_classifier/1c_build_training_dataset_npz.py
-    python 1c_build_training_dataset_npz.py --data_dir /path/to/npz/files
-
-**From .csv files:**
+**Command-Line Mode:**
 
 .. code-block:: bash
 
-    # examples/gesture_classifier/1e_build_training_dataset_multi_csv.py
-    python 1e_build_training_dataset_multi_csv.py --data_dir /path/to/csv/files
+    # Single file with channel selection
+    python 1_build_dataset.py \
+        --root_dir /data \
+        --file_type rhd \
+        --file_path recording.rhd \
+        --channels 0:64 \
+        --overwrite
 
-**From any format (automatic detection):**
+    # Multi-file with channel mapping
+    python 1_build_dataset.py \
+        --root_dir /data \
+        --multi_file \
+        --channel_map 8-8-L \
+        --exclude_pattern test \
+        --overwrite
+
+    # CSV with IMU features
+    python 1_build_dataset.py \
+        --root_dir /data \
+        --file_type csv \
+        --multi_file \
+        --modality both \
+        --imu_features rich \
+        --overwrite
+
+**Configuration File:**
 
 .. code-block:: bash
 
-    # examples/gesture_classifier/1e_build_training_dataset_any.py
-    python 1e_build_training_dataset_any.py --data_dir /path/to/files
+    # Use shared config file (.gesture_config)
+    python 1_build_dataset.py --config_file config.json --overwrite
+
+**Key Features:**
+
+- Automatic event file discovery (checks ``events/`` subdirectory)
+- Smart file filtering with exclude patterns
+- HD-EMG grid support with spatial transforms
+- Multi-modal EMG+IMU feature extraction
+- Paper-style preprocessing mode (120Hz highpass, RMS only)
+- Poly5 format support
+
+**Legacy Scripts:**
+
+Previous format-specific scripts (1a-1e) are still available but deprecated:
+
+- ``1a_build_training_dataset_rhd.py`` - Single RHD file
+- ``1b_build_training_dataset_multi_rhd.py`` - Multiple RHD files
+- ``1c_build_training_dataset_npz.py`` - Single NPZ file
+- ``1d_build_training_dataset_multi_npz.py`` - Multiple NPZ files
+- ``1e_build_training_dataset_any.py`` - Auto-detect format
 
 ----
 
@@ -98,7 +115,75 @@ Once you have prepared your training dataset, train a classifier:
     Train a gesture classification model
     """
     from intan.ml import train_classifier, ModelManager
+
+----
+
+Stage 3: Making Predictions
+---------------------------
+
+**New in v0.1.0**: Unified prediction CLI with 4 modes.
+
+The ``3_predict.py`` script provides a single entry point for all prediction workflows:
+
+**File Mode** - Offline prediction from single RHD file:
+
+.. code-block:: bash
+
+    python 3_predict.py file \
+        --root_dir /data \
+        --file_path recording.rhd \
+        --label 128ch \
+        --verbose
+
+**Batch Mode** - Process multiple files with aggregated metrics:
+
+.. code-block:: bash
+
+    python 3_predict.py batch \
+        --root_dir /data \
+        --rhd_glob "raw/**/*.rhd" \
+        --events_dir events/ \
+        --label 128ch \
+        --save_eval
+
+**Record Mode** - Fixed-duration device recording:
+
+.. code-block:: bash
+
+    python 3_predict.py record \
+        --root_dir /data \
+        --label 128ch \
+        --seconds 10 \
+        --verbose
+
+**Stream Mode** - Real-time continuous prediction:
+
+.. code-block:: bash
+
+    python 3_predict.py stream \
+        --root_dir /data \
+        --label 128ch \
+        --infer_hz 20 \
+        --smooth_k 5 \
+        --use_lsl
+
+**Configuration:**
+
+Uses shared ``.gesture_config`` file for default values. Interactive prompts when arguments missing.
+
+**Legacy Scripts:**
+
+Previous prediction scripts are still available but deprecated:
+
+- ``3a_predict_from_rhd.py`` - Single file prediction
+- ``3b_batch_predict_from_rhd.py`` - Batch processing
+- ``3c_predict_from_device_record.py`` - Device recording
+- ``3d_predict_from_device_realtime.py`` - Real-time streaming
+
+.. code-block:: python
+
     import numpy as np
+    from intan.ml import ModelManager
 
     # Load training data
     data = np.load('training_data.npz')
@@ -114,7 +199,7 @@ Once you have prepared your training dataset, train a classifier:
         model_type='CNN',
         n_components=20,
         epochs=50,
-        batch_size=32
+        batch_size=32,
     )
 
     # Save trained model

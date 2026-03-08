@@ -20,7 +20,7 @@
 - 🤖 **Machine Learning**: Complete gesture classification pipeline with TensorFlow
 - 📊 **Visualization**: Waterfall plots, real-time plotting, GUI applications
 - 🔌 **Hardware Integration**: LSL support, Raspberry Pi Pico, robotic control
-- 🖥️ **GUI Applications**: EMG viewer, trial selector, gesture pipeline interface
+- **GUI Applications**: EMG viewer, trial selector, gesture pipeline interface (PyQt5 preferred; Tkinter fallback)
 - 🚀 **Performance**: GPU acceleration, optimized for real-time applications
 
 ---
@@ -65,13 +65,34 @@ source intan/bin/activate  # Windows: intan\Scripts\activate
 pip install python-intan
 ```
 
-### GPU Support (Optional)
+### Optional Features
 
-For faster machine learning training:
+**GPU Support** - For faster machine learning training: follow the
+official TensorFlow GPU installation guide for the correct `pip` wheel
+and system CUDA/CuDNN versions:
+
+https://www.tensorflow.org/install
+
+As an example, to install the CPU-only TensorFlow wheel pinned to the
+project version:
 
 ```bash
-pip install tensorflow[and-cuda] nvidia-cudnn-cu12
+pip install tensorflow==2.19.0
 ```
+
+**Video Processing** - For hand landmark tracking and finger kinematics:
+```bash
+pip install 'python-intan[video]'
+```
+Includes: opencv-python, mediapipe, and [handtrack](https://github.com/Jshulgach/Hand-Landmark-Tracker) package.
+
+**GUI Applications** - The GUI apps (EMG viewer, trial selector, gesture pipeline) are
+optional. To install GUI dependencies:
+
+```bash
+pip install 'python-intan[gui]'
+```
+Includes: `PyQt5` and `pyqtgraph`.
 
 ---
 
@@ -95,11 +116,11 @@ t = result['t_amplifier']
 
 # Quick filtering
 emg_filtered = intan.processing.notch_filter(emg_data, fs, f0=60)
-emg_filtered = intan.processing.filter_emg(emg_filtered, 'bandpass', fs,
-                                            lowcut=10, highcut=500)
+emg_filtered = intan.processing.filter_emg(emg_filtered, filter_type='bandpass',
+                                            lowcut=10, highcut=500, fs=fs)
 
 # Visualize
-intan.plotting.waterfall(emg_filtered, range(64), t,
+intan.plotting.waterfall(data=emg_filtered, channel_indices=range(64), time_vector=t,
                          plot_title='Filtered EMG Data')
 ```
 
@@ -162,6 +183,22 @@ while True:
     prediction = predictor.get_prediction()
     if prediction:
         print(f"Gesture: {prediction['label']} ({prediction['confidence']:.1%})")
+```
+
+Note: the real-time predictor and some ML utilities require additional ML dependencies
+(TensorFlow or PyTorch) and optional C/CUDA system libraries. If you don't have those
+installed, the import may fail. Wrap ML usage in a try/except or install the ML extras
+for this project before running the example.
+
+Example guarded pattern:
+
+```python
+try:
+  from intan.ml import EMGRealTimePredictor
+except Exception as e:
+  raise RuntimeError("EMGRealTimePredictor requires ML dependencies; install extras or skip this example") from e
+
+# then proceed to create and run the predictor
 ```
 
 ### Lab Streaming Layer (LSL) Integration

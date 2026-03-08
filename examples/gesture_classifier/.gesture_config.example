@@ -1,0 +1,108 @@
+# EMG Gesture Classifier Configuration
+# Shared configuration file for all gesture_classifier scripts:
+#   1a-1e: Dataset building scripts
+#   2/2b:  Model training scripts
+#   3a-3d: Prediction scripts (or use predict.py unified CLI)
+#
+# This file is automatically created when you save settings from predict.py
+# You can also manually create/edit this file as .gesture_config
+
+# ============================================================================
+# Core Settings (used by all scripts)
+# ============================================================================
+
+# Path to the root directory containing all project data
+# Used by: all scripts
+root_dir=G:/path/to/your/project
+
+# Model label/tag (e.g., '128ch', 'emg_v1', etc.)
+# Used by: training (2*.py) and prediction (3*.py) scripts
+label=128ch
+
+# Enable verbose logging (true/false)
+# Used by: all scripts
+verbose=false
+
+# ============================================================================
+# Dataset Building Settings (1*.py scripts)
+# ============================================================================
+
+# Directory containing raw RHD files
+# Used by: 1a, 1b, 1e
+raw_dir=G:/path/to/raw
+
+# Directory containing events files
+# Used by: 1a, 1b, 1e
+events_dir=G:/path/to/events
+
+# Directory containing NPZ files (for NPZ-based dataset building)
+# Used by: 1c, 1d
+npz_dir=G:/path/to/npz
+
+# Output directory for training datasets
+# Used by: 1a-1e
+output_dir=G:/path/to/output
+
+# Feature extraction window size in milliseconds
+# Used by: 1a-1e, 3a-3d
+window_ms=200
+
+# Feature extraction step size in milliseconds
+# Used by: 1a-1e, 3a-3d
+step_ms=50
+
+# ============================================================================
+# Training Settings (2*.py scripts)
+# ============================================================================
+
+# Path to training dataset (.npz file)
+# Used by: 2, 2b
+dataset_path=G:/path/to/training_dataset.npz
+
+# Number of training epochs
+# Used by: 2, 2b
+epochs=1000
+
+# Batch size for training
+# Used by: 2, 2b
+batch_size=32
+
+# Learning rate
+# Used by: 2, 2b
+learning_rate=0.001
+
+# Enable PCA dimensionality reduction (true/false)
+# Used by: 2, 2b
+use_pca=true
+
+# Number of PCA components (if use_pca=true)
+# Used by: 2, 2b
+n_components=30
+
+# ============================================================================
+# Prediction Settings (3*.py scripts)
+# ============================================================================
+
+# Path to RHD file for single-file prediction
+# Used by: 3a, predict.py --mode file
+file_path=G:/path/to/recording.rhd
+
+# Glob pattern for batch prediction
+# Used by: 3b, predict.py --mode batch
+rhd_glob=G:/path/to/raw/**/*.rhd
+
+# Recording duration in seconds (device modes)
+# Used by: 3c, predict.py --mode record
+seconds=10
+
+# Inference rate in Hz (streaming mode)
+# Used by: 3d, predict.py --mode stream
+infer_hz=20
+
+# Majority vote smoothing window size (streaming mode)
+# Used by: 3d, predict.py --mode stream
+smooth_k=5
+
+# Enable LSL publishing (true/false, streaming mode)
+# Used by: 3d, predict.py --mode stream
+use_lsl=false

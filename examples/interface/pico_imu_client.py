@@ -66,6 +66,17 @@ class PicoIMUClient:
         if self._rx_th:
             self._rx_th.join(timeout=1.0)
 
+    def __enter__(self):
+        """Context manager entry."""
+        if not self.start():
+            raise ConnectionError(f"Failed to connect to Pico IMU: {self.last_error()}")
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit."""
+        self.stop()
+        return False
+
     def get_latest(self) -> Optional[Tuple[int, float, float, float, float, float, float, float, float, float]]:
         """
         Return the newest telemetry tuple:
@@ -178,3 +189,53 @@ class PicoIMUClient:
             except Exception:
                 pass
             self._sock = None
+
+
+def main():
+    """Standalone test for Pico IMU client."""
+    import argparse
+    
+    ap = argparse.ArgumentParser(description="Pico IMU Client Test")
+    ap.add_argument("--ap-ip", default="192.168.4.1", help="Pico AP IP address")
+    ap.add_argument("--port", type=int, default=9000, help="Discovery port")
+    ap.add_argument("--timeout", type=float, default=6.0, help="Discovery timeout (s)")
+    ap.add_argument("--print-rate", type=float, default=1.0, help="Print stats every N seconds (0=off)")
+    args = ap.parse_args()
+
+    print(f"[IMU] Connecting to Pico at {args.ap_ip}:{args.port}...")
+    
+    try:
+        with PicoIMUClient(
+            ap_ip=args.ap_ip,
+            discovery_port=args.port,
+            print_rate_hz=args.print_rate
+        ) as imu:
+            print(f"[OK] Connected! Receiving at ~{imu.rate_hz():.1f} Hz")
+            print("[RUN] Streaming... Press Ctrl+C to stop.\n")
+            
+            try:
+                while True:
+                    latest = imu.get_latest()
+                    if latest:
+                        seq, r, p, y, ax, ay, az, gx, gy, gz = latest
+                        print(f"[IMU] seq={seq:5d} "
+                              f"RPY=({r:+6.2f},{p:+6.2f},{y:+6.2f}) "
+                              f"Acc=({ax:+5.2f},{ay:+5.2f},{az:+5.2f}) "
+                              f"Gyro=({gx:+6.1f},{gy:+6.1f},{gz:+6.1f})  "
+                              f"{imu.rate_hz():.1f} Hz", end='\r')
+                    time.sleep(0.1)
+            except KeyboardInterrupt:
+                print("\n[STOP] Disconnecting...")
+        
+        print("[DONE] Connection closed.")
+    
+    except ConnectionError as e:
+        print(f"[ERROR] {e}")
+        return 1
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())

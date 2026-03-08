@@ -13,7 +13,7 @@ __version__ = "0.0.3"
 __author__ = "Jonathan Shulgach"
 __email__ = "jshulgac@andrew.cmu.edu"
 __license__ = "MIT"
-__url__ = "https://github.com/jshulgach/intan-python"
+__url__ = "https://github.com/Neuro-Mechatronics-Interfaces/python-intan"
 __description__ = "Python interface for streaming, parsing, and analyzing Intan Technologies RHX files"
 
 import importlib as _importlib
