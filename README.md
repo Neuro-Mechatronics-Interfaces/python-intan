@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/figs/logo.png" alt="python-intan logo" width="220"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/Neuro-Mechatronics-Interfaces/python-intan/main/docs/figs/logo.png" alt="python-intan logo" width="220"></p>
 
 # python-intan
 

@@ -23,6 +23,15 @@ def test_version_is_consistent():
     assert f"version: {intan.__version__}" in citation
 
 
+def test_readme_logo_uses_an_absolute_url_for_pypi():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    expected = (
+        'src="https://raw.githubusercontent.com/'
+        'Neuro-Mechatronics-Interfaces/python-intan/main/docs/figs/logo.png"'
+    )
+    assert expected in readme
+
+
 def test_documented_subpackages_are_lazy_attributes():
     assert intan.processing.__name__ == "intan.processing"
     assert intan.io.__name__ == "intan.io"
