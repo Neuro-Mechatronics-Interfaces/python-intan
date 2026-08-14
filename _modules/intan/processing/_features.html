@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>intan.processing._features &#8212; python-intan 0.2.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <script src="../../../_static/documentation_options.js?v=37f418d5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for intan.processing._features</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">hilbert</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+
+<span class="c1"># Deflationary orthogonality</span>
+<div class="viewcode-block" id="orthogonalize">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.orthogonalize">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">orthogonalize</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="n">wp</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Orthogonalizes the weight vector wp with respect to the first i columns of W.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        W: Weight matrix of shape (n_features, n_features).</span>
+<span class="sd">        wp: Weight vector to be orthogonalized of shape (n_features,).</span>
+<span class="sd">        i: Index of the column in W to orthogonalize against.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        wp: Orthogonalized weight vector of shape (n_features,).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">wp</span> <span class="o">-</span> <span class="p">((</span><span class="n">wp</span> <span class="o">@</span> <span class="n">W</span><span class="p">[:</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">@</span> <span class="n">W</span><span class="p">[:</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span></div>
+
+
+
+<span class="c1"># wp normalization</span>
+<div class="viewcode-block" id="normalize">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.normalize">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="n">wp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalizes the weight vector wp.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        wp: Weight vector to be normalized of shape (n_features,).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        wp: Normalized weight vector of shape (n_features,).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">wp</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">wp</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="rectify">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.rectify">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rectify</span><span class="p">(</span><span class="n">emg_data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rectifies EMG data by converting all values to their absolute values.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        emg_data (numpy array): List of numpy arrays or pandas DataFrame items with filtered EMG data.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        rectified_data: List of rectified numpy arrays (same shape as input data).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">emg_data</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="window_rms">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.window_rms">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">window_rms</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply windowed RMS to each channel in the multichannel EMG data.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        emg_data: Numpy array of shape (num_samples, num_channels).</span>
+<span class="sd">        window_size: Size of the window for RMS calculation.</span>
+<span class="sd">        verbose: Whether to print progress.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Smoothed EMG data with windowed RMS applied to each channel (same shape as input).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;| Applying windowed RMS with window size </span><span class="si">{</span><span class="n">window_size</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">num_channels</span><span class="p">,</span> <span class="n">num_samples</span> <span class="o">=</span> <span class="n">emg_data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">rms_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_channels</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_channels</span><span class="p">):</span>
+        <span class="n">rms_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">window_rms_1D</span><span class="p">(</span><span class="n">emg_data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:],</span> <span class="n">window_size</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rms_data</span></div>
+
+
+
+<div class="viewcode-block" id="window_rms_1D">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.window_rms_1D">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">window_rms_1D</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">window_size</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute windowed RMS of the signal.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        signal: Input EMG signal.</span>
+<span class="sd">        window_size: Size of the window for RMS calculation.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Windowed RMS signal.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">signal</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">window_size</span><span class="p">)</span> <span class="o">/</span> <span class="n">window_size</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="calculate_rms">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.calculate_rms">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_rms</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">window_size</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates RMS features for each channel using non-overlapping windows.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data: 2D numpy array of EMG data (channels, samples).</span>
+<span class="sd">        window_size: Size of the window for RMS calculation.</span>
+<span class="sd">        verbose: Whether to print progress.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        rms_features: 2D numpy array of RMS features (channels, windows).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;| Calculating RMS features...&quot;</span><span class="p">)</span>
+    <span class="n">n_channels</span><span class="p">,</span> <span class="n">n_samples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">n_windows</span> <span class="o">=</span> <span class="n">n_samples</span> <span class="o">//</span> <span class="n">window_size</span>
+    <span class="n">rms_features</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_channels</span><span class="p">,</span> <span class="n">n_windows</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_channels</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_windows</span><span class="p">):</span>
+            <span class="n">window</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ch</span><span class="p">,</span> <span class="n">i</span> <span class="o">*</span> <span class="n">window_size</span><span class="p">:(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">window_size</span><span class="p">]</span>
+            <span class="n">rms_features</span><span class="p">[</span><span class="n">ch</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">window</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">rms_features</span>  <span class="c1"># Shape (n_channels, n_windows)</span></div>
+
+
+
+<div class="viewcode-block" id="compute_rolling_rms">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.compute_rolling_rms">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_rolling_rms</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute rolling RMS on a 1D signal.&quot;&quot;&quot;</span>
+    <span class="n">squared</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">signal</span><span class="p">)</span>
+    <span class="n">window</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">window_size</span><span class="p">)</span> <span class="o">/</span> <span class="n">window_size</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">squared</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="downsample">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.downsample">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">downsample</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="p">,</span> <span class="n">target_fs</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Downsamples the EMG data to the target sampling rate.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        emg_data: 2D numpy array of shape (num_channels, num_samples).</span>
+<span class="sd">        sampling_rate: Sampling rate of the original EMG data.</span>
+<span class="sd">        target_fs: Target sampling rate for downsampling.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        downsampled_data: 2D numpy array of shape (num_channels, downsampled_samples).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Compute the downsampling factor</span>
+    <span class="n">downsample_factor</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sampling_rate</span> <span class="o">/</span> <span class="n">target_fs</span><span class="p">)</span>
+
+    <span class="c1"># Downsample the data by taking every nth sample</span>
+    <span class="n">downsampled_data</span> <span class="o">=</span> <span class="n">emg_data</span><span class="p">[:,</span> <span class="p">::</span><span class="n">downsample_factor</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">downsampled_data</span></div>
+
+
+
+<div class="viewcode-block" id="common_average_reference">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.common_average_reference">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">common_average_reference</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">ignore_channels</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Applies Common Average Referencing (CAR) to the multi-channel EMG data.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        emg_data: 2D numpy array of shape (num_channels, num_samples).</span>
+<span class="sd">        ignore_channels: List of channels to ignore in CAR calculation (optional).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        car_data: 2D numpy array after applying CAR (same shape as input).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bad_channels</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">ignore_channels</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bad_channels</span> <span class="o">=</span> <span class="n">ignore_channels</span>
+
+    <span class="n">good_channels</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">emg_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bad_channels</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">good_channels</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No good channels available for Common Average Referencing.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Compute the common average (mean across all channels at each time point)</span>
+    <span class="n">mean_signal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">emg_data</span><span class="p">[</span><span class="n">good_channels</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Shape: (good_channels, n_samples)</span>
+
+    <span class="c1"># Subtract the common average from each channel</span>
+    <span class="k">return</span> <span class="n">emg_data</span> <span class="o">-</span> <span class="n">mean_signal</span>  <span class="c1"># Broadcast subtraction across channels</span></div>
+
+
+
+<div class="viewcode-block" id="envelope_extraction">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.envelope_extraction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">envelope_extraction</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;hilbert&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extracts the envelope of the EMG signal using the Hilbert transform.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data: 2D numpy array of EMG data (channels, samples).</span>
+<span class="sd">        method: Method for envelope extraction (&#39;hilbert&#39; or other).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        envelope: 2D numpy array of the envelope (channels, samples).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;hilbert&#39;</span><span class="p">:</span>
+        <span class="n">analytic_signal</span> <span class="o">=</span> <span class="n">hilbert</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">envelope</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">analytic_signal</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unsupported method for envelope extraction.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">envelope</span></div>
+
+
+
+<div class="viewcode-block" id="z_score_norm">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.z_score_norm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">z_score_norm</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply z-score normalization to the input data.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data: 2D numpy array of shape (channels, samples).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        normalized_data: 2D numpy array of shape (channels, samples) after z-score normalization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+    <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+    <span class="n">normalized_data</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span> <span class="o">-</span> <span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">std</span>
+    <span class="k">return</span> <span class="n">normalized_data</span></div>
+
+
+
+<span class="c1"># RMS (Root Mean Square)</span>
+<div class="viewcode-block" id="compute_rms">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.compute_rms">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_rms</span><span class="p">(</span><span class="n">emg_window</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute RMS of EMG data along a given axis.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        emg_window (np.ndarray): EMG data with one or two dimensions.</span>
+<span class="sd">        axis (int): Axis to compute RMS over. Default is -1 (last axis).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray or float: RMS value(s) along the given axis.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">emg_window</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">emg_window</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">emg_window</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="compute_grid_average">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.compute_grid_average">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_grid_average</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">grid_spacing</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the average of the EMG grids according to the grid spacing. For example, a spacing of 8 means that</span>
+<span class="sd">    channels 1, 9, 17, etc. will be averaged together to form the first grid, and so on.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        emg_data (np.ndarray): 2D numpy array of shape (num_channels, num_samples).</span>
+<span class="sd">        grid_spacing (int): Number of channels to average together.</span>
+<span class="sd">        axis (int): Axis along which to compute the grid averages.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        grid_averages (np.ndarray): 2D numpy array of shape (num_grids, num_samples).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_channels</span><span class="p">,</span> <span class="n">num_samples</span> <span class="o">=</span> <span class="n">emg_data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">num_grids</span> <span class="o">=</span> <span class="n">num_channels</span> <span class="o">//</span> <span class="n">grid_spacing</span>
+    <span class="n">grid_averages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_grids</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_grids</span><span class="p">):</span>
+        <span class="n">start_idx</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">grid_spacing</span>
+        <span class="n">end_idx</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">grid_spacing</span>
+        <span class="n">grid_averages</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">emg_data</span><span class="p">[</span><span class="n">start_idx</span><span class="p">:</span><span class="n">end_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">grid_averages</span></div>
+
+
+
+<div class="viewcode-block" id="variance">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.variance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">variance</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the variance of the input data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (np.ndarray) shape (n_channels, n_samples): Input data for which to compute the variance.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: Variance value for each channel.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="mean_absolute_value">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.mean_absolute_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mean_absolute_value</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the Mean Absolute Value (MAV) of the input data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (np.ndarray) shape (n_channels, n_samples): Input data for which to compute the MAV.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: MAV value for each channel.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="zero_crossings">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.zero_crossings">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">zero_crossings</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the number of zero crossings in the input data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ch (np.ndarray): Input data for which to compute the zero crossings.</span>
+<span class="sd">        threshold (float): Threshold for detecting significant changes.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        int: Number of zero crossings.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">ch</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ch</span><span class="p">))</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="integrated_emg">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.integrated_emg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">integrated_emg</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the Integrated EMG (IEMG) of the input data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (np.ndarray) shape (n_channels, n_samples): Input data for which to compute the IEMG.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: Integrated EMG value for each channel.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">data</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="slope_sign_changes">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.slope_sign_changes">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">slope_sign_changes</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the number of slope sign changes in the input data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ch (np.ndarray): Input data for which to compute the slope sign changes.</span>
+<span class="sd">        threshold (float): Threshold for detecting significant changes.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        int: Number of slope sign changes.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ch</span><span class="p">)))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">ch</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="waveform_length">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.waveform_length">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">waveform_length</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the waveform length of the input data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (np.ndarray) shape (n_channels, n_samples): Input data for which to compute the waveform length.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: Waveform length for each channel.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="root_mean_square">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.root_mean_square">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">root_mean_square</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes the Root Mean Square (RMS) of the input data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data (np.ndarray) shape (n_channels, n_samples): Input data for which to compute the RMS.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: RMS value for each channel.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span></div>
+
+
+
+<span class="n">FEATURE_REGISTRY</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;mean_absolute_value&#39;</span><span class="p">:</span> <span class="n">mean_absolute_value</span><span class="p">,</span>
+    <span class="s1">&#39;zero_crossings&#39;</span><span class="p">:</span> <span class="n">zero_crossings</span><span class="p">,</span>
+    <span class="s1">&#39;slope_sign_changes&#39;</span><span class="p">:</span> <span class="n">slope_sign_changes</span><span class="p">,</span>
+    <span class="s1">&#39;waveform_length&#39;</span><span class="p">:</span> <span class="n">waveform_length</span><span class="p">,</span>
+    <span class="s1">&#39;root_mean_square&#39;</span><span class="p">:</span> <span class="n">root_mean_square</span><span class="p">,</span>
+    <span class="s1">&#39;variance&#39;</span><span class="p">:</span> <span class="n">variance</span><span class="p">,</span>
+    <span class="s1">&#39;integrated_emg&#39;</span><span class="p">:</span> <span class="n">integrated_emg</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="extract_features">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.extract_features">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_features</span><span class="p">(</span><span class="n">segment</span><span class="p">,</span> <span class="n">feature_fns</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extracts features from a multichannel segment.</span>
+
+<span class="sd">    ARgs:</span>
+<span class="sd">        segment: np.ndarray (n_channels, n_samples)</span>
+<span class="sd">        feature_fns: list of strings or callables</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        1D np.ndarray: flattened feature vector</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">feature_fns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">feature_fns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">FEATURE_REGISTRY</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="c1"># Resolve string names to callables</span>
+    <span class="n">resolved_fns</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">feature_fns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">FEATURE_REGISTRY</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown feature name: </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">resolved_fns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FEATURE_REGISTRY</span><span class="p">[</span><span class="n">fn</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">resolved_fns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="n">feats</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">segment</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">resolved_fns</span><span class="p">:</span>
+            <span class="n">feats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fn</span><span class="p">(</span><span class="n">ch</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">feats</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="extract_features_sliding_window">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.extract_features_sliding_window">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_features_sliding_window</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">fs</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">window_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">step_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">feature_fns</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data: (n_channels, n_samples) array of EMG data</span>
+<span class="sd">        fs:  (int)  sampling rate in Hz</span>
+<span class="sd">        window_ms: window length in ms</span>
+<span class="sd">        step_ms:   step between windows in ms</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        (n_windows, n_features)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># compute sizes in samples</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">window_ms</span><span class="o">/</span><span class="mi">1000</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">step_ms</span><span class="o">/</span><span class="mi">1000</span> <span class="o">*</span> <span class="n">fs</span><span class="p">)</span>
+    <span class="n">n_samples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># figure out how many windows (floor)</span>
+    <span class="n">n_windows</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">n_samples</span> <span class="o">-</span> <span class="n">w</span><span class="p">)</span><span class="o">//</span><span class="n">s</span>
+
+    <span class="k">if</span> <span class="n">feature_fns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">feature_fns</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">FEATURE_REGISTRY</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="c1"># Resolve string names to callables</span>
+    <span class="n">resolved_fns</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">feature_fns</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">fn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">FEATURE_REGISTRY</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown feature name: </span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">resolved_fns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">FEATURE_REGISTRY</span><span class="p">[</span><span class="n">fn</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">resolved_fns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+
+    <span class="n">feats</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_windows</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">s</span>
+        <span class="n">seg</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:</span><span class="n">start</span> <span class="o">+</span> <span class="n">w</span><span class="p">]</span>
+        <span class="c1"># returns vector of length n_features</span>
+        <span class="n">fv</span> <span class="o">=</span> <span class="n">extract_features</span><span class="p">(</span><span class="n">seg</span><span class="p">,</span> <span class="n">resolved_fns</span><span class="p">)</span>
+        <span class="n">feats</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fv</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">feats</span><span class="p">)</span>  <span class="c1"># shape (n_windows, n_features)</span></div>
+
+
+
+<div class="viewcode-block" id="feature_spec_from_registry">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._features.feature_spec_from_registry">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">feature_spec_from_registry</span><span class="p">(</span>
+    <span class="n">feature_registry</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">],</span>
+    <span class="n">feature_fns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">per_channel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;channel_major&quot;</span><span class="p">,</span>   <span class="c1"># [ch0 feats..., ch1 feats..., ...]</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;training_order&quot;</span> <span class="c1"># clarifies feature vector is built in training channel order</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build a self-describing spec for your feature vector.</span>
+
+<span class="sd">    If feature_fns is None, we assume &#39;use all&#39; features in the registry, in the</span>
+<span class="sd">    registry&#39;s key order.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">feature_fns</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">feature_registry</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">feature_fns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;__name__&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">fn</span><span class="p">)))</span>
+
+    <span class="c1"># In your current registry, each function returns a scalar per-channel.</span>
+    <span class="n">dims_per_feature</span> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;per_channel&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">per_channel</span><span class="p">),</span>
+        <span class="s2">&quot;order&quot;</span><span class="p">:</span> <span class="n">names</span><span class="p">,</span>                 <span class="c1"># feature names in the order they were concatenated</span>
+        <span class="s2">&quot;dims_per_feature&quot;</span><span class="p">:</span> <span class="n">dims_per_feature</span><span class="p">,</span>
+        <span class="s2">&quot;layout&quot;</span><span class="p">:</span> <span class="n">layout</span><span class="p">,</span>
+        <span class="s2">&quot;channels&quot;</span><span class="p">:</span> <span class="n">channels</span>            <span class="c1"># how channels were ordered when flattening</span>
+    <span class="p">}</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/logo.png" alt="Logo of python-intan"/>
+            </a></p>
+<h1 class="logo"><a href="../../../index.html">python-intan</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/faqs.html">Frequently asked questions</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/introduction.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intan_api/modules.html">intan</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024-2026, Jonathan Shulgach.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

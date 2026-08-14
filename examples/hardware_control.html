@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Hardware Integration and Control &#8212; python-intan 0.1.0 documentation</title>
+    <title>Hardware integration &#8212; python-intan 0.2.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/documentation_options.js?v=37f418d5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -18,7 +18,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="intan" href="../intan_api/modules.html" />
-    <link rel="prev" title="Realtime gesture prediction from streaming data" href="realtime_predict.html" />
+    <link rel="prev" title="Real-time prediction" href="realtime_predict.html" />
    
   <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   
@@ -36,447 +36,56 @@
 
           <div class="body" role="main">
             
-  <section id="hardware-integration-and-control">
-<h1>Hardware Integration and Control<a class="headerlink" href="#hardware-integration-and-control" title="Link to this heading">¶</a></h1>
-<p>These examples demonstrate integration between Intan EMG systems and external hardware for closed-loop control, robotic applications, and multi-sensor systems.</p>
-<hr class="docutils" />
-<section id="d-printed-robotic-arm-control">
-<h2>3D-Printed Robotic Arm Control<a class="headerlink" href="#d-printed-robotic-arm-control" title="Link to this heading">¶</a></h2>
-<p>Control a 3D-printed robotic hand using EMG-based gesture recognition. This example shows how to integrate the Intan system with a Raspberry Pi Pico-controlled servo system.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>Demo video available in the <a class="reference external" href="https://github.com/Neuro-Mechatronics-Interfaces/python-intan/tree/main/examples/3D_printed_arm_control">3D printed arm README</a>.</p>
-</div>
-<p><strong>Hardware Requirements:</strong></p>
+  <section id="hardware-integration">
+<h1>Hardware integration<a class="headerlink" href="#hardware-integration" title="Link to this heading">¶</a></h1>
+<p>The hardware examples connect Intan acquisition workflows to optional external
+devices. They are reference integrations, not turnkey applications: no trained
+models, hardware drivers, or device-specific credentials are bundled.</p>
+<section id="d-printed-arm-control">
+<h2>3D-printed arm control<a class="headerlink" href="#d-printed-arm-control" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">examples/3D_printed_arm_control</span></code> contains CircuitPython firmware for a
+Raspberry Pi Pico controlling a PCA9685 servo driver. Typical hardware includes
+a Pico or Pico 2, five or six servos, a suitable 5 V servo supply, and an InMoov
+or comparable printed hand.</p>
+<p>Use the supported PyTorch workflow in <code class="docutils literal notranslate"><span class="pre">examples/gesture_classifier</span></code> to build
+and run a gesture classifier. The application consuming its predictions should
+map labels such as <code class="docutils literal notranslate"><span class="pre">rest</span></code>, <code class="docutils literal notranslate"><span class="pre">grip</span></code>, and <code class="docutils literal notranslate"><span class="pre">open</span></code> to the newline-terminated
+commands accepted by the Pico firmware. Keep servo power separate from USB
+power and test motion limits before connecting the printed mechanism.</p>
+<section id="pico-setup">
+<h3>Pico setup<a class="headerlink" href="#pico-setup" title="Link to this heading">¶</a></h3>
+<ol class="arabic simple">
+<li><p>Install a compatible CircuitPython release on the Pico.</p></li>
+<li><p>Install the PCA9685 CircuitPython library on the device.</p></li>
+<li><p>Copy <code class="docutils literal notranslate"><span class="pre">examples/3D_printed_arm_control/code.py</span></code> to the Pico as <code class="docutils literal notranslate"><span class="pre">code.py</span></code>.</p></li>
+<li><p>Confirm the serial port and servo channel mapping before sending commands.</p></li>
+</ol>
+<p>The pinned firmware image stored in the repository is retained for hardware
+reproducibility but is excluded from Python release archives.</p>
+</section>
+</section>
+<section id="rhx-tcp-examples">
+<h2>RHX TCP examples<a class="headerlink" href="#rhx-tcp-examples" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">examples/RHXDevice</span></code> and <code class="docutils literal notranslate"><span class="pre">examples/interface</span></code> demonstrate acquisition from
+an RHX TCP server. Start RHX, enable its TCP server, and confirm the configured
+command and waveform ports before running these scripts. Use <code class="docutils literal notranslate"><span class="pre">--help</span></code> for
+scripts that expose command-line options.</p>
+</section>
+<section id="pico-imu-example">
+<h2>Pico IMU example<a class="headerlink" href="#pico-imu-example" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">examples/interface/pico_imu_client.py</span></code> receives optional IMU data from the
+matching CircuitPython firmware in <code class="docutils literal notranslate"><span class="pre">examples/interface/pico/code.py</span></code>. This is
+a separate serial integration and is not required for normal RHD file loading.</p>
+</section>
+<section id="safety-and-limitations">
+<h2>Safety and limitations<a class="headerlink" href="#safety-and-limitations" title="Link to this heading">¶</a></h2>
 <ul class="simple">
-<li><p>Raspberry Pi Pico (or Pico 2)</p></li>
-<li><p>PCA9685 16-channel servo driver</p></li>
-<li><p>5-6 servo motors</p></li>
-<li><p>3D-printed InMoov hand components</p></li>
-<li><p>5V power supply (servos)</p></li>
-</ul>
-<p><strong>Software Requirements:</strong></p>
-<ul class="simple">
-<li><p>CircuitPython on Pico</p></li>
-<li><p>Python 3.10+ on host PC</p></li>
-<li><p>PySerial library</p></li>
-</ul>
-<p><strong>Setup:</strong></p>
-<p>See the detailed <a class="reference external" href="https://github.com/Neuro-Mechatronics-Interfaces/python-intan/tree/main/examples/3D_printed_arm_control">build guide</a>.</p>
-<p><strong>Architecture:</strong></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>┌─────────────┐         ┌──────────────┐         ┌─────────────┐
-│ Intan RHX   │  USB    │   Host PC    │  Serial │ Pico + PCA  │
-│   Device    │────────▶│  + Python    │────────▶│   9685      │
-└─────────────┘         └──────────────┘         └─────────────┘
-                               │                         │
-                               │ EMG Processing          │ Servo Control
-                               │ Gesture Recognition     │
-                               ▼                         ▼
-                        [Predict Gesture]          [Move Fingers]
-</pre></div>
-</div>
-<p><strong>Host-side control script:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">EMG-controlled robotic hand</span>
-<span class="sd">Requires: Pico running code.py from examples/3D_printed_arm_control/</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.ml</span><span class="w"> </span><span class="kn">import</span> <span class="n">EMGRealTimePredictor</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">serial</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
-
-<span class="c1"># Initialize Intan device</span>
-<span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
-<span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">))</span>
-<span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
-
-<span class="c1"># Load gesture model</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s1">&#39;gesture_model.keras&#39;</span><span class="p">)</span>
-
-<span class="c1"># Connect to Pico via serial</span>
-<span class="n">pico</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="s1">&#39;COM3&#39;</span><span class="p">,</span> <span class="mi">115200</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># Adjust port</span>
-
-<span class="c1"># Gesture-to-command mapping</span>
-<span class="n">GESTURE_COMMANDS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="s1">&#39;rest&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;flex&#39;</span><span class="p">:</span> <span class="s1">&#39;grip&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;extend&#39;</span><span class="p">:</span> <span class="s1">&#39;open&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;pinch&#39;</span><span class="p">:</span> <span class="s1">&#39;pinch&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;point&#39;</span><span class="p">:</span> <span class="s1">&#39;point&#39;</span><span class="p">,</span>
-<span class="p">}</span>
-
-<span class="c1"># Real-time predictor</span>
-<span class="n">predictor</span> <span class="o">=</span> <span class="n">EMGRealTimePredictor</span><span class="p">(</span>
-    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-    <span class="n">pca</span><span class="o">=</span><span class="n">pca</span><span class="p">,</span>
-    <span class="n">mean</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span>
-    <span class="n">std</span><span class="o">=</span><span class="n">std</span><span class="p">,</span>
-    <span class="n">label_names</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">GESTURE_COMMANDS</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
-    <span class="n">confidence_threshold</span><span class="o">=</span><span class="mf">0.8</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;System ready. Perform gestures to control robot.&quot;</span><span class="p">)</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">predictor</span><span class="o">.</span><span class="n">run_prediction_loop</span><span class="p">()</span>
-
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="n">prediction</span> <span class="o">=</span> <span class="n">predictor</span><span class="o">.</span><span class="n">get_prediction</span><span class="p">()</span>
-
-        <span class="k">if</span> <span class="n">prediction</span><span class="p">:</span>
-            <span class="n">gesture</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span>
-            <span class="n">confidence</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[</span><span class="s1">&#39;confidence&#39;</span><span class="p">]</span>
-
-            <span class="k">if</span> <span class="n">gesture</span> <span class="ow">in</span> <span class="n">GESTURE_COMMANDS</span><span class="p">:</span>
-                <span class="n">command</span> <span class="o">=</span> <span class="n">GESTURE_COMMANDS</span><span class="p">[</span><span class="n">gesture</span><span class="p">]</span>
-                <span class="n">pico</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="se">\\</span><span class="s2">n&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">confidence</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">gesture</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping...&quot;</span><span class="p">)</span>
-<span class="k">finally</span><span class="p">:</span>
-    <span class="n">pico</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">b</span><span class="s2">&quot;rest</span><span class="se">\\</span><span class="s2">n&quot;</span><span class="p">)</span>
-    <span class="n">pico</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
-</div>
-<p><strong>Pico firmware (CircuitPython):</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Raspberry Pi Pico servo controller</span>
-<span class="sd">File: examples/3D_printed_arm_control/code.py</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">board</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">busio</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">adafruit_servokit</span><span class="w"> </span><span class="kn">import</span> <span class="n">ServoKit</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">supervisor</span>
-
-<span class="c1"># Initialize PCA9685</span>
-<span class="n">i2c</span> <span class="o">=</span> <span class="n">busio</span><span class="o">.</span><span class="n">I2C</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">GP1</span><span class="p">,</span> <span class="n">board</span><span class="o">.</span><span class="n">GP0</span><span class="p">)</span>
-<span class="n">kit</span> <span class="o">=</span> <span class="n">ServoKit</span><span class="p">(</span><span class="n">channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">i2c</span><span class="o">=</span><span class="n">i2c</span><span class="p">)</span>
-
-<span class="c1"># Servo channel assignments</span>
-<span class="n">THUMB</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="n">INDEX</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">MIDDLE</span> <span class="o">=</span> <span class="mi">2</span>
-<span class="n">RING</span> <span class="o">=</span> <span class="mi">3</span>
-<span class="n">PINKY</span> <span class="o">=</span> <span class="mi">4</span>
-<span class="n">WRIST</span> <span class="o">=</span> <span class="mi">5</span>
-
-<span class="c1"># Define gestures as servo angles</span>
-<span class="n">GESTURES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;rest&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">90</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span>
-    <span class="s1">&#39;grip&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">170</span><span class="p">,</span> <span class="mi">170</span><span class="p">,</span> <span class="mi">170</span><span class="p">,</span> <span class="mi">170</span><span class="p">,</span> <span class="mi">170</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span>
-    <span class="s1">&#39;open&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span>
-    <span class="s1">&#39;pinch&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">170</span><span class="p">,</span> <span class="mi">170</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span>
-    <span class="s1">&#39;point&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">170</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">170</span><span class="p">,</span> <span class="mi">170</span><span class="p">,</span> <span class="mi">170</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span>
-<span class="p">}</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">move_to_gesture</span><span class="p">(</span><span class="n">gesture_name</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">gesture_name</span> <span class="ow">in</span> <span class="n">GESTURES</span><span class="p">:</span>
-        <span class="n">angles</span> <span class="o">=</span> <span class="n">GESTURES</span><span class="p">[</span><span class="n">gesture_name</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">servo_idx</span><span class="p">,</span> <span class="n">angle</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">angles</span><span class="p">):</span>
-            <span class="n">kit</span><span class="o">.</span><span class="n">servo</span><span class="p">[</span><span class="n">servo_idx</span><span class="p">]</span><span class="o">.</span><span class="n">angle</span> <span class="o">=</span> <span class="n">angle</span>
-
-<span class="c1"># Main loop</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Robotic hand ready&quot;</span><span class="p">)</span>
-<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">supervisor</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">serial_bytes_available</span><span class="p">:</span>
-        <span class="n">command</span> <span class="o">=</span> <span class="nb">input</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Received: </span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">move_to_gesture</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
-</pre></div>
-</div>
-<p><strong>Available gestures:</strong></p>
-<ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">rest</span></code>: Neutral position</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">grip</span></code>: Close all fingers</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">open</span></code>: Open all fingers</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">pinch</span></code>: Thumb + index finger</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">point</span></code>: Extend index finger</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">flex</span></code>: Individual finger control</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">supinate/pronate</span></code>: Wrist rotation</p></li>
-</ul>
-</section>
-<hr class="docutils" />
-<section id="rhx-device-interface-examples">
-<h2>RHX Device Interface Examples<a class="headerlink" href="#rhx-device-interface-examples" title="Link to this heading">¶</a></h2>
-<p>Low-level examples for interfacing with Intan RHX hardware.</p>
-<p><strong>Connecting to device:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Basic device connection and configuration</span>
-<span class="sd">Script: examples/interface/rhx_connect_to_device.py</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
-
-<span class="c1"># Connect to RHX TCP server</span>
-<span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span>
-    <span class="n">host</span><span class="o">=</span><span class="s1">&#39;127.0.0.1&#39;</span><span class="p">,</span>
-    <span class="n">command_port</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
-    <span class="n">waveform_port</span><span class="o">=</span><span class="mi">5001</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Connected: </span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">connected</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample rate: </span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">get_sample_rate</span><span class="p">()</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Available channels: </span><span class="si">{</span><span class="n">device</span><span class="o">.</span><span class="n">get_num_channels</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="c1"># Enable specific channels</span>
-<span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
-
-<span class="c1"># Start streaming</span>
-<span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
-
-<span class="c1"># Stream 1 second of data</span>
-<span class="n">timestamps</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">duration_sec</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Streamed data shape: </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
-</div>
-<p><strong>Multi-channel streaming plot:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Real-time plot of multiple channels</span>
-python<span class="w"> </span>examples/RHXDevice/multichannel_stream_plot.py
-</pre></div>
-</div>
-<p><strong>Recording demo:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Record streaming data to file</span>
-python<span class="w"> </span>examples/RHXDevice/record_demo.py<span class="w"> </span>--duration<span class="w"> </span><span class="m">60</span><span class="w"> </span>--output<span class="w"> </span>recording.npz
-</pre></div>
-</div>
-<p><strong>TCP benchmark:</strong></p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Test TCP streaming performance</span>
-python<span class="w"> </span>examples/RHXDevice/tcp_benchmark.py<span class="w"> </span>--channels<span class="w"> </span><span class="m">128</span><span class="w"> </span>--duration<span class="w"> </span><span class="m">10</span>
-</pre></div>
-</div>
-<p><strong>Comparing file vs stream:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Verify streaming data matches recorded file</span>
-<span class="sd">Script: examples/RHXDevice/compare_rhd_vs_stream.py</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rhd_file</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="c1"># Stream live data</span>
-<span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">()</span>
-<span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">([</span><span class="mi">15</span><span class="p">])</span>  <span class="c1"># Channel 15</span>
-<span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
-<span class="n">_</span><span class="p">,</span> <span class="n">stream_data</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">duration_sec</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
-<span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-
-<span class="c1"># Load same data from file</span>
-<span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">(</span><span class="s1">&#39;recording.rhd&#39;</span><span class="p">)</span>
-<span class="n">file_data</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">][</span><span class="mi">15</span><span class="p">,</span> <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">stream_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
-
-<span class="c1"># Compare</span>
-<span class="n">correlation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">stream_data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">file_data</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Correlation: </span><span class="si">{</span><span class="n">correlation</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-<span class="c1"># Should be &gt;0.99 if synchronized properly</span>
-</pre></div>
-</div>
-<p><strong>Scrolling live plot:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Real-time scrolling plot</span>
-<span class="sd">Script: examples/RHXDevice/scrolling_live.py</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">RealtimePlotter</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-<span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
-<span class="n">device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
-
-<span class="c1"># RealtimePlotter expects a `client` that implements</span>
-<span class="c1"># `get_samples(channel, n_samples)`. IntanRHXDevice does not provide this</span>
-<span class="c1"># directly, so we wrap it in a small adapter.</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">DeviceAdapter</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">):</span>
-        <span class="c1"># Use the device circular buffer to obtain the latest window</span>
-        <span class="n">win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">get_latest_window</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_samples</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">fs</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">win</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">win</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        <span class="k">return</span> <span class="n">win</span><span class="p">[</span><span class="n">channel</span><span class="p">,</span> <span class="o">-</span><span class="n">n_samples</span><span class="p">:]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-
-<span class="n">client</span> <span class="o">=</span> <span class="n">DeviceAdapter</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
-<span class="n">plotter</span> <span class="o">=</span> <span class="n">RealtimePlotter</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="o">=</span><span class="n">device</span><span class="o">.</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">channels_to_plot</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)))</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">plotter</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
-<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping...&quot;</span><span class="p">)</span>
-<span class="k">finally</span><span class="p">:</span>
-    <span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="raspberry-pi-pico-imu-integration">
-<h2>Raspberry Pi Pico + IMU Integration<a class="headerlink" href="#raspberry-pi-pico-imu-integration" title="Link to this heading">¶</a></h2>
-<p>Combine Intan EMG with IMU (accelerometer/gyroscope) data from a Pico.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Synchronized EMG + IMU recording</span>
-<span class="sd">Script: examples/interface/rhx_emg_and_imu.py</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span><span class="p">,</span> <span class="n">PicoIMUClient</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-
-<span class="c1"># Connect to Intan</span>
-<span class="n">emg_device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">)</span>
-<span class="n">emg_device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">))</span>
-<span class="n">emg_device</span><span class="o">.</span><span class="n">start_streaming</span><span class="p">()</span>
-
-<span class="c1"># Connect to Pico IMU</span>
-<span class="n">imu_client</span> <span class="o">=</span> <span class="n">PicoIMUClient</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="s1">&#39;COM4&#39;</span><span class="p">,</span> <span class="n">baud_rate</span><span class="o">=</span><span class="mi">115200</span><span class="p">)</span>
-
-<span class="c1"># Recording buffers</span>
-<span class="n">emg_buffer</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="n">imu_buffer</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="n">timestamps</span> <span class="o">=</span> <span class="p">[]</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recording EMG + IMU... Press Ctrl+C to stop&quot;</span><span class="p">)</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="c1"># Get EMG data</span>
-        <span class="n">ts</span><span class="p">,</span> <span class="n">emg_data</span> <span class="o">=</span> <span class="n">emg_device</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">n_frames</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
-        <span class="n">emg_buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">emg_data</span><span class="p">)</span>
-
-        <span class="c1"># Get IMU data (non-blocking)</span>
-        <span class="n">imu_sample</span> <span class="o">=</span> <span class="n">imu_client</span><span class="o">.</span><span class="n">read_sample</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">imu_sample</span><span class="p">:</span>
-            <span class="n">imu_buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">imu_sample</span><span class="p">)</span>
-
-        <span class="n">timestamps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
-
-<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping...&quot;</span><span class="p">)</span>
-
-<span class="k">finally</span><span class="p">:</span>
-    <span class="c1"># Save synchronized data</span>
-    <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span>
-        <span class="s1">&#39;emg_imu_recording.npz&#39;</span><span class="p">,</span>
-        <span class="n">emg</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">emg_buffer</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-        <span class="n">imu</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">imu_buffer</span><span class="p">),</span>
-        <span class="n">timestamps</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">timestamps</span><span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved EMG shape: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">emg_buffer</span><span class="p">,</span><span class="w"> </span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saved IMU samples: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">imu_buffer</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="n">imu_client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="n">emg_device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
-</div>
-<p><strong>Pico IMU streaming script:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Pico IMU data publisher</span>
-<span class="sd">File: examples/interface/pico/code.py</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">board</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">busio</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">adafruit_mpu6050</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-
-<span class="n">i2c</span> <span class="o">=</span> <span class="n">busio</span><span class="o">.</span><span class="n">I2C</span><span class="p">(</span><span class="n">board</span><span class="o">.</span><span class="n">GP1</span><span class="p">,</span> <span class="n">board</span><span class="o">.</span><span class="n">GP0</span><span class="p">)</span>
-<span class="n">mpu</span> <span class="o">=</span> <span class="n">adafruit_mpu6050</span><span class="o">.</span><span class="n">MPU6050</span><span class="p">(</span><span class="n">i2c</span><span class="p">)</span>
-
-<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-    <span class="n">accel</span> <span class="o">=</span> <span class="n">mpu</span><span class="o">.</span><span class="n">acceleration</span>
-    <span class="n">gyro</span> <span class="o">=</span> <span class="n">mpu</span><span class="o">.</span><span class="n">gyro</span>
-
-    <span class="c1"># Send as CSV over serial</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">accel</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">accel</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">accel</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">,&quot;</span>
-          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gyro</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">gyro</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">gyro</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>  <span class="c1"># 100 Hz</span>
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="wireless-emg-with-rhd2164">
-<h2>Wireless EMG with RHD2164<a class="headerlink" href="#wireless-emg-with-rhd2164" title="Link to this heading">¶</a></h2>
-<p>Interface with RHD2164 wireless headstage via SPI.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Wireless RHD2164 interface</span>
-<span class="sd">Script: examples/RHD2164_wireless/code.py</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">RHD2164Interface</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
-
-<span class="c1"># Initialize SPI interface (on Pico or similar)</span>
-<span class="n">rhd</span> <span class="o">=</span> <span class="n">RHD2164Interface</span><span class="p">(</span>
-    <span class="n">spi_bus</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-    <span class="n">cs_pin</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="n">sample_rate</span><span class="o">=</span><span class="mi">20000</span>
-<span class="p">)</span>
-
-<span class="c1"># Configure channels</span>
-<span class="n">rhd</span><span class="o">.</span><span class="n">configure_channels</span><span class="p">(</span>
-    <span class="n">channels</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span>
-    <span class="n">bandwidth</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">7500</span><span class="p">],</span>  <span class="c1"># Hz</span>
-    <span class="n">dsp_enabled</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-
-<span class="c1"># Start acquisition</span>
-<span class="n">rhd</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">rhd</span><span class="o">.</span><span class="n">data_available</span><span class="p">():</span>
-            <span class="n">samples</span> <span class="o">=</span> <span class="n">rhd</span><span class="o">.</span><span class="n">read_samples</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>  <span class="c1"># Read 100 samples</span>
-            <span class="c1"># Process samples...</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Read </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples&quot;</span><span class="p">)</span>
-
-        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
-
-<span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
-    <span class="n">rhd</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="tcp-command-interface">
-<h2>TCP Command Interface<a class="headerlink" href="#tcp-command-interface" title="Link to this heading">¶</a></h2>
-<p>Low-level TCP control examples.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Send commands to RHX via TCP</span>
-<span class="sd">Script: examples/intan_tcp/RHXRunAndStimulateDemo.py</span>
-<span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">intan.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanTCPClient</span>
-
-<span class="n">client</span> <span class="o">=</span> <span class="n">IntanTCPClient</span><span class="p">()</span>
-
-<span class="c1"># Query device info</span>
-<span class="n">sample_rate</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;get sampleratehertz&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Sample rate: </span><span class="si">{</span><span class="n">sample_rate</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
-
-<span class="c1"># Configure stimulation</span>
-<span class="n">client</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;set a-010.stimenabled true&#39;</span><span class="p">)</span>
-<span class="n">client</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;set a-010.stimshape biphasic&#39;</span><span class="p">)</span>
-<span class="n">client</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;set a-010.firstphaseamplitudemicroamps 100&#39;</span><span class="p">)</span>
-<span class="n">client</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;set a-010.firstphasedurationmicroseconds 200&#39;</span><span class="p">)</span>
-
-<span class="c1"># Trigger stimulation</span>
-<span class="n">client</span><span class="o">.</span><span class="n">execute_command</span><span class="p">(</span><span class="s1">&#39;execute manualstimtriggerpulse a-010&#39;</span><span class="p">)</span>
-
-<span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-</pre></div>
-</div>
-</section>
-<hr class="docutils" />
-<section id="see-also">
-<h2>See Also<a class="headerlink" href="#see-also" title="Link to this heading">¶</a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="gesture_classification.html"><span class="doc">Gesture Classification Pipeline</span></a> - ML pipeline for control</p></li>
-<li><p><a class="reference internal" href="../info/rhx_device.html"><span class="doc">Intan RHX Controller Device</span></a> - RHX device details</p></li>
-<li><p><a class="reference external" href="https://inmoov.fr/hand-and-forarm/">InMoov hand build guide</a></p></li>
-<li><p><a class="reference external" href="https://circuitpython.org/">CircuitPython documentation</a></p></li>
+<li><p>Test hardware motion without a person attached.</p></li>
+<li><p>Use a current-limited supply sized for the servos.</p></li>
+<li><p>Treat serial port names, channel counts, and sampling rates as deployment
+configuration rather than library defaults.</p></li>
+<li><p>Hardware examples require their physical devices and were not exercised by
+the package’s headless test suite.</p></li>
 </ul>
 </section>
 </section>
@@ -513,7 +122,7 @@ python<span class="w"> </span>examples/RHXDevice/tcp_benchmark.py<span class="w"
 <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">Frequently Asked Questions (FAQs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">Frequently asked questions</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
@@ -533,7 +142,7 @@ python<span class="w"> </span>examples/RHXDevice/tcp_benchmark.py<span class="w"
 <ul>
   <li><a href="../index.html">Documentation overview</a><ul>
   <li><a href="introduction.html">Examples</a><ul>
-      <li>Previous: <a href="realtime_predict.html" title="previous chapter">Realtime gesture prediction from streaming data</a></li>
+      <li>Previous: <a href="realtime_predict.html" title="previous chapter">Real-time prediction</a></li>
       <li>Next: <a href="../intan_api/modules.html" title="next chapter">intan</a></li>
   </ul></li>
   </ul></li>
@@ -552,7 +161,7 @@ python<span class="w"> </span>examples/RHXDevice/tcp_benchmark.py<span class="w"
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &#169;2025, Jonathan Shulgach.
+      &#169;2024-2026, Jonathan Shulgach.
       
       |
       Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>

@@ -1,37 +1,34 @@
 Installation
-===================
+============
 
-Here we will setup your environment to best run all tutorials.
-
-We can setup a virtual environment using conda or venv. This is the recommended way to run the tutorials.
-
-If you are using conda, run the following command in your terminal:
+``python-intan`` requires Python 3.10 or later. A virtual environment is recommended.
 
 .. code-block:: bash
 
-    conda create -n intan python=3.10
-    conda activate intan
+   python -m venv .venv
+   # Linux/macOS: source .venv/bin/activate
+   # Windows PowerShell: .venv\Scripts\Activate.ps1
+   python -m pip install --upgrade pip
+   python -m pip install python-intan
 
-If you are using **venv**, run the following command in your terminal:
-
-.. code-block:: bash
-
-    python -m venv intan
-    source intan/bin/activate
-
-We can install the package from PyPI:
+Optional features are grouped so a base installation does not download GUI, video, or machine-learning stacks:
 
 .. code-block:: bash
 
-    pip install python-intan
+   python -m pip install 'python-intan[gui]'
+   python -m pip install 'python-intan[ml]'
+   python -m pip install 'python-intan[video]'
 
-Or, install the latest version from GitHub:
+The ``video`` extra provides OpenCV and MediaPipe. The separate ``handtrack`` project used by one finger-kinematics example is not installed automatically.
+
+Development checkout
+--------------------
 
 .. code-block:: bash
 
-    git clone https://github.com/Neuro-Mechatronics-Interfaces/python-intan
-    cd python-intan
-    pip install -e .
+   git clone https://github.com/Neuro-Mechatronics-Interfaces/python-intan.git
+   cd python-intan
+   python -m pip install -e '.[test]'
+   python -m pytest
 
-Now that we have the package installed, we can start using it.
-The package is designed to be easy to use and understand. Check out the tutorials below to get started.
+Examples should be launched from the repository root. Hardware and LSL examples additionally require a running device, RHX TCP server, or LSL stream.

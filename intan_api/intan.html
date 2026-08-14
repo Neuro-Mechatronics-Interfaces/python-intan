@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>intan package &#8212; python-intan 0.1.0 documentation</title>
+    <title>intan package &#8212; python-intan 0.2.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/documentation_options.js?v=37f418d5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -43,19 +43,103 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="intan.applications.html">intan.applications package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="intan.applications.html#intan.applications.launch_emg_viewer"><code class="docutils literal notranslate"><span class="pre">launch_emg_viewer()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="intan.applications.html#intan.applications.launch_emg_trial_selector"><code class="docutils literal notranslate"><span class="pre">launch_emg_trial_selector()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="intan.applications.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.applications.html#module-intan.applications._emg_viewer">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.save_model_obj"><code class="docutils literal notranslate"><span class="pre">save_model_obj()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.load_model_obj"><code class="docutils literal notranslate"><span class="pre">load_model_obj()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.save_trials_csv"><code class="docutils literal notranslate"><span class="pre">save_trials_csv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.load_trials_csv"><code class="docutils literal notranslate"><span class="pre">load_trials_csv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.save_features_npz"><code class="docutils literal notranslate"><span class="pre">save_features_npz()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.load_features_npz"><code class="docutils literal notranslate"><span class="pre">load_features_npz()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.build_layout"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.build_layout()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.build_acquisition_tab"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.build_acquisition_tab()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.build_trials_tab"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.build_trials_tab()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.build_filtering_tab"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.build_filtering_tab()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.build_training_tab"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.build_training_tab()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.add_feature_directory"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.add_feature_directory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.add_training_directory"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.add_training_directory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.apply_visualization_filters"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.apply_visualization_filters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.copy_display_to_training_filters"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.copy_display_to_training_filters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.load_feature_segments"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.load_feature_segments()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.load_segment_and_visualize"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.load_segment_and_visualize()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.load_file"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.load_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.update_training_labels_from_directory"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.update_training_labels_from_directory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.remove_training_directory"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.remove_training_directory()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.remove_selected_label"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.remove_selected_label()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.visualize_selected_segment"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.visualize_selected_segment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.run_pca_visualization"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.run_pca_visualization()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.refresh_labels_list"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.refresh_labels_list()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.update_training_labels_from_filename"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.update_training_labels_from_filename()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.run_trial_segmentation"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.run_trial_segmentation()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.enable_indexing"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.enable_indexing()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.scroll_plot"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.scroll_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.on_click"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.on_click()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.save_table"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.save_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.parse_channel_range"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.parse_channel_range()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.load_table"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.load_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.delete_selected"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.delete_selected()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.update_channel"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.update_channel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.plot_channel"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.plot_channel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.extract_features_from_directories"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.extract_features_from_directories()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.extract_td_features"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.extract_td_features()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.apply_training_filters"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.apply_training_filters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.add_scalebars"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.add_scalebars()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.insert_channel_labels"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.insert_channel_labels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.insert_vertical_labels"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.insert_vertical_labels()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.build_training_dataset"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.build_training_dataset()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.waterfall_gui_plot"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.waterfall_gui_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewerTk.on_closing"><code class="docutils literal notranslate"><span class="pre">EMGViewerTk.on_closing()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="intan.decomposition.html">intan.decomposition package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._emg_viewer.EMGViewer"><code class="docutils literal notranslate"><span class="pre">EMGViewer</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.emg_data"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.emg_data</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.time_vector"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.time_vector</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.sampling_rate"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.sampling_rate</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.current_channel"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.current_channel</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.indexing_enabled"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.indexing_enabled</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.load_file"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.load_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.append_file"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.append_file()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.sample_index_to_timestamp"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.sample_index_to_timestamp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.save_table"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.save_table()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.delete_selected"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.delete_selected()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.extract_edges"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.extract_edges()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.clear_indices"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.clear_indices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.update_channel"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.update_channel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.enable_indexing"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.enable_indexing()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.on_click"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.on_click()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.plot_channel"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.plot_channel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.applications.html#intan.applications._emg_trial_selector.EMGTrialSelector.on_closing"><code class="docutils literal notranslate"><span class="pre">EMGTrialSelector.on_closing()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._launcher.launch_emg_viewer"><code class="docutils literal notranslate"><span class="pre">launch_emg_viewer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.applications.html#intan.applications._launcher.launch_emg_trial_selector"><code class="docutils literal notranslate"><span class="pre">launch_emg_trial_selector()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="intan.decomposition.html">intan.decomposition package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intan.decomposition.html#intan.decomposition._pca.pca"><code class="docutils literal notranslate"><span class="pre">pca()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.decomposition.html#intan.decomposition._cfica.CFICA2"><code class="docutils literal notranslate"><span class="pre">CFICA2()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.decomposition.html#intan.decomposition._cfica.whitening_pca"><code class="docutils literal notranslate"><span class="pre">whitening_pca()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.decomposition.html#intan.decomposition._cfica.delay_embed"><code class="docutils literal notranslate"><span class="pre">delay_embed()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.decomposition.html#intan.decomposition._cfica.kernel_fastica"><code class="docutils literal notranslate"><span class="pre">kernel_fastica()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.decomposition.html#intan.decomposition._cfica.corr_constrained_ica"><code class="docutils literal notranslate"><span class="pre">corr_constrained_ica()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.decomposition.html#intan.decomposition._cfica.threshold_cov"><code class="docutils literal notranslate"><span class="pre">threshold_cov()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.decomposition.html#intan.decomposition._cfica.discard_redundant_spikes"><code class="docutils literal notranslate"><span class="pre">discard_redundant_spikes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.decomposition.html#intan.decomposition._cfica.waveform_estimation"><code class="docutils literal notranslate"><span class="pre">waveform_estimation()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="intan.interface.html">intan.interface package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="intan.interface.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.interface.html#module-intan.interface">Submodules</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="intan.io.html">intan.io package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="intan.io.html#module-intan.io._canonicalizer">Submodules</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._canonicalizer.canonical_label"><code class="docutils literal notranslate"><span class="pre">canonical_label()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._csv_utils.load_csv_file"><code class="docutils literal notranslate"><span class="pre">load_csv_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._csv_utils.find_csv_dir"><code class="docutils literal notranslate"><span class="pre">find_csv_dir()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._csv_utils.load_csv_files"><code class="docutils literal notranslate"><span class="pre">load_csv_files()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._exceptions.UnrecognizedFileError"><code class="docutils literal notranslate"><span class="pre">UnrecognizedFileError</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._exceptions.UnknownChannelTypeError"><code class="docutils literal notranslate"><span class="pre">UnknownChannelTypeError</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._exceptions.FileSizeError"><code class="docutils literal notranslate"><span class="pre">FileSizeError</span></code></a></li>
@@ -64,20 +148,214 @@
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._exceptions.GetSampleRateFailure"><code class="docutils literal notranslate"><span class="pre">GetSampleRateFailure</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._exceptions.InvalidReceivedDataSize"><code class="docutils literal notranslate"><span class="pre">InvalidReceivedDataSize</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._exceptions.InvalidMagicNumber"><code class="docutils literal notranslate"><span class="pre">InvalidMagicNumber</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.adjust_path"><code class="docutils literal notranslate"><span class="pre">adjust_path()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.check_file_present"><code class="docutils literal notranslate"><span class="pre">check_file_present()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.check_end_of_file"><code class="docutils literal notranslate"><span class="pre">check_end_of_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.print_progress"><code class="docutils literal notranslate"><span class="pre">print_progress()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.read_config_file"><code class="docutils literal notranslate"><span class="pre">read_config_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.get_file_paths"><code class="docutils literal notranslate"><span class="pre">get_file_paths()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.load_labeled_file"><code class="docutils literal notranslate"><span class="pre">load_labeled_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.load_txt_config"><code class="docutils literal notranslate"><span class="pre">load_txt_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.load_yaml_file"><code class="docutils literal notranslate"><span class="pre">load_yaml_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.load_json_file"><code class="docutils literal notranslate"><span class="pre">load_json_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.load_config_file"><code class="docutils literal notranslate"><span class="pre">load_config_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.labels_from_events"><code class="docutils literal notranslate"><span class="pre">labels_from_events()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.last_event_index"><code class="docutils literal notranslate"><span class="pre">last_event_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.stem_without_timestamp"><code class="docutils literal notranslate"><span class="pre">stem_without_timestamp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.glob_first"><code class="docutils literal notranslate"><span class="pre">glob_first()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.find_event_file"><code class="docutils literal notranslate"><span class="pre">find_event_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.discover_data_files"><code class="docutils literal notranslate"><span class="pre">discover_data_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._file_utils.find_dataset_file"><code class="docutils literal notranslate"><span class="pre">find_dataset_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._npz_utils.list_npz_files"><code class="docutils literal notranslate"><span class="pre">list_npz_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._npz_utils.find_npz_by_label"><code class="docutils literal notranslate"><span class="pre">find_npz_by_label()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._npz_utils.load_npz_record"><code class="docutils literal notranslate"><span class="pre">load_npz_record()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._npz_utils.save_as_npz"><code class="docutils literal notranslate"><span class="pre">save_as_npz()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._npz_utils.save_as_npz_compressed"><code class="docutils literal notranslate"><span class="pre">save_as_npz_compressed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._npz_utils.load_npz_file"><code class="docutils literal notranslate"><span class="pre">load_npz_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._npz_utils.load_npz_files"><code class="docutils literal notranslate"><span class="pre">load_npz_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._npz_utils.load_training_dataset"><code class="docutils literal notranslate"><span class="pre">load_training_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._npz_utils.load_and_merge_datasets"><code class="docutils literal notranslate"><span class="pre">load_and_merge_datasets()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._npz_utils.save_training_dataset"><code class="docutils literal notranslate"><span class="pre">save_training_dataset()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.read_uint32"><code class="docutils literal notranslate"><span class="pre">read_uint32()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.read_int32"><code class="docutils literal notranslate"><span class="pre">read_int32()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.read_uint16"><code class="docutils literal notranslate"><span class="pre">read_uint16()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.get_timestamp_signed"><code class="docutils literal notranslate"><span class="pre">get_timestamp_signed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.read_one_data_block"><code class="docutils literal notranslate"><span class="pre">read_one_data_block()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.read_timestamps"><code class="docutils literal notranslate"><span class="pre">read_timestamps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.read_analog_signals"><code class="docutils literal notranslate"><span class="pre">read_analog_signals()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.read_digital_signals"><code class="docutils literal notranslate"><span class="pre">read_digital_signals()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.read_analog_signal_type"><code class="docutils literal notranslate"><span class="pre">read_analog_signal_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.read_digital_signal_type"><code class="docutils literal notranslate"><span class="pre">read_digital_signal_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.read_all_data_blocks"><code class="docutils literal notranslate"><span class="pre">read_all_data_blocks()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.initialize_memory"><code class="docutils literal notranslate"><span class="pre">initialize_memory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.advance_indices"><code class="docutils literal notranslate"><span class="pre">advance_indices()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_block_parser.plural"><code class="docutils literal notranslate"><span class="pre">plural()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_channel_utils.print_all_channel_names"><code class="docutils literal notranslate"><span class="pre">print_all_channel_names()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_channel_utils.print_names_in_group"><code class="docutils literal notranslate"><span class="pre">print_names_in_group()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_channel_utils.find_channel_in_group"><code class="docutils literal notranslate"><span class="pre">find_channel_in_group()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_channel_utils.find_channel_in_header"><code class="docutils literal notranslate"><span class="pre">find_channel_in_header()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_header"><code class="docutils literal notranslate"><span class="pre">read_header()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_qstring"><code class="docutils literal notranslate"><span class="pre">read_qstring()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_notes"><code class="docutils literal notranslate"><span class="pre">read_notes()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_version_number"><code class="docutils literal notranslate"><span class="pre">read_version_number()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.check_magic_number"><code class="docutils literal notranslate"><span class="pre">check_magic_number()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_notch_filter_frequency"><code class="docutils literal notranslate"><span class="pre">read_notch_filter_frequency()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_channel_structure"><code class="docutils literal notranslate"><span class="pre">read_channel_structure()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_num_temp_sensor_channels"><code class="docutils literal notranslate"><span class="pre">read_num_temp_sensor_channels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_sample_rate"><code class="docutils literal notranslate"><span class="pre">read_sample_rate()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_freq_settings"><code class="docutils literal notranslate"><span class="pre">read_freq_settings()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_impedance_test_frequencies"><code class="docutils literal notranslate"><span class="pre">read_impedance_test_frequencies()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_eval_board_mode"><code class="docutils literal notranslate"><span class="pre">read_eval_board_mode()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_reference_channel"><code class="docutils literal notranslate"><span class="pre">read_reference_channel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.read_new_channel"><code class="docutils literal notranslate"><span class="pre">read_new_channel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.append_new_channel"><code class="docutils literal notranslate"><span class="pre">append_new_channel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.add_num_channels"><code class="docutils literal notranslate"><span class="pre">add_num_channels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.set_num_samples_per_data_block"><code class="docutils literal notranslate"><span class="pre">set_num_samples_per_data_block()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.set_sample_rates"><code class="docutils literal notranslate"><span class="pre">set_sample_rates()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.set_frequency_parameters"><code class="docutils literal notranslate"><span class="pre">set_frequency_parameters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.initialize_channels"><code class="docutils literal notranslate"><span class="pre">initialize_channels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.add_signal_group_information"><code class="docutils literal notranslate"><span class="pre">add_signal_group_information()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.add_channel_information"><code class="docutils literal notranslate"><span class="pre">add_channel_information()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.header_to_result"><code class="docutils literal notranslate"><span class="pre">header_to_result()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.print_header_summary"><code class="docutils literal notranslate"><span class="pre">print_header_summary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.data_to_result"><code class="docutils literal notranslate"><span class="pre">data_to_result()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.plural"><code class="docutils literal notranslate"><span class="pre">plural()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.get_bytes_per_data_block"><code class="docutils literal notranslate"><span class="pre">get_bytes_per_data_block()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.bytes_per_signal_type"><code class="docutils literal notranslate"><span class="pre">bytes_per_signal_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.calculate_data_size"><code class="docutils literal notranslate"><span class="pre">calculate_data_size()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.calculate_num_samples"><code class="docutils literal notranslate"><span class="pre">calculate_num_samples()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_header_parsing.print_record_time_summary"><code class="docutils literal notranslate"><span class="pre">print_record_time_summary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.load_rhd_file"><code class="docutils literal notranslate"><span class="pre">load_rhd_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.read_time_file"><code class="docutils literal notranslate"><span class="pre">read_time_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.read_amplifier_file"><code class="docutils literal notranslate"><span class="pre">read_amplifier_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.read_auxiliary_file"><code class="docutils literal notranslate"><span class="pre">read_auxiliary_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.read_adc_file"><code class="docutils literal notranslate"><span class="pre">read_adc_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.load_dat_file"><code class="docutils literal notranslate"><span class="pre">load_dat_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.load_per_signal_files"><code class="docutils literal notranslate"><span class="pre">load_per_signal_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.load_files_from_path"><code class="docutils literal notranslate"><span class="pre">load_files_from_path()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.apply_notch_filter"><code class="docutils literal notranslate"><span class="pre">apply_notch_filter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.parse_data"><code class="docutils literal notranslate"><span class="pre">parse_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.scale_timestamps"><code class="docutils literal notranslate"><span class="pre">scale_timestamps()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.scale_analog_data"><code class="docutils literal notranslate"><span class="pre">scale_analog_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._rhd_loader.extract_digital_data"><code class="docutils literal notranslate"><span class="pre">extract_digital_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.parse_event_file"><code class="docutils literal notranslate"><span class="pre">parse_event_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.parse_numeric_args"><code class="docutils literal notranslate"><span class="pre">parse_numeric_args()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.convert_events_to_list"><code class="docutils literal notranslate"><span class="pre">convert_events_to_list()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.lock_params_to_meta"><code class="docutils literal notranslate"><span class="pre">lock_params_to_meta()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.load_metadata_json"><code class="docutils literal notranslate"><span class="pre">load_metadata_json()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.normalize_name"><code class="docutils literal notranslate"><span class="pre">normalize_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.build_indices_from_mapping"><code class="docutils literal notranslate"><span class="pre">build_indices_from_mapping()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.align_channels_by_name"><code class="docutils literal notranslate"><span class="pre">align_channels_by_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.select_training_channels_by_name"><code class="docutils literal notranslate"><span class="pre">select_training_channels_by_name()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.trained_channel_names_from_meta"><code class="docutils literal notranslate"><span class="pre">trained_channel_names_from_meta()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.trained_channel_names_from_dataset_npz"><code class="docutils literal notranslate"><span class="pre">trained_channel_names_from_dataset_npz()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.get_trained_channel_names"><code class="docutils literal notranslate"><span class="pre">get_trained_channel_names()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.parse_channel_spec"><code class="docutils literal notranslate"><span class="pre">parse_channel_spec()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.load_channel_mapping"><code class="docutils literal notranslate"><span class="pre">load_channel_mapping()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.resolve_channel_selection"><code class="docutils literal notranslate"><span class="pre">resolve_channel_selection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.normalize_channel_name_1based"><code class="docutils literal notranslate"><span class="pre">normalize_channel_name_1based()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.parse_channels_spec"><code class="docutils literal notranslate"><span class="pre">parse_channels_spec()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.discover_and_group_files"><code class="docutils literal notranslate"><span class="pre">discover_and_group_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.load_single_file"><code class="docutils literal notranslate"><span class="pre">load_single_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.load_files_merged"><code class="docutils literal notranslate"><span class="pre">load_files_merged()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.file_stem"><code class="docutils literal notranslate"><span class="pre">file_stem()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.io.html#intan.io._utilities.find_event_for_file"><code class="docutils literal notranslate"><span class="pre">find_event_for_file()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="intan.ml.html">intan.ml package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intan.ml.html">intan.ml package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intan.ml.html#intan.ml.EMGRealTimePredictor"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml.EMGRealTimePredictor.apply_filters"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.apply_filters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml.EMGRealTimePredictor.extract_and_classify"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.extract_and_classify()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml.EMGRealTimePredictor.get_label_for_sample"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.get_label_for_sample()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml.EMGRealTimePredictor.run_prediction_loop"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.run_prediction_loop()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml.EMGRealTimePredictor.stop"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.stop()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml.EMGRealTimePredictor.get_message"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.get_message()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="intan.ml.html#intan.ml.evaluate_against_events"><code class="docutils literal notranslate"><span class="pre">evaluate_against_events()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.ml.html#intan.ml.classification_report_safe"><code class="docutils literal notranslate"><span class="pre">classification_report_safe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.ml.html#intan.ml.confusion_matrix_safe"><code class="docutils literal notranslate"><span class="pre">confusion_matrix_safe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.ml.html#intan.ml.predict_file"><code class="docutils literal notranslate"><span class="pre">predict_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.ml.html#intan.ml.predict_batch"><code class="docutils literal notranslate"><span class="pre">predict_batch()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.ml.html#intan.ml.predict_from_device"><code class="docutils literal notranslate"><span class="pre">predict_from_device()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.ml.html#intan.ml.predict_realtime_stream"><code class="docutils literal notranslate"><span class="pre">predict_realtime_stream()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.ml.html#intan.ml._ml_utilities.EMGRealTimePredictor"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml._ml_utilities.EMGRealTimePredictor.apply_filters"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.apply_filters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml._ml_utilities.EMGRealTimePredictor.extract_and_classify"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.extract_and_classify()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml._ml_utilities.EMGRealTimePredictor.get_label_for_sample"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.get_label_for_sample()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml._ml_utilities.EMGRealTimePredictor.run_prediction_loop"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.run_prediction_loop()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml._ml_utilities.EMGRealTimePredictor.stop"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.stop()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.ml.html#intan.ml._ml_utilities.EMGRealTimePredictor.get_message"><code class="docutils literal notranslate"><span class="pre">EMGRealTimePredictor.get_message()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="intan.plotting.html">intan.plotting package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="intan.plotting.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.plotting.html#intan.plotting.waterfall"><code class="docutils literal notranslate"><span class="pre">waterfall()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.plotting.html#intan.plotting.add_scalebars"><code class="docutils literal notranslate"><span class="pre">add_scalebars()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.plotting.html#intan.plotting.insert_channel_labels"><code class="docutils literal notranslate"><span class="pre">insert_channel_labels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.plotting.html#intan.plotting.insert_vertical_labels"><code class="docutils literal notranslate"><span class="pre">insert_vertical_labels()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.plotting.html#intan.plotting.RealtimePlotter"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting.RealtimePlotter.init_filters"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter.init_filters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting.RealtimePlotter.apply_filters"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter.apply_filters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting.RealtimePlotter.init_plot"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter.init_plot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting.RealtimePlotter.update"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter.update()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting.RealtimePlotter.run"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="intan.plotting.html#intan.plotting.run_realtime_plot"><code class="docutils literal notranslate"><span class="pre">run_realtime_plot()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.plotting.html#module-intan.plotting._realtime_plotter">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting._realtime_plotter.RealtimePlotter"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="intan.plotting.html#intan.plotting._realtime_plotter.RealtimePlotter.init_filters"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter.init_filters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.plotting.html#intan.plotting._realtime_plotter.RealtimePlotter.apply_filters"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter.apply_filters()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.plotting.html#intan.plotting._realtime_plotter.RealtimePlotter.init_plot"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter.init_plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.plotting.html#intan.plotting._realtime_plotter.RealtimePlotter.update"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter.update()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="intan.plotting.html#intan.plotting._realtime_plotter.RealtimePlotter.run"><code class="docutils literal notranslate"><span class="pre">RealtimePlotter.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting._realtime_plotter.run_realtime_plot"><code class="docutils literal notranslate"><span class="pre">run_realtime_plot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting._waterfall.waterfall"><code class="docutils literal notranslate"><span class="pre">waterfall()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting._waterfall.add_scalebars"><code class="docutils literal notranslate"><span class="pre">add_scalebars()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting._waterfall.insert_channel_labels"><code class="docutils literal notranslate"><span class="pre">insert_channel_labels()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="intan.plotting.html#intan.plotting._waterfall.insert_vertical_labels"><code class="docutils literal notranslate"><span class="pre">insert_vertical_labels()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="intan.processing.html">intan.processing package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._filters.preprocess_emg"><code class="docutils literal notranslate"><span class="pre">preprocess_emg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._filters.parse_channel_ranges"><code class="docutils literal notranslate"><span class="pre">parse_channel_ranges()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._filters.notch_filter"><code class="docutils literal notranslate"><span class="pre">notch_filter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._filters.lowpass_filter"><code class="docutils literal notranslate"><span class="pre">lowpass_filter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._filters.bandpass_filter"><code class="docutils literal notranslate"><span class="pre">bandpass_filter()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._filters.filter_emg"><code class="docutils literal notranslate"><span class="pre">filter_emg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._filters.process_emg_pipeline"><code class="docutils literal notranslate"><span class="pre">process_emg_pipeline()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._filters.sliding_window"><code class="docutils literal notranslate"><span class="pre">sliding_window()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.orthogonalize"><code class="docutils literal notranslate"><span class="pre">orthogonalize()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.normalize"><code class="docutils literal notranslate"><span class="pre">normalize()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.rectify"><code class="docutils literal notranslate"><span class="pre">rectify()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.window_rms"><code class="docutils literal notranslate"><span class="pre">window_rms()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.window_rms_1D"><code class="docutils literal notranslate"><span class="pre">window_rms_1D()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.calculate_rms"><code class="docutils literal notranslate"><span class="pre">calculate_rms()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.compute_rolling_rms"><code class="docutils literal notranslate"><span class="pre">compute_rolling_rms()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.downsample"><code class="docutils literal notranslate"><span class="pre">downsample()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.common_average_reference"><code class="docutils literal notranslate"><span class="pre">common_average_reference()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.envelope_extraction"><code class="docutils literal notranslate"><span class="pre">envelope_extraction()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.z_score_norm"><code class="docutils literal notranslate"><span class="pre">z_score_norm()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.compute_rms"><code class="docutils literal notranslate"><span class="pre">compute_rms()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.compute_grid_average"><code class="docutils literal notranslate"><span class="pre">compute_grid_average()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.variance"><code class="docutils literal notranslate"><span class="pre">variance()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.mean_absolute_value"><code class="docutils literal notranslate"><span class="pre">mean_absolute_value()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.zero_crossings"><code class="docutils literal notranslate"><span class="pre">zero_crossings()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.integrated_emg"><code class="docutils literal notranslate"><span class="pre">integrated_emg()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.slope_sign_changes"><code class="docutils literal notranslate"><span class="pre">slope_sign_changes()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.waveform_length"><code class="docutils literal notranslate"><span class="pre">waveform_length()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.root_mean_square"><code class="docutils literal notranslate"><span class="pre">root_mean_square()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.extract_features"><code class="docutils literal notranslate"><span class="pre">extract_features()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.extract_features_sliding_window"><code class="docutils literal notranslate"><span class="pre">extract_features_sliding_window()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._features.feature_spec_from_registry"><code class="docutils literal notranslate"><span class="pre">feature_spec_from_registry()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._metrics_utils.load_metrics_data"><code class="docutils literal notranslate"><span class="pre">load_metrics_data()</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="intan.processing.html#intan.processing._metrics_utils.get_metrics_file"><code class="docutils literal notranslate"><span class="pre">get_metrics_file()</span></code></a></li>
 </ul>
@@ -133,7 +411,7 @@ from Intan Technologies’ RHD2000 and RHS2000 acquisition systems.</p>
 <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">Frequently Asked Questions (FAQs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">Frequently asked questions</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
@@ -172,7 +450,7 @@ from Intan Technologies’ RHD2000 and RHS2000 acquisition systems.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &#169;2025, Jonathan Shulgach.
+      &#169;2024-2026, Jonathan Shulgach.
       
       |
       Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>

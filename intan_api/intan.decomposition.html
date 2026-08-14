@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>intan.decomposition package &#8212; python-intan 0.1.0 documentation</title>
+    <title>intan.decomposition package &#8212; python-intan 0.2.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/documentation_options.js?v=37f418d5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -39,6 +39,70 @@
   <section id="intan-decomposition-package">
 <h1>intan.decomposition package<a class="headerlink" href="#intan-decomposition-package" title="Link to this heading">¶</a></h1>
 <p>Decomposition methods for EMG, including PCA and constrained ICA utilities.</p>
+<dl class="py function" id="module-intan.decomposition._pca">
+<span id="module-intan.decomposition"></span><dt class="sig sig-object py" id="intan.decomposition._pca.pca">
+<span class="sig-name descname"><span class="pre">pca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_components</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variance_threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.95</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/decomposition/_pca.html#pca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.decomposition._pca.pca" title="Link to this definition">¶</a></dt>
+<dd><p>Implements PCA on a dataset with the number of components specified.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>X</strong> – Input data of shape (samples, channels)</p></li>
+<li><p><strong>n_components</strong> – Number of components to keep.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Reconstructed data using the first k components.
+n_pca_95: Number of components needed to reach 95% variance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>X_reconstructed_k</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function" id="module-intan.decomposition._cfica">
+<dt class="sig sig-object py" id="intan.decomposition._cfica.CFICA2">
+<span class="sig-name descname"><span class="pre">CFICA2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emg_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Mu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/decomposition/_cfica.html#CFICA2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.decomposition._cfica.CFICA2" title="Link to this definition">¶</a></dt>
+<dd><p>Python version of CFICA2: Kernel and Correlation Constrained FastICA for HD-EMG</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.decomposition._cfica.whitening_pca">
+<span class="sig-name descname"><span class="pre">whitening_pca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/decomposition/_cfica.html#whitening_pca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.decomposition._cfica.whitening_pca" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.decomposition._cfica.delay_embed">
+<span class="sig-name descname"><span class="pre">delay_embed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delay</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/decomposition/_cfica.html#delay_embed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.decomposition._cfica.delay_embed" title="Link to this definition">¶</a></dt>
+<dd><p>Emulates the yanchi() function from MATLAB’s CFICA2.
+Returns (2*delay + 1)*channels x samples matrix</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.decomposition._cfica.kernel_fastica">
+<span class="sig-name descname"><span class="pre">kernel_fastica</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">A</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/decomposition/_cfica.html#kernel_fastica"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.decomposition._cfica.kernel_fastica" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.decomposition._cfica.corr_constrained_ica">
+<span class="sig-name descname"><span class="pre">corr_constrained_ica</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">X</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">S</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-06</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/decomposition/_cfica.html#corr_constrained_ica"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.decomposition._cfica.corr_constrained_ica" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.decomposition._cfica.threshold_cov">
+<span class="sig-name descname"><span class="pre">threshold_cov</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">peak_interval</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/decomposition/_cfica.html#threshold_cov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.decomposition._cfica.threshold_cov" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.decomposition._cfica.discard_redundant_spikes">
+<span class="sig-name descname"><span class="pre">discard_redundant_spikes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">S</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">MUpulse</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/decomposition/_cfica.html#discard_redundant_spikes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.decomposition._cfica.discard_redundant_spikes" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.decomposition._cfica.waveform_estimation">
+<span class="sig-name descname"><span class="pre">waveform_estimation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">S</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wavelength</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/decomposition/_cfica.html#waveform_estimation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.decomposition._cfica.waveform_estimation" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </section>
 
 
@@ -73,7 +137,7 @@
 <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">Frequently Asked Questions (FAQs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">Frequently asked questions</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
@@ -114,7 +178,7 @@
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &#169;2025, Jonathan Shulgach.
+      &#169;2024-2026, Jonathan Shulgach.
       
       |
       Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>

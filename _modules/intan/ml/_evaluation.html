@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>intan.ml._evaluation &#8212; python-intan 0.2.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <script src="../../../_static/documentation_options.js?v=37f418d5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for intan.ml._evaluation</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">accuracy_score</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">classification_report</span><span class="p">,</span> <span class="n">confusion_matrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">labels_from_events</span>
+
+<div class="viewcode-block" id="evaluate_against_events">
+<a class="viewcode-back" href="../../../intan_api/intan.ml.html#intan.ml.evaluate_against_events">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">evaluate_against_events</span><span class="p">(</span>
+    <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">window_starts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">y_pred</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">,</span>                                <span class="c1"># can be ints or strings</span>
+    <span class="n">drop_labels</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Unknown&quot;</span><span class="p">,</span> <span class="s2">&quot;Start&quot;</span><span class="p">),</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="c1"># ---- optional helpers for mapping int preds &lt;-&gt; strings ----</span>
+    <span class="n">label_encoder</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>                              <span class="c1"># e.g., manager.label_encoder (sklearn)</span>
+    <span class="n">class_names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>     <span class="c1"># alternative to label_encoder</span>
+    <span class="n">label_to_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="c1"># if you want to map y_true-&gt;ids</span>
+    <span class="c1"># ---- normalization / reporting controls ----</span>
+    <span class="n">canonicalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>                       <span class="c1"># normalize case/spacing/underscores</span>
+    <span class="n">alias</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>       <span class="c1"># e.g. {&#39;fingersopen&#39;:&#39;handopen&#39;}</span>
+    <span class="n">zero_division</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>                          <span class="c1"># silence undefined metric warnings</span>
+    <span class="n">return_metrics</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>                    <span class="c1"># optionally return a dict of metrics</span>
+    <span class="n">return_arrays</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>                     <span class="c1"># also return y_true_c, y_pred_c if True</span>
+    <span class="n">verbose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print a classification report &amp; confusion matrix using the emg.event file,</span>
+<span class="sd">    robust to label casing and int/string mismatches.</span>
+
+<span class="sd">    If return_metrics=True, returns {&#39;accuracy&#39;: float, &#39;classification_report&#39;: dict,</span>
+<span class="sd">    &#39;confusion_matrix&#39;: [[...]] , &#39;labels&#39;: [...]}.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Evaluating against events in: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="ow">or</span> <span class="n">window_starts</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">window_starts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Skipped offline evaluation (no events file or no predictions).&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># --- Load true labels aligned to window starts ---</span>
+    <span class="n">y_true</span> <span class="o">=</span> <span class="n">labels_from_events</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">window_starts</span><span class="p">)</span>  <span class="c1"># array[str]</span>
+    <span class="n">y_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+
+    <span class="c1"># Drop administrative labels from ground truth (and align preds with same mask)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">drop_labels</span><span class="p">))</span>
+    <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">y_pred</span><span class="p">))[</span><span class="n">mask</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span><span class="si">}</span><span class="s2"> true labels from events file, contents: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">y_true</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No valid windows to evaluate (all Unknown/Start).&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># --- Convert predictions to strings if they are integer class IDs ---</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">label_encoder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">label_encoder</span><span class="p">,</span> <span class="s2">&quot;classes_&quot;</span><span class="p">):</span>
+            <span class="n">classes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">label_encoder</span><span class="o">.</span><span class="n">classes_</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+            <span class="n">y_pred</span> <span class="o">=</span> <span class="n">classes</span><span class="p">[</span><span class="n">y_pred</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="n">class_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">classes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">class_names</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+            <span class="n">y_pred</span> <span class="o">=</span> <span class="n">classes</span><span class="p">[</span><span class="n">y_pred</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">label_to_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">y_true_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">label_to_id</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">y_true</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+                <span class="n">keep</span> <span class="o">=</span> <span class="n">y_true_ids</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+                <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true_ids</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span>
+                <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)[</span><span class="n">keep</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;y_pred are ints but no label mapping provided; results may be misleading.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># --- Canonicalize for fair comparison (case/space/underscore-insensitive) ---</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_canon</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">alias</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span> <span class="k">if</span> <span class="n">alias</span> <span class="k">else</span> <span class="n">s</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">canonicalize</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">s</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[\s_-]+&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="n">y_true_c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">_canon</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">y_true</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+    <span class="n">y_pred_c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">_canon</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">y_pred</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+
+    <span class="c1"># --- Guard: align lengths if something went off ---</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">y_true_c</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_pred_c</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No overlapping samples after preprocessing.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true_c</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_pred_c</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Length mismatch (y_true=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">y_true_c</span><span class="p">)</span><span class="si">}</span><span class="s2">, y_pred=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">y_pred_c</span><span class="p">)</span><span class="si">}</span><span class="s2">), truncating to </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">y_true_c</span> <span class="o">=</span> <span class="n">y_true_c</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">y_pred_c</span> <span class="o">=</span> <span class="n">y_pred_c</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+
+    <span class="c1"># Only report labels that actually appear in either y_true or y_pred</span>
+    <span class="n">labels_sorted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">y_true_c</span><span class="p">,</span> <span class="n">y_pred_c</span><span class="p">]))</span>
+
+    <span class="c1"># --- Metrics ---</span>
+    <span class="n">acc</span> <span class="o">=</span> <span class="n">accuracy_score</span><span class="p">(</span><span class="n">y_true_c</span><span class="p">,</span> <span class="n">y_pred_c</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Validation accuracy (canonicalized): </span><span class="si">{</span><span class="n">acc</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== Classification Report ===&quot;</span><span class="p">)</span>
+    <span class="n">rep_text</span> <span class="o">=</span> <span class="n">classification_report_safe</span><span class="p">(</span>
+        <span class="n">y_true_c</span><span class="p">,</span> <span class="n">y_pred_c</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels_sorted</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="n">zero_division</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">&quot;text&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">rep_text</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=== Confusion Matrix ===&quot;</span><span class="p">)</span>
+    <span class="n">cm</span><span class="p">,</span> <span class="n">cm_labels</span> <span class="o">=</span> <span class="n">confusion_matrix_safe</span><span class="p">(</span><span class="n">y_true_c</span><span class="p">,</span> <span class="n">y_pred_c</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels_sorted</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">cm</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">return_metrics</span><span class="p">:</span>
+        <span class="n">rep_dict</span> <span class="o">=</span> <span class="n">classification_report_safe</span><span class="p">(</span>
+            <span class="n">y_true_c</span><span class="p">,</span> <span class="n">y_pred_c</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels_sorted</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="n">zero_division</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">&quot;dict&quot;</span>
+        <span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">acc</span><span class="p">),</span>
+            <span class="s2">&quot;classification_report&quot;</span><span class="p">:</span> <span class="n">rep_dict</span><span class="p">,</span>
+            <span class="s2">&quot;confusion_matrix&quot;</span><span class="p">:</span> <span class="n">cm</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="s2">&quot;labels&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cm_labels</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">return_arrays</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">&quot;y_true_c&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_true_c</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">out</span><span class="p">[</span><span class="s2">&quot;y_pred_c&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_pred_c</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">out</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="classification_report_safe">
+<a class="viewcode-back" href="../../../intan_api/intan.ml.html#intan.ml.classification_report_safe">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">classification_report_safe</span><span class="p">(</span>
+    <span class="n">y_true</span><span class="p">,</span>
+    <span class="n">y_pred</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">zero_division</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text&quot;</span><span class="p">,</span>   <span class="c1"># &quot;text&quot; or &quot;dict&quot;</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper around sklearn.classification_report with robust handling of kwargs</span>
+<span class="sd">    across sklearn versions, and a simple output switch.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">y_pred</span><span class="p">))</span>
+
+    <span class="c1"># Try with zero_division + output_dict (newer sklearn); gracefully degrade.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">output</span> <span class="o">==</span> <span class="s2">&quot;dict&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">classification_report</span><span class="p">(</span>
+                <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="n">zero_division</span><span class="p">,</span> <span class="n">output_dict</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">classification_report</span><span class="p">(</span>
+                <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">zero_division</span><span class="o">=</span><span class="n">zero_division</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">4</span>
+            <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="c1"># Older sklearn: no zero_division kw; try again without it.</span>
+        <span class="k">if</span> <span class="n">output</span> <span class="o">==</span> <span class="s2">&quot;dict&quot;</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">classification_report</span><span class="p">(</span>
+                    <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">output_dict</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                <span class="c1"># Very old: no output_dict either -&gt; return plain text</span>
+                <span class="k">return</span> <span class="n">classification_report</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">classification_report</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="confusion_matrix_safe">
+<a class="viewcode-back" href="../../../intan_api/intan.ml.html#intan.ml.confusion_matrix_safe">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">confusion_matrix_safe</span><span class="p">(</span>
+    <span class="n">y_true</span><span class="p">,</span>
+    <span class="n">y_pred</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># e.g., &quot;true&quot; | &quot;pred&quot; | &quot;all&quot; (sklearn &gt;=0.22)</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrap sklearn.confusion_matrix; tolerate older versions that may lack normalize kw.</span>
+<span class="sd">    Returns (cm, labels).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">labels</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">y_pred</span><span class="p">))</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cm</span><span class="p">,</span> <span class="n">labels</span></div>
+
+
+
+
+<span class="c1"># def evaluate_against_events(</span>
+<span class="c1">#     file_path: str,</span>
+<span class="c1">#     window_starts: np.ndarray,</span>
+<span class="c1">#     y_pred: Iterable,                                # can be ints or strings</span>
+<span class="c1">#     drop_labels: Tuple[str, ...] = (&quot;Unknown&quot;, &quot;Start&quot;),</span>
+<span class="c1">#     *,</span>
+<span class="c1">#     # ---- optional helpers for mapping int preds &lt;-&gt; strings ----</span>
+<span class="c1">#     label_encoder=None,                              # e.g., manager.label_encoder (sklearn)</span>
+<span class="c1">#     class_names: Optional[Sequence[str]] = None,     # alternative to label_encoder</span>
+<span class="c1">#     label_to_id: Optional[Mapping[str, int]] = None, # if you want to map y_true-&gt;ids</span>
+<span class="c1">#     # ---- normalization / reporting controls ----</span>
+<span class="c1">#     canonicalize: bool = True,                       # normalize case/spacing/underscores</span>
+<span class="c1">#     alias: Optional[Mapping[str, str]] = None,       # e.g. {&#39;fingersopen&#39;:&#39;handopen&#39;}</span>
+<span class="c1">#     zero_division: int = 0,                          # silence undefined metric warnings</span>
+<span class="c1">#     return_metrics: bool = False,                    # optionally return a dict of metrics</span>
+<span class="c1">#     verbose: bool = False,</span>
+<span class="c1"># ) -&gt; Optional[dict]:</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     Print a classification report &amp; confusion matrix using the emg.event file,</span>
+<span class="c1">#     robust to label casing and int/string mismatches.</span>
+<span class="c1">#</span>
+<span class="c1">#     If return_metrics=True, returns {&#39;accuracy&#39;: float, &#39;classification_report&#39;: dict,</span>
+<span class="c1">#     &#39;confusion_matrix&#39;: [[...]] , &#39;labels&#39;: [...]}.</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     if verbose:</span>
+<span class="c1">#         logging.info(f&quot;Evaluating against events in: {file_path}&quot;)</span>
+<span class="c1">#</span>
+<span class="c1">#     if not os.path.isfile(file_path) or window_starts is None or len(window_starts) == 0:</span>
+<span class="c1">#         logging.info(&quot;Skipped offline evaluation (no events file or no predictions).&quot;)</span>
+<span class="c1">#         return None</span>
+<span class="c1">#</span>
+<span class="c1">#     # --- Load true labels aligned to window starts ---</span>
+<span class="c1">#     y_true = labels_from_events(file_path, window_starts)  # array[str]</span>
+<span class="c1">#     y_true = np.asarray(y_true, dtype=object)</span>
+<span class="c1">#</span>
+<span class="c1">#     # Drop administrative labels from ground truth (and align preds with same mask)</span>
+<span class="c1">#     mask = ~np.isin(y_true, list(drop_labels))</span>
+<span class="c1">#     y_true = y_true[mask]</span>
+<span class="c1">#     y_pred = np.asarray(list(y_pred))[mask]</span>
+<span class="c1">#</span>
+<span class="c1">#     if verbose:</span>
+<span class="c1">#         print(f&quot;Loaded {len(y_true)} true labels from events file, contents: {np.unique(y_true)}&quot;)</span>
+<span class="c1">#     if y_true.size == 0:</span>
+<span class="c1">#         logging.warning(&quot;No valid windows to evaluate (all Unknown/Start).&quot;)</span>
+<span class="c1">#         return None</span>
+<span class="c1">#</span>
+<span class="c1">#     # --- Convert predictions to strings if they are integer class IDs ---</span>
+<span class="c1">#     if np.issubdtype(np.asarray(y_pred).dtype, np.integer):</span>
+<span class="c1">#         if label_encoder is not None and hasattr(label_encoder, &quot;classes_&quot;):</span>
+<span class="c1">#             classes = np.asarray(label_encoder.classes_, dtype=object)</span>
+<span class="c1">#             y_pred = classes[y_pred.astype(int)]</span>
+<span class="c1">#         elif class_names is not None:</span>
+<span class="c1">#             classes = np.asarray(class_names, dtype=object)</span>
+<span class="c1">#             y_pred = classes[y_pred.astype(int)]</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             # As a last resort: keep ints, but try to map y_true -&gt; ids if mapping given</span>
+<span class="c1">#             if label_to_id is not None:</span>
+<span class="c1">#                 # map y_true strings -&gt; ints via label_to_id, unknowns get -1 then filtered</span>
+<span class="c1">#                 y_true_ids = np.array([label_to_id.get(str(s), -1) for s in y_true], dtype=int)</span>
+<span class="c1">#                 keep = y_true_ids &gt;= 0</span>
+<span class="c1">#                 y_true = y_true_ids[keep]</span>
+<span class="c1">#                 y_pred = np.asarray(y_pred, dtype=int)[keep]</span>
+<span class="c1">#             else:</span>
+<span class="c1">#                 logging.warning(&quot;y_pred are ints but no label mapping provided; results may be misleading.&quot;)</span>
+<span class="c1">#</span>
+<span class="c1">#     # --- Canonicalize for fair comparison (case/space/underscore-insensitive) ---</span>
+<span class="c1">#     def _canon(s: str) -&gt; str:</span>
+<span class="c1">#         if s is None:</span>
+<span class="c1">#             return &quot;&quot;</span>
+<span class="c1">#         s = str(s)</span>
+<span class="c1">#         s = alias.get(s, s) if alias else s</span>
+<span class="c1">#         if not canonicalize:</span>
+<span class="c1">#             return s</span>
+<span class="c1">#         return re.sub(r&quot;[\s_-]+&quot;, &quot;&quot;, s.strip()).lower()</span>
+<span class="c1">#</span>
+<span class="c1">#     y_true_c = np.array([_canon(s) for s in y_true], dtype=object)</span>
+<span class="c1">#     y_pred_c = np.array([_canon(s) for s in y_pred], dtype=object)</span>
+<span class="c1">#</span>
+<span class="c1">#     # --- Guard: align lengths if something went off (shouldn&#39;t happen, but safe) ---</span>
+<span class="c1">#     n = min(len(y_true_c), len(y_pred_c))</span>
+<span class="c1">#     if n == 0:</span>
+<span class="c1">#         logging.warning(&quot;No overlapping samples after preprocessing.&quot;)</span>
+<span class="c1">#         return None</span>
+<span class="c1">#     if len(y_true_c) != len(y_pred_c):</span>
+<span class="c1">#         logging.warning(f&quot;Length mismatch (y_true={len(y_true_c)}, y_pred={len(y_pred_c)}), truncating to {n}.&quot;)</span>
+<span class="c1">#         y_true_c = y_true_c[:n]</span>
+<span class="c1">#         y_pred_c = y_pred_c[:n]</span>
+<span class="c1">#</span>
+<span class="c1">#     # Only report labels that actually appear in either y_true or y_pred</span>
+<span class="c1">#     labels_sorted = np.unique(np.concatenate([y_true_c, y_pred_c]))</span>
+<span class="c1">#</span>
+<span class="c1">#     # --- Metrics ---</span>
+<span class="c1">#     acc = accuracy_score(y_true_c, y_pred_c)</span>
+<span class="c1">#     print(f&quot;\nValidation accuracy (canonicalized): {acc:.4f}\n&quot;)</span>
+<span class="c1">#     print(&quot;=== Classification Report ===&quot;)</span>
+<span class="c1">#     rep_text = classification_report_safe(y_true_c, y_pred_c, labels=labels_sorted, zero_division=zero_division)</span>
+<span class="c1">#     print(rep_text)</span>
+<span class="c1">#     print(&quot;=== Confusion Matrix ===&quot;)</span>
+<span class="c1">#     cm = confusion_matrix_safe(y_true_c, y_pred_c, labels=labels_sorted)</span>
+<span class="c1">#     print(cm)</span>
+<span class="c1">#</span>
+<span class="c1">#     if return_metrics:</span>
+<span class="c1">#         # also return a machine-friendly dict</span>
+<span class="c1">#         try:</span>
+<span class="c1">#             from sklearn.metrics import classification_report as _cr</span>
+<span class="c1">#             rep_dict = _cr(y_true_c, y_pred_c, labels=labels_sorted, zero_division=zero_division, output_dict=True)</span>
+<span class="c1">#         except TypeError:</span>
+<span class="c1">#             # older sklearn may not support output_dict in same way; fallback by parsing text is overkill</span>
+<span class="c1">#             rep_dict = {&quot;report_text&quot;: rep_text}</span>
+<span class="c1">#         return {</span>
+<span class="c1">#             &quot;accuracy&quot;: float(acc),</span>
+<span class="c1">#             &quot;classification_report&quot;: rep_dict,</span>
+<span class="c1">#             &quot;confusion_matrix&quot;: cm.tolist(),</span>
+<span class="c1">#             &quot;labels&quot;: labels_sorted.tolist(),</span>
+<span class="c1">#         }</span>
+<span class="c1">#     return None</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/logo.png" alt="Logo of python-intan"/>
+            </a></p>
+<h1 class="logo"><a href="../../../index.html">python-intan</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/faqs.html">Frequently asked questions</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/introduction.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intan_api/modules.html">intan</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024-2026, Jonathan Shulgach.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

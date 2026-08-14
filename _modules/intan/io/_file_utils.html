@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>intan.io._file_utils &#8212; python-intan 0.2.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <script src="../../../_static/documentation_options.js?v=37f418d5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for intan.io._file_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">intan.io._file_utils</span>
+
+<span class="sd">Utility functions for file and path handling in the Intan interface.</span>
+
+<span class="sd">This module includes helpers for:</span>
+<span class="sd">- Cross-platform path adjustment (Windows, WSL, Linux)</span>
+<span class="sd">- File presence validation</span>
+<span class="sd">- Reading configuration or labeled trial files</span>
+<span class="sd">- End-of-file checks and error handling</span>
+<span class="sd">- Progress bar display during file loading</span>
+<span class="sd">- Directory scanning for `.rhd` datasets</span>
+
+<span class="sd">Used throughout the `intan.io` submodule to support flexible loading and validation</span>
+<span class="sd">of data from local or mounted environments.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">pd</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">tkinter</span><span class="w"> </span><span class="kn">import</span> <span class="n">filedialog</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">filedialog</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># tkinter not available (e.g., headless environment)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">intan.io._exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">FileSizeError</span>
+
+
+<div class="viewcode-block" id="adjust_path">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.adjust_path">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adjust_path</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adjusts a file path for compatibility with the host operating system.</span>
+
+<span class="sd">    Automatically detects WSL, Linux, or native Windows and transforms</span>
+<span class="sd">    file paths accordingly (e.g., `C:\\` to `/mnt/c/` on WSL).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        path (str): Original file path (Windows-style or POSIX)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Transformed path compatible with the current OS.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span>
+
+    <span class="c1"># Check if the system is running under WSL</span>
+    <span class="k">if</span> <span class="s2">&quot;microsoft&quot;</span> <span class="ow">in</span> <span class="n">platform</span><span class="o">.</span><span class="n">uname</span><span class="p">()</span><span class="o">.</span><span class="n">release</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="s2">&quot;WSL&quot;</span>
+
+    <span class="c1"># Modify the path based on the system type</span>
+    <span class="k">if</span> <span class="n">system</span> <span class="o">==</span> <span class="s2">&quot;Windows&quot;</span><span class="p">:</span>
+        <span class="c1"># If running on native Windows, return the path as is</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+
+    <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s2">&quot;WSL&quot;</span><span class="p">:</span>
+        <span class="c1"># If running on WSL, convert &quot;C:/&quot; to &quot;/mnt/c/&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;:&quot;</span><span class="p">:</span>
+            <span class="n">drive_letter</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="c1"># Properly replace backslashes without using them in f-string</span>
+            <span class="n">linux_path</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;/mnt/</span><span class="si">{</span><span class="n">drive_letter</span><span class="si">}{</span><span class="n">linux_path</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">elif</span> <span class="n">system</span> <span class="o">==</span> <span class="s2">&quot;Linux&quot;</span><span class="p">:</span>
+        <span class="c1"># If running on native Linux, assume Linux paths are provided correctly</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported system: </span><span class="si">{</span><span class="n">system</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="check_file_present">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.check_file_present">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_file_present</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">metrics_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Check whether a file is listed in a given metrics CSV.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        file (str): File path to check.</span>
+<span class="sd">        metrics_file (pd.DataFrame): Loaded CSV with a &#39;File Name&#39; column.</span>
+<span class="sd">        verbose (bool): If True, print a warning when file is missing.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: (filename, is_present) where `is_present` is True if the file is found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">file</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+    <span class="k">if</span> <span class="n">filename</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metrics_file</span><span class="p">[</span><span class="s1">&#39;File Name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> not found in metrics file&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filename</span><span class="p">,</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="n">filename</span><span class="p">,</span> <span class="kc">True</span></div>
+
+
+
+<div class="viewcode-block" id="check_end_of_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.check_end_of_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">check_end_of_file</span><span class="p">(</span><span class="n">filesize</span><span class="p">,</span> <span class="n">fid</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Validate that the file pointer has reached the end of the file.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        FileSizeError: If unread bytes remain in the stream.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bytes_remaining</span> <span class="o">=</span> <span class="n">filesize</span> <span class="o">-</span> <span class="n">fid</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">bytes_remaining</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">FileSizeError</span><span class="p">(</span><span class="s1">&#39;Error: End of file not reached.&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="print_progress">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.print_progress">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_progress</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">print_step</span><span class="p">,</span> <span class="n">percent_done</span><span class="p">,</span> <span class="n">bar_length</span><span class="o">=</span><span class="mi">40</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Print an ASCII progress bar in the terminal.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        i (int): Current iteration index.</span>
+<span class="sd">        target (int): Total number of iterations.</span>
+<span class="sd">        print_step (float): Update frequency as a percentage.</span>
+<span class="sd">        percent_done (float): Last percentage printed (used to avoid overprinting).</span>
+<span class="sd">        bar_length (int): Length of the ASCII progress bar.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Updated `percent_done` value.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fraction_done</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">i</span> <span class="o">/</span> <span class="n">target</span><span class="p">)</span>
+
+    <span class="c1"># Only update if we&#39;ve crossed a new step</span>
+    <span class="k">if</span> <span class="n">fraction_done</span> <span class="o">&gt;=</span> <span class="n">percent_done</span><span class="p">:</span>
+        <span class="n">fraction_bar</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="n">target</span>
+        <span class="n">arrow</span> <span class="o">=</span> <span class="s1">&#39;=&#39;</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">fraction_bar</span> <span class="o">*</span> <span class="n">bar_length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;&gt;&#39;</span> <span class="k">if</span> <span class="n">fraction_bar</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="p">(</span><span class="n">bar_length</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">arrow</span><span class="p">))</span>
+
+        <span class="n">ending</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">target</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&#39;</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Progress: [</span><span class="si">{</span><span class="n">arrow</span><span class="si">}{</span><span class="n">padding</span><span class="si">}</span><span class="s1">] </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">fraction_bar</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="si">}</span><span class="s1">%&#39;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">ending</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+        <span class="n">percent_done</span> <span class="o">+=</span> <span class="n">print_step</span>
+
+    <span class="k">return</span> <span class="n">percent_done</span></div>
+
+
+
+<div class="viewcode-block" id="read_config_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.read_config_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">read_config_file</span><span class="p">(</span><span class="n">config_file</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse a simple key=value style configuration file (e.g. TRUECONFIG.txt).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        config_file (str): Path to the config file.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Dictionary of key-value settings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Dictionary to store the key-value pairs</span>
+    <span class="n">config_data</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Open the TRUECONFIG.txt file and read its contents</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config_file</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+            <span class="c1"># Strip whitespace and ignore empty lines or comments</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Split the line into key and value at the first &#39;=&#39;</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">config_data</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">config_data</span></div>
+
+
+
+<div class="viewcode-block" id="get_file_paths">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.get_file_paths">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_file_paths</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Scan a directory for files or folders, with optional filtering by extension.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        directory (str): Root folder to search.</span>
+<span class="sd">        file_type (str or None): Extension to search for (e.g. &#39;.rhd&#39;). If None, returns subfolders.</span>
+<span class="sd">        verbose (bool): If True, print the number of items found.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list[pathlib.Path]: List of matching files or folders.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Searching in directory:&quot;</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+
+    <span class="c1"># Convert the directory to an absolute path and a Path object for compatibility</span>
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">directory</span><span class="p">))</span>
+
+    <span class="c1"># Check if the directory exists</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">directory</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">directory</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Directory &#39;</span><span class="si">{</span><span class="n">directory</span><span class="si">}</span><span class="s2">&#39; not found or is not a valid directory.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="c1"># If file_type is left None, we just need to return the folders within the current directory</span>
+    <span class="n">file_paths</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">file_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">file_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">directory</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">file_paths</span><span class="p">)</span><span class="si">}</span><span class="s2"> folders&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s1">&#39;.rhd&#39;</span><span class="p">:</span>
+        <span class="c1"># Recursively find all .rhd files</span>
+        <span class="n">file_paths</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">directory</span><span class="o">.</span><span class="n">rglob</span><span class="p">(</span><span class="s1">&#39;*.rhd&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">file_paths</span><span class="p">)</span><span class="si">}</span><span class="s2"> .rhd files&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unsupported file type. Please specify &#39;.rhd&#39; or None.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">file_paths</span></div>
+
+
+
+<div class="viewcode-block" id="load_labeled_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.load_labeled_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_labeled_file</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a label/notes file containing gesture timing and annotations.</span>
+
+<span class="sd">    This is used for supervised EMG labeling during offline training.</span>
+
+<span class="sd">    If no path is provided, opens a GUI file selection dialog.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        path (str or None): Path to the `.txt` notes file.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: Labeled samples with columns [&quot;Sample&quot;, &quot;Time&quot;, &quot;Label&quot;],</span>
+<span class="sd">                      cleaned and sorted by sample index.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">filedialog</span><span class="o">.</span><span class="n">askopenfilename</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select Notes File&quot;</span><span class="p">,</span> <span class="n">filetypes</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Text files&quot;</span><span class="p">,</span> <span class="s2">&quot;*.txt&quot;</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Sample&quot;</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">,</span> <span class="s2">&quot;Label&quot;</span><span class="p">])</span>  <span class="c1"># return empty if cancelled</span>
+
+    <span class="c1"># Read the notes file (no header expected)</span>
+    <span class="n">df_raw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="c1"># If the first row contains column names (text), drop it</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;sample&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">cell</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">df_raw</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">df_raw</span> <span class="o">=</span> <span class="n">df_raw</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="c1"># Assign column names</span>
+    <span class="n">df_raw</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Sample&quot;</span><span class="p">,</span> <span class="s2">&quot;Time&quot;</span><span class="p">,</span> <span class="s2">&quot;Label&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Remove any rows that contain &#39;threshold&#39; (or other irrelevant markers) in the label</span>
+    <span class="n">df_raw</span> <span class="o">=</span> <span class="n">df_raw</span><span class="p">[</span><span class="o">~</span><span class="n">df_raw</span><span class="p">[</span><span class="s2">&quot;Label&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;threshold&quot;</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">na</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span>
+
+    <span class="c1"># Clean up label text (e.g., remove the word &quot; cue&quot; if present)</span>
+    <span class="n">df_raw</span><span class="p">[</span><span class="s2">&quot;Label&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_raw</span><span class="p">[</span><span class="s2">&quot;Label&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; cue&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">case</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># Convert sample indices to int and sort by time</span>
+    <span class="n">df_raw</span><span class="p">[</span><span class="s2">&quot;Sample&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_raw</span><span class="p">[</span><span class="s2">&quot;Sample&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">df_sorted</span> <span class="o">=</span> <span class="n">df_raw</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s2">&quot;Sample&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df_sorted</span></div>
+
+
+
+<div class="viewcode-block" id="load_txt_config">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.load_txt_config">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_txt_config</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parse a simple key=value style configuration file (e.g. config.txt).</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        file_path (str): Path to the config file.</span>
+<span class="sd">        verbose (bool): If True, print warnings and info messages.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Dictionary of key-value settings.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">filedialog</span><span class="o">.</span><span class="n">askopenfilename</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select Notes File&quot;</span><span class="p">,</span> <span class="n">filetypes</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Text files&quot;</span><span class="p">,</span> <span class="s2">&quot;*.txt&quot;</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">file_path</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cancelled selection&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># Dictionary to store the key-value pairs</span>
+    <span class="n">config_data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+            <span class="c1"># Strip whitespace and ignore empty lines or comments</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span> <span class="ow">or</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Split the line into key and value at the first &#39;=&#39;</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">config_data</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">()]</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">config_data</span></div>
+
+
+
+<div class="viewcode-block" id="load_yaml_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.load_yaml_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_yaml_file</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load configuration from a YAML file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        file_path (str): Path to the YAML file.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Parsed config dictionary.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">filedialog</span><span class="o">.</span><span class="n">askopenfilename</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select Notes File&quot;</span><span class="p">,</span>
+                                               <span class="n">filetypes</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Text files&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;*.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;*.yml&quot;</span><span class="p">])])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">file_path</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">config</span></div>
+
+
+
+<div class="viewcode-block" id="load_json_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.load_json_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_json_file</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load configuration from a JSON file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        file_path (str): Path to the JSON file.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Parsed config dictionary.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">filedialog</span><span class="o">.</span><span class="n">askopenfilename</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select Notes File&quot;</span><span class="p">,</span>
+                                               <span class="n">filetypes</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Text files&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;*.json&quot;</span><span class="p">])])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">file_path</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">config</span></div>
+
+
+
+<div class="viewcode-block" id="load_config_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.load_config_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_config_file</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load configuration from a file, supporting .txt, .yaml, and .json formats.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        file_path (str): Path to the config file.</span>
+<span class="sd">        verbose (bool): If True, print debug information.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Parsed config dictionary or None if loading failed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">filedialog</span><span class="o">.</span><span class="n">askopenfilename</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select Config File&quot;</span><span class="p">,</span>
+                                               <span class="n">filetypes</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Text files&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;*.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;*.yaml&quot;</span><span class="p">,</span> <span class="s2">&quot;*.yml&quot;</span><span class="p">,</span> <span class="s2">&quot;*.json&quot;</span><span class="p">])])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">file_path</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cancelled selection&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">ext</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span><span class="o">.</span><span class="n">suffix</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s1">&#39;.txt&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">load_txt_config</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ext</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;.yaml&#39;</span><span class="p">,</span> <span class="s1">&#39;.yml&#39;</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">load_yaml_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">ext</span> <span class="o">==</span> <span class="s1">&#39;.json&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">load_json_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported config file format: </span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="labels_from_events">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.labels_from_events">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">labels_from_events</span><span class="p">(</span><span class="n">event_path</span><span class="p">,</span> <span class="n">window_starts</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">strict_segment</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">2000</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map each window start (absolute sample index) to a label using an events CSV</span>
+<span class="sd">    with columns: &#39;Sample Index&#39;, &#39;Timestamp&#39;, &#39;Label&#39;. The Timestamp text is ignored.</span>
+
+<span class="sd">    strict_segment=True: drops any window whose [start, start+step) crosses an event boundary.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">event_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;Sample Index&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="ow">or</span> <span class="s1">&#39;Label&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Event file must have &#39;Sample Index&#39; and &#39;Label&#39; columns&quot;</span><span class="p">)</span>
+    <span class="n">ev_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;Sample Index&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+    <span class="n">ev_lab</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="c1"># Trim any &#39;#&#39; comments from labels</span>
+    <span class="n">ev_lab</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">lab</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;#&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">lab</span> <span class="ow">in</span> <span class="n">ev_lab</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+
+    <span class="c1"># sort by sample index</span>
+    <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">ev_idx</span><span class="p">)</span>
+    <span class="n">ev_idx</span> <span class="o">=</span> <span class="n">ev_idx</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
+    <span class="n">ev_lab</span> <span class="o">=</span> <span class="n">ev_lab</span><span class="p">[</span><span class="n">order</span><span class="p">]</span>
+
+    <span class="c1"># for each window start, pick the last event with idx &lt;= start</span>
+    <span class="c1"># searchsorted returns insertion position; subtract 1 to get the last &lt;=</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">ev_idx</span><span class="p">,</span> <span class="n">window_starts</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="c1"># anything before the first event is Unknown</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pos</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ev_lab</span><span class="p">[</span><span class="n">pos</span><span class="p">],</span> <span class="s1">&#39;Unknown&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">strict_segment</span><span class="p">:</span>
+        <span class="c1"># drop windows that cross an event boundary</span>
+        <span class="c1"># boundary after this window&#39;s start is at ev_idx[pos+1]</span>
+        <span class="n">next_pos</span> <span class="o">=</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">next_change</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">next_pos</span> <span class="o">&lt;</span> <span class="n">ev_idx</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">ev_idx</span><span class="p">[</span><span class="n">next_pos</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
+        <span class="c1"># if your step in samples is known, ensure start+step &lt;= next_change</span>
+        <span class="c1"># (pass it in or compute the exact end you want). As a simple guard:</span>
+        <span class="c1"># keep only windows whose label doesn&#39;t change immediately after start.</span>
+        <span class="n">ok</span> <span class="o">=</span> <span class="p">(</span><span class="n">next_change</span> <span class="o">&gt;</span> <span class="n">window_starts</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">ok</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s1">&#39;Unknown&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="last_event_index">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.last_event_index">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">last_event_index</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span> <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">last</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">ln</span> <span class="o">=</span> <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ln</span> <span class="ow">or</span> <span class="n">ln</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ln</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;sample&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ln</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+                <span class="n">last</span> <span class="o">=</span> <span class="n">idx</span> <span class="k">if</span> <span class="n">last</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">last</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">last</span></div>
+
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># File Discovery Utilities</span>
+<span class="c1"># =============================================================================</span>
+
+<div class="viewcode-block" id="stem_without_timestamp">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.stem_without_timestamp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stem_without_timestamp</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the base name from a file path, stripping any timestamp suffix.</span>
+<span class="sd">    </span>
+<span class="sd">    Common patterns handled:</span>
+<span class="sd">        - &quot;IndexExtension_241112_170737.npz&quot; -&gt; &quot;IndexExtension&quot;</span>
+<span class="sd">        - &quot;WristFlexion_2024-01-15_143052.rhd&quot; -&gt; &quot;WristFlexion&quot;</span>
+<span class="sd">        - &quot;recording.rhd&quot; -&gt; &quot;recording&quot;</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        path: File path or filename</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Base name without extension or timestamp suffix</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; stem_without_timestamp(&quot;IndexExtension_241112_170737.npz&quot;)</span>
+<span class="sd">        &#39;IndexExtension&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+    
+    <span class="c1"># Handle numpy object arrays</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;item&quot;</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+    
+    <span class="c1"># Get filename without extension</span>
+    <span class="n">stem</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)))[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># Strip timestamp suffixes like _YYMMDD_HHMMSS or _YYYY-MM-DD_HHMMSS</span>
+    <span class="n">stem</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;_\d</span><span class="si">{6}</span><span class="s1">_\d</span><span class="si">{6}</span><span class="s1">$&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">stem</span><span class="p">)</span>  <span class="c1"># _YYMMDD_HHMMSS</span>
+    <span class="n">stem</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;_\d</span><span class="si">{4}</span><span class="s1">-\d</span><span class="si">{2}</span><span class="s1">-\d</span><span class="si">{2}</span><span class="s1">_\d</span><span class="si">{6}</span><span class="s1">$&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">stem</span><span class="p">)</span>  <span class="c1"># _YYYY-MM-DD_HHMMSS</span>
+    <span class="n">stem</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;_\d</span><span class="si">{8}</span><span class="s1">_\d</span><span class="si">{6}</span><span class="s1">$&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">stem</span><span class="p">)</span>  <span class="c1"># _YYYYMMDD_HHMMSS</span>
+    
+    <span class="k">return</span> <span class="n">stem</span></div>
+
+
+
+<div class="viewcode-block" id="glob_first">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.glob_first">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">glob_first</span><span class="p">(</span><span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the first file matching a glob pattern, or None if no matches.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        pattern: Glob pattern (for example, ``/data/events/*.event``)</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        First matching file path (sorted), or None</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; glob_first(&quot;/data/events/trial*.event&quot;)</span>
+<span class="sd">        &#39;/data/events/trial1_emg.event&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">glob</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">glob_module</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">pattern</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">matches</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob_module</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">pattern</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">matches</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="find_event_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.find_event_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_event_file</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">data_file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">extensions</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.event&quot;</span><span class="p">,</span> <span class="s2">&quot;.txt&quot;</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Auto-discover the event file corresponding to a data recording.</span>
+<span class="sd">    </span>
+<span class="sd">    Search order:</span>
+<span class="sd">        1. &lt;root&gt;/events/&lt;stem&gt;_emg.{event,txt}</span>
+<span class="sd">        2. &lt;root&gt;/events/&lt;stem&gt;.{event,txt}</span>
+<span class="sd">        3. &lt;root&gt;/events/&lt;stem_base&gt;_emg.{event,txt}  (without timestamp)</span>
+<span class="sd">        4. &lt;root&gt;/events/&lt;stem_base&gt;.{event,txt}</span>
+<span class="sd">        5. Sibling to data file: &lt;parent&gt;/&lt;stem&gt;*.{event,txt}</span>
+<span class="sd">        6. If only one event file exists in events/, use it</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        root_dir: Root directory of the experiment</span>
+<span class="sd">        data_file_path: Path to the data file (.rhd, .npz, etc.)</span>
+<span class="sd">        label: Optional label prefix to try</span>
+<span class="sd">        extensions: File extensions to search for</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Path to event file, or None if not found</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; find_event_file(&quot;/data/exp1&quot;, &quot;/data/exp1/emg/trial1_241112.rhd&quot;)</span>
+<span class="sd">        &#39;/data/exp1/events/trial1_emg.event&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">glob</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">glob_module</span>
+    
+    <span class="c1"># Extract stems</span>
+    <span class="n">full_stem</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">data_file_path</span><span class="p">)))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">base_stem</span> <span class="o">=</span> <span class="n">stem_without_timestamp</span><span class="p">(</span><span class="n">data_file_path</span><span class="p">)</span>
+    
+    <span class="n">events_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="s2">&quot;events&quot;</span><span class="p">)</span>
+    <span class="n">data_parent</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">data_file_path</span><span class="p">)</span>
+    
+    <span class="c1"># Helper to try multiple extensions</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_try_with_extensions</span><span class="p">(</span><span class="n">base_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">base_path</span> <span class="o">+</span> <span class="n">ext</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">path</span>
+            <span class="n">matches</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob_module</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    
+    <span class="c1"># 1-4: Try various patterns in events directory</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">stem</span> <span class="ow">in</span> <span class="p">[</span><span class="n">full_stem</span><span class="p">,</span> <span class="n">base_stem</span><span class="p">]:</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">events_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">_emg&quot;</span><span class="p">))</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">events_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stem</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+    
+    <span class="c1"># Add label-prefixed variants if label provided</span>
+    <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">events_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_emg&quot;</span><span class="p">))</span>
+        <span class="n">candidates</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">events_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+    
+    <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_try_with_extensions</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span>
+    
+    <span class="c1"># 5: Glob next to data file</span>
+    <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob_module</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_parent</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">full_stem</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob_module</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_parent</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_stem</span><span class="si">}</span><span class="s2">*</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># 6: If only one event file in events dir, use it</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">events_dir</span><span class="p">):</span>
+        <span class="n">all_events</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+            <span class="n">all_events</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">glob_module</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">events_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;*</span><span class="si">{</span><span class="n">ext</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)))</span>
+        <span class="n">all_events</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_events</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_events</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">all_events</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="discover_data_files">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.discover_data_files">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">discover_data_files</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">extensions</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;.rhd&quot;</span><span class="p">,</span> <span class="s2">&quot;.npz&quot;</span><span class="p">),</span>
+    <span class="n">subdir</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">recursive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Discover all data files in a directory tree.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        root_dir: Root directory to search</span>
+<span class="sd">        extensions: File extensions to find (e.g., (&quot;.rhd&quot;, &quot;.npz&quot;))</span>
+<span class="sd">        subdir: Optional subdirectory to search (e.g., &quot;emg&quot;, &quot;raw&quot;)</span>
+<span class="sd">        recursive: If True, search subdirectories</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Sorted list of file paths</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; discover_data_files(&quot;/data/exp1&quot;, extensions=(&quot;.rhd&quot;,))</span>
+<span class="sd">        [&#39;/data/exp1/raw/trial1.rhd&#39;, &#39;/data/exp1/raw/trial2.rhd&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">glob</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">glob_module</span>
+    
+    <span class="n">search_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">subdir</span><span class="p">)</span> <span class="k">if</span> <span class="n">subdir</span> <span class="k">else</span> <span class="n">root_dir</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">search_dir</span><span class="p">):</span>
+        <span class="c1"># Try common subdirectory names</span>
+        <span class="k">for</span> <span class="n">fallback</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;emg&quot;</span><span class="p">,</span> <span class="s2">&quot;raw&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">]:</span>
+            <span class="n">alt</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">fallback</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">alt</span><span class="p">):</span>
+                <span class="n">search_dir</span> <span class="o">=</span> <span class="n">alt</span>
+                <span class="k">break</span>
+    
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">search_dir</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="s2">&quot;**/*&quot;</span> <span class="k">if</span> <span class="n">recursive</span> <span class="k">else</span> <span class="s2">&quot;*&quot;</span>
+    
+    <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extensions</span><span class="p">:</span>
+        <span class="n">glob_pattern</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">search_dir</span><span class="p">,</span> <span class="n">pattern</span> <span class="o">+</span> <span class="n">ext</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">glob_module</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">glob_pattern</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="n">recursive</span><span class="p">))</span>
+    
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">files</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="find_dataset_file">
+<a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._file_utils.find_dataset_file">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_dataset_file</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Find a training dataset NPZ file in common locations.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        root_dir: Root directory to search</span>
+<span class="sd">        label: Optional label prefix</span>
+<span class="sd">        candidates: Additional candidate filenames to try</span>
+<span class="sd">    </span>
+<span class="sd">    Returns:</span>
+<span class="sd">        Path to dataset file, or None if not found</span>
+<span class="sd">    </span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; find_dataset_file(&quot;/data/exp1&quot;, label=&quot;sleeve&quot;)</span>
+<span class="sd">        &#39;/data/exp1/sleeve_training_dataset.npz&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">search_paths</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># Label-specific first</span>
+    <span class="k">if</span> <span class="n">label</span><span class="p">:</span>
+        <span class="n">search_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2">_training_dataset.npz&quot;</span><span class="p">))</span>
+    
+    <span class="c1"># Common names</span>
+    <span class="n">search_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="s2">&quot;training_dataset.npz&quot;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="s2">&quot;dataset_emg_windows.npz&quot;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="s2">&quot;dataset.npz&quot;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="s2">&quot;emg&quot;</span><span class="p">,</span> <span class="s2">&quot;dataset_emg_windows.npz&quot;</span><span class="p">),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="s2">&quot;emg&quot;</span><span class="p">,</span> <span class="s2">&quot;training_dataset.npz&quot;</span><span class="p">),</span>
+    <span class="p">])</span>
+    
+    <span class="c1"># User-provided candidates</span>
+    <span class="k">if</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">search_paths</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">search_paths</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">path</span>
+    
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/logo.png" alt="Logo of python-intan"/>
+            </a></p>
+<h1 class="logo"><a href="../../../index.html">python-intan</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/faqs.html">Frequently asked questions</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/introduction.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intan_api/modules.html">intan</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024-2026, Jonathan Shulgach.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

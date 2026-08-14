@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>intan.processing package &#8212; python-intan 0.1.0 documentation</title>
+    <title>intan.processing package &#8212; python-intan 0.2.1 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/documentation_options.js?v=37f418d5"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -39,12 +39,630 @@
   <section id="intan-processing-package">
 <h1>intan.processing package<a class="headerlink" href="#intan-processing-package" title="Link to this heading">¶</a></h1>
 <p>Signal processing, filtering, feature extraction, and metrics utilities for EMG data.</p>
+<p id="module-intan.processing._filters"><span id="module-intan.processing"></span>intan.processing._filters</p>
+<p>Comprehensive EMG signal preprocessing module.</p>
+<p>Includes:</p>
+<ul class="simple">
+<li><p>Bandpass, lowpass, and notch filters</p></li>
+<li><p>Hilbert envelope extraction</p></li>
+<li><p>RMS and windowed RMS computation</p></li>
+<li><p>Common average referencing (CAR)</p></li>
+<li><p>Sliding windows and PCA-based dimensionality reduction</p></li>
+<li><p>CNN-ECA compatible preprocessing pipeline</p></li>
+</ul>
+<p>This module supports feature extraction pipelines for real-time classification
+and pre-training EMG datasets with overlapping or fixed windows.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._filters.preprocess_emg">
+<span class="sig-name descname"><span class="pre">preprocess_emg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emg_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_rate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_filters.html#preprocess_emg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._filters.preprocess_emg" title="Link to this definition">¶</a></dt>
+<dd><p>Applies filtering and extracts RMS features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>emg_data</strong> – 2D numpy array of EMG data (channels, samples).</p></li>
+<li><p><strong>sample_rate</strong> – Sampling rate of the EMG data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D numpy array of RMS features (channels, windows).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>rms_features</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._filters.parse_channel_ranges">
+<span class="sig-name descname"><span class="pre">parse_channel_ranges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_arg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_filters.html#parse_channel_ranges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._filters.parse_channel_ranges" title="Link to this definition">¶</a></dt>
+<dd><p>Parses a channel range string (e.g., [1:8, 64:72]) and returns a flat list of integers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>channel_arg</strong> (<em>str</em>) – The string containing channel ranges (e.g., “[1:8, 64:72]”).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A flat list of integers.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._filters.notch_filter">
+<span class="sig-name descname"><span class="pre">notch_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_filters.html#notch_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._filters.notch_filter" title="Link to this definition">¶</a></dt>
+<dd><p>Applies a notch filter to the data to remove 60 Hz interference. Assumes data shape (n_channels, n_samples).
+A bandwidth of 10 Hz is recommended for 50 or 60 Hz notch filters; narrower bandwidths lead to
+poor time-domain properties with an extended ringing response to
+transient disturbances.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>ndarray</em>) – Input data to be filtered.</p></li>
+<li><p><strong>fs</strong> (<em>float</em>) – Sampling frequency of the data.</p></li>
+<li><p><strong>f0</strong> (<em>float</em>) – Frequency to be removed from the data (60 Hz).</p></li>
+<li><p><strong>Q</strong> (<em>float</em>) – Quality factor of the notch filter.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>nn.array</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>out = notch_filter(signal_in, 30000, 60, 10);</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._filters.lowpass_filter">
+<span class="sig-name descname"><span class="pre">lowpass_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_filters.html#lowpass_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._filters.lowpass_filter" title="Link to this definition">¶</a></dt>
+<dd><p>Applies a lowpass filter to the data using a Butterworth filter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>ndarray</em>) – Input data to be filtered.</p></li>
+<li><p><strong>cutoff</strong> (<em>float</em>) – Cutoff frequency.</p></li>
+<li><p><strong>fs</strong> (<em>float</em>) – Sampling frequency of the data.</p></li>
+<li><p><strong>order</strong> (<em>int</em>) – Order of the filter.</p></li>
+<li><p><strong>axis</strong> (<em>int</em>) – Axis along which to apply the filter.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._filters.bandpass_filter">
+<span class="sig-name descname"><span class="pre">bandpass_filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_filters.html#bandpass_filter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._filters.bandpass_filter" title="Link to this definition">¶</a></dt>
+<dd><p>Applies a bandpass filter to the data using a Butterworth filter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>ndarray</em>) – Input data to be filtered.</p></li>
+<li><p><strong>lowcut</strong> (<em>float</em>) – Low cutoff frequency.</p></li>
+<li><p><strong>highcut</strong> (<em>float</em>) – High cutoff frequency.</p></li>
+<li><p><strong>fs</strong> (<em>float</em>) – Sampling frequency of the data.</p></li>
+<li><p><strong>order</strong> (<em>int</em>) – Order of the filter.</p></li>
+<li><p><strong>axis</strong> (<em>int</em>) – Axis along which to apply the filter.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Whether to print filter parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._filters.filter_emg">
+<span class="sig-name descname"><span class="pre">filter_emg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emg_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bandpass'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1259</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_filters.html#filter_emg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._filters.filter_emg" title="Link to this definition">¶</a></dt>
+<dd><p>Applies a bandpass or lowpass filter to EMG data using numpy arrays.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>emg_data</strong> – Numpy array of shape (num_samples, num_channels) with EMG data.</p></li>
+<li><p><strong>filter_type</strong> – Type of filter to apply (‘bandpass’ or ‘lowpass’).</p></li>
+<li><p><strong>lowcut</strong> – Low cutoff frequency for the bandpass filter.</p></li>
+<li><p><strong>highcut</strong> – High cutoff frequency for the bandpass filter.</p></li>
+<li><p><strong>fs</strong> – Sampling rate of the EMG data.</p></li>
+<li><p><strong>order</strong> – Filter order.</p></li>
+<li><p><strong>verbose</strong> – Whether to print progress.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Filtered data as a numpy array (same shape as input data).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._filters.process_emg_pipeline">
+<span class="sig-name descname"><span class="pre">process_emg_pipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">highcut</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">order</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">400</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_filters.html#process_emg_pipeline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._filters.process_emg_pipeline" title="Link to this definition">¶</a></dt>
+<dd><p>Processing steps to match the CNN-ECA methodology
+<a class="reference external" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC10669079/">https://pmc.ncbi.nlm.nih.gov/articles/PMC10669079/</a>
+Input data is assumed to have shape (N_channels, N_samples)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – 2D numpy array of EMG data (channels, samples).</p></li>
+<li><p><strong>lowcut</strong> – Low cutoff frequency for the bandpass filter.</p></li>
+<li><p><strong>highcut</strong> – High cutoff frequency for the bandpass filter.</p></li>
+<li><p><strong>order</strong> – Order of the Butterworth filter.</p></li>
+<li><p><strong>window_size</strong> – Window size for RMS calculation.</p></li>
+<li><p><strong>verbose</strong> – Whether to print progress.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D numpy array of processed EMG data (channels, samples).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>smoothed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._filters.sliding_window">
+<span class="sig-name descname"><span class="pre">sliding_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_filters.html#sliding_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._filters.sliding_window" title="Link to this definition">¶</a></dt>
+<dd><p>Splits the data into overlapping windows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – 2D numpy array of shape (channels, samples).</p></li>
+<li><p><strong>window_size</strong> – Window size in number of samples.</p></li>
+<li><p><strong>step_size</strong> – Step size in number of samples.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of numpy arrays, each representing a window of data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>windows</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function" id="module-intan.processing._features">
+<dt class="sig sig-object py" id="intan.processing._features.orthogonalize">
+<span class="sig-name descname"><span class="pre">orthogonalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">W</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#orthogonalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.orthogonalize" title="Link to this definition">¶</a></dt>
+<dd><p>Orthogonalizes the weight vector wp with respect to the first i columns of W.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>W</strong> – Weight matrix of shape (n_features, n_features).</p></li>
+<li><p><strong>wp</strong> – Weight vector to be orthogonalized of shape (n_features,).</p></li>
+<li><p><strong>i</strong> – Index of the column in W to orthogonalize against.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Orthogonalized weight vector of shape (n_features,).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>wp</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.normalize">
+<span class="sig-name descname"><span class="pre">normalize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wp</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#normalize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.normalize" title="Link to this definition">¶</a></dt>
+<dd><p>Normalizes the weight vector wp.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>wp</strong> – Weight vector to be normalized of shape (n_features,).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Normalized weight vector of shape (n_features,).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>wp</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.rectify">
+<span class="sig-name descname"><span class="pre">rectify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emg_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#rectify"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.rectify" title="Link to this definition">¶</a></dt>
+<dd><p>Rectifies EMG data by converting all values to their absolute values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>emg_data</strong> (<em>numpy array</em>) – List of numpy arrays or pandas DataFrame items with filtered EMG data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of rectified numpy arrays (same shape as input data).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>rectified_data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.window_rms">
+<span class="sig-name descname"><span class="pre">window_rms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emg_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">400</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#window_rms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.window_rms" title="Link to this definition">¶</a></dt>
+<dd><p>Apply windowed RMS to each channel in the multichannel EMG data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>emg_data</strong> – Numpy array of shape (num_samples, num_channels).</p></li>
+<li><p><strong>window_size</strong> – Size of the window for RMS calculation.</p></li>
+<li><p><strong>verbose</strong> – Whether to print progress.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Smoothed EMG data with windowed RMS applied to each channel (same shape as input).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.window_rms_1D">
+<span class="sig-name descname"><span class="pre">window_rms_1D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#window_rms_1D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.window_rms_1D" title="Link to this definition">¶</a></dt>
+<dd><p>Compute windowed RMS of the signal.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> – Input EMG signal.</p></li>
+<li><p><strong>window_size</strong> – Size of the window for RMS calculation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Windowed RMS signal.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.calculate_rms">
+<span class="sig-name descname"><span class="pre">calculate_rms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#calculate_rms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.calculate_rms" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates RMS features for each channel using non-overlapping windows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – 2D numpy array of EMG data (channels, samples).</p></li>
+<li><p><strong>window_size</strong> – Size of the window for RMS calculation.</p></li>
+<li><p><strong>verbose</strong> – Whether to print progress.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D numpy array of RMS features (channels, windows).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>rms_features</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.compute_rolling_rms">
+<span class="sig-name descname"><span class="pre">compute_rolling_rms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#compute_rolling_rms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.compute_rolling_rms" title="Link to this definition">¶</a></dt>
+<dd><p>Compute rolling RMS on a 1D signal.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.downsample">
+<span class="sig-name descname"><span class="pre">downsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emg_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampling_rate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#downsample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.downsample" title="Link to this definition">¶</a></dt>
+<dd><p>Downsamples the EMG data to the target sampling rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>emg_data</strong> – 2D numpy array of shape (num_channels, num_samples).</p></li>
+<li><p><strong>sampling_rate</strong> – Sampling rate of the original EMG data.</p></li>
+<li><p><strong>target_fs</strong> – Target sampling rate for downsampling.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D numpy array of shape (num_channels, downsampled_samples).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>downsampled_data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.common_average_reference">
+<span class="sig-name descname"><span class="pre">common_average_reference</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emg_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#common_average_reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.common_average_reference" title="Link to this definition">¶</a></dt>
+<dd><p>Applies Common Average Referencing (CAR) to the multi-channel EMG data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>emg_data</strong> – 2D numpy array of shape (num_channels, num_samples).</p></li>
+<li><p><strong>ignore_channels</strong> – List of channels to ignore in CAR calculation (optional).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D numpy array after applying CAR (same shape as input).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>car_data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.envelope_extraction">
+<span class="sig-name descname"><span class="pre">envelope_extraction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hilbert'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#envelope_extraction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.envelope_extraction" title="Link to this definition">¶</a></dt>
+<dd><p>Extracts the envelope of the EMG signal using the Hilbert transform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> – 2D numpy array of EMG data (channels, samples).</p></li>
+<li><p><strong>method</strong> – Method for envelope extraction (‘hilbert’ or other).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D numpy array of the envelope (channels, samples).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>envelope</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.z_score_norm">
+<span class="sig-name descname"><span class="pre">z_score_norm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#z_score_norm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.z_score_norm" title="Link to this definition">¶</a></dt>
+<dd><p>Apply z-score normalization to the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> – 2D numpy array of shape (channels, samples).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D numpy array of shape (channels, samples) after z-score normalization.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>normalized_data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.compute_rms">
+<span class="sig-name descname"><span class="pre">compute_rms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emg_window</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#compute_rms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.compute_rms" title="Link to this definition">¶</a></dt>
+<dd><p>Compute RMS of EMG data along a given axis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>emg_window</strong> (<em>np.ndarray</em>) – EMG data with one or two dimensions.</p></li>
+<li><p><strong>axis</strong> (<em>int</em>) – Axis to compute RMS over. Default is -1 (last axis).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>RMS value(s) along the given axis.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray or float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.compute_grid_average">
+<span class="sig-name descname"><span class="pre">compute_grid_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">emg_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid_spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#compute_grid_average"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.compute_grid_average" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the average of the EMG grids according to the grid spacing. For example, a spacing of 8 means that
+channels 1, 9, 17, etc. will be averaged together to form the first grid, and so on.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>emg_data</strong> (<em>np.ndarray</em>) – 2D numpy array of shape (num_channels, num_samples).</p></li>
+<li><p><strong>grid_spacing</strong> (<em>int</em>) – Number of channels to average together.</p></li>
+<li><p><strong>axis</strong> (<em>int</em>) – Axis along which to compute the grid averages.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>2D numpy array of shape (num_grids, num_samples).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>grid_averages (np.ndarray)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.variance">
+<span class="sig-name descname"><span class="pre">variance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#variance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.variance" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the variance of the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>np.ndarray</em><em>) </em><em>shape</em><em> (</em><em>n_channels</em><em>, </em><em>n_samples</em>) – Input data for which to compute the variance.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Variance value for each channel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.mean_absolute_value">
+<span class="sig-name descname"><span class="pre">mean_absolute_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#mean_absolute_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.mean_absolute_value" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the Mean Absolute Value (MAV) of the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>np.ndarray</em><em>) </em><em>shape</em><em> (</em><em>n_channels</em><em>, </em><em>n_samples</em>) – Input data for which to compute the MAV.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>MAV value for each channel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.zero_crossings">
+<span class="sig-name descname"><span class="pre">zero_crossings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#zero_crossings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.zero_crossings" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the number of zero crossings in the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ch</strong> (<em>np.ndarray</em>) – Input data for which to compute the zero crossings.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – Threshold for detecting significant changes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of zero crossings.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.integrated_emg">
+<span class="sig-name descname"><span class="pre">integrated_emg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#integrated_emg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.integrated_emg" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the Integrated EMG (IEMG) of the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>np.ndarray</em><em>) </em><em>shape</em><em> (</em><em>n_channels</em><em>, </em><em>n_samples</em>) – Input data for which to compute the IEMG.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Integrated EMG value for each channel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.slope_sign_changes">
+<span class="sig-name descname"><span class="pre">slope_sign_changes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#slope_sign_changes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.slope_sign_changes" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the number of slope sign changes in the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ch</strong> (<em>np.ndarray</em>) – Input data for which to compute the slope sign changes.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – Threshold for detecting significant changes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number of slope sign changes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.waveform_length">
+<span class="sig-name descname"><span class="pre">waveform_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#waveform_length"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.waveform_length" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the waveform length of the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>np.ndarray</em><em>) </em><em>shape</em><em> (</em><em>n_channels</em><em>, </em><em>n_samples</em>) – Input data for which to compute the waveform length.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Waveform length for each channel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.root_mean_square">
+<span class="sig-name descname"><span class="pre">root_mean_square</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#root_mean_square"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.root_mean_square" title="Link to this definition">¶</a></dt>
+<dd><p>Computes the Root Mean Square (RMS) of the input data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>np.ndarray</em><em>) </em><em>shape</em><em> (</em><em>n_channels</em><em>, </em><em>n_samples</em>) – Input data for which to compute the RMS.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>RMS value for each channel.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.extract_features">
+<span class="sig-name descname"><span class="pre">extract_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">segment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_fns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#extract_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.extract_features" title="Link to this definition">¶</a></dt>
+<dd><p>Extracts features from a multichannel segment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>segment</strong> – np.ndarray (n_channels, n_samples)</p></li>
+<li><p><strong>feature_fns</strong> – list of strings or callables</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>flattened feature vector</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>1D np.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.extract_features_sliding_window">
+<span class="sig-name descname"><span class="pre">extract_features_sliding_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_ms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_ms</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_fns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#extract_features_sliding_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.extract_features_sliding_window" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span>) – (n_channels, n_samples) array of EMG data</p></li>
+<li><p><strong>fs</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – (int)  sampling rate in Hz</p></li>
+<li><p><strong>window_ms</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – window length in ms</p></li>
+<li><p><strong>step_ms</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></span>) – step between windows in ms</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">ndarray</span></code></span></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(n_windows, n_features)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="intan.processing._features.feature_spec_from_registry">
+<span class="sig-name descname"><span class="pre">feature_spec_from_registry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_registry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_fns</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">per_channel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'channel_major'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'training_order'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/intan/processing/_features.html#feature_spec_from_registry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#intan.processing._features.feature_spec_from_registry" title="Link to this definition">¶</a></dt>
+<dd><p>Build a self-describing spec for your feature vector.</p>
+<p>If feature_fns is None, we assume ‘use all’ features in the registry, in the
+registry’s key order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">Dict</span></code></span></p>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>feature_registry</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>]</em>)</p></li>
+<li><p><strong>feature_fns</strong> (<em>List</em><em>[</em><em>str</em><em> | </em><em>Callable</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>per_channel</strong> (<em>bool</em>)</p></li>
+<li><p><strong>layout</strong> (<em>str</em>)</p></li>
+<li><p><strong>channels</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 <p id="module-intan.processing._metrics_utils">intan.processing._metrics_utils</p>
 <p>Utilities for loading gesture metrics and creating gesture-label mappings.</p>
-<p>This module:
-- Loads EMG trial classification metadata from CSV or TXT
-- Parses gesture names into integer class mappings
-- Provides helper functions for checking or retrieving metrics files</p>
+<p>This module:</p>
+<ul class="simple">
+<li><p>Loads EMG trial classification metadata from CSV or TXT</p></li>
+<li><p>Parses gesture names into integer class mappings</p></li>
+<li><p>Provides helper functions for checking or retrieving metrics files</p></li>
+</ul>
 <p>Used in training/testing pipelines that require alignment between gesture labels
 and EMG signal segments.</p>
 <dl class="py function">
@@ -121,7 +739,7 @@ and EMG signal segments.</p>
 <p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../info/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">Frequently Asked Questions (FAQs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info/faqs.html">Frequently asked questions</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
 <ul>
@@ -162,7 +780,7 @@ and EMG signal segments.</p>
       <div class="clearer"></div>
     </div>
     <div class="footer">
-      &#169;2025, Jonathan Shulgach.
+      &#169;2024-2026, Jonathan Shulgach.
       
       |
       Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>intan.processing._filters &#8212; python-intan 0.2.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=686e5160" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <script src="../../../_static/documentation_options.js?v=37f418d5"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for intan.processing._filters</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">intan.processing._filters</span>
+
+<span class="sd">Comprehensive EMG signal preprocessing module.</span>
+
+<span class="sd">Includes:</span>
+
+<span class="sd">- Bandpass, lowpass, and notch filters</span>
+<span class="sd">- Hilbert envelope extraction</span>
+<span class="sd">- RMS and windowed RMS computation</span>
+<span class="sd">- Common average referencing (CAR)</span>
+<span class="sd">- Sliding windows and PCA-based dimensionality reduction</span>
+<span class="sd">- CNN-ECA compatible preprocessing pipeline</span>
+
+<span class="sd">This module supports feature extraction pipelines for real-time classification</span>
+<span class="sd">and pre-training EMG datasets with overlapping or fixed windows.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.signal</span><span class="w"> </span><span class="kn">import</span> <span class="n">butter</span><span class="p">,</span> <span class="n">filtfilt</span><span class="p">,</span> <span class="n">hilbert</span><span class="p">,</span> <span class="n">iirnotch</span><span class="p">,</span> <span class="n">lfilter</span><span class="p">,</span> <span class="n">lfilter_zi</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">._features</span><span class="w"> </span><span class="kn">import</span> <span class="n">compute_rms</span><span class="p">,</span> <span class="n">window_rms</span><span class="p">,</span> <span class="n">common_average_reference</span><span class="p">,</span> <span class="n">envelope_extraction</span>
+
+<span class="c1">#from sklearn.decomposition import PCA</span>
+<span class="c1">#from sklearn.preprocessing import StandardScaler</span>
+
+<div class="viewcode-block" id="preprocess_emg">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._filters.preprocess_emg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">preprocess_emg</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Applies filtering and extracts RMS features.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        emg_data: 2D numpy array of EMG data (channels, samples).</span>
+<span class="sd">        sample_rate: Sampling rate of the EMG data.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        rms_features: 2D numpy array of RMS features (channels, windows).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">filtered_data</span> <span class="o">=</span> <span class="n">notch_filter</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">f0</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+    <span class="n">filtered_data</span> <span class="o">=</span> <span class="n">bandpass_filter</span><span class="p">(</span><span class="n">filtered_data</span><span class="p">,</span> <span class="n">lowcut</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">highcut</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">sample_rate</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">rms_features</span> <span class="o">=</span> <span class="n">compute_rms</span><span class="p">(</span><span class="n">filtered_data</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="mf">0.1</span> <span class="o">*</span> <span class="n">sample_rate</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">rms_features</span></div>
+
+
+
+<div class="viewcode-block" id="parse_channel_ranges">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._filters.parse_channel_ranges">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_channel_ranges</span><span class="p">(</span><span class="n">channel_arg</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parses a channel range string (e.g., [1:8, 64:72]) and returns a flat list of integers.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        channel_arg (str): The string containing channel ranges (e.g., &quot;[1:8, 64:72]&quot;).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list: A flat list of integers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Remove square brackets and split by commas</span>
+    <span class="n">channel_arg</span> <span class="o">=</span> <span class="n">channel_arg</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;[]&quot;</span><span class="p">)</span>
+    <span class="n">ranges</span> <span class="o">=</span> <span class="n">channel_arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+
+    <span class="n">channel_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ranges</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">r</span><span class="p">:</span>
+            <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">))</span>
+            <span class="c1"># channel_list.extend(range(start - 1, end))  # Convert to 0-based indexing</span>
+            <span class="n">channel_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># channel_list.append(int(r) - 1)  # Convert single channel to 0-based indexing</span>
+            <span class="n">channel_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">channel_list</span></div>
+
+
+
+<div class="viewcode-block" id="notch_filter">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._filters.notch_filter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">notch_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">f0</span><span class="o">=</span><span class="mf">60.0</span><span class="p">,</span> <span class="n">Q</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Applies a notch filter to the data to remove 60 Hz interference. Assumes data shape (n_channels, n_samples).</span>
+<span class="sd">    A bandwidth of 10 Hz is recommended for 50 or 60 Hz notch filters; narrower bandwidths lead to</span>
+<span class="sd">    poor time-domain properties with an extended ringing response to</span>
+<span class="sd">    transient disturbances.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data (ndarray): Input data to be filtered.</span>
+<span class="sd">        fs (float): Sampling frequency of the data.</span>
+<span class="sd">        f0 (float): Frequency to be removed from the data (60 Hz).</span>
+<span class="sd">        Q (float): Quality factor of the notch filter.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        nn.array:</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        out = notch_filter(signal_in, 30000, 60, 10);</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">iirnotch</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span> <span class="n">Q</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="lowpass_filter">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._filters.lowpass_filter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lowpass_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Applies a lowpass filter to the data using a Butterworth filter.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data (ndarray): Input data to be filtered.</span>
+<span class="sd">        cutoff (float): Cutoff frequency.</span>
+<span class="sd">        fs (float): Sampling frequency of the data.</span>
+<span class="sd">        order (int): Order of the filter.</span>
+<span class="sd">        axis (int): Axis along which to apply the filter.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ndarray: Filtered data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">,</span> <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;low&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="bandpass_filter">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._filters.bandpass_filter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">bandpass_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">lowcut</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">highcut</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">4000</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Applies a bandpass filter to the data using a Butterworth filter.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data (ndarray): Input data to be filtered.</span>
+<span class="sd">        lowcut (float): Low cutoff frequency.</span>
+<span class="sd">        highcut (float): High cutoff frequency.</span>
+<span class="sd">        fs (float): Sampling frequency of the data.</span>
+<span class="sd">        order (int): Order of the filter.</span>
+<span class="sd">        axis (int): Axis along which to apply the filter.</span>
+<span class="sd">        verbose (bool): Whether to print filter parameters.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        ndarray: Filtered data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="n">butter</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="p">[</span><span class="n">lowcut</span><span class="p">,</span> <span class="n">highcut</span><span class="p">],</span> <span class="n">btype</span><span class="o">=</span><span class="s2">&quot;bandpass&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">filtfilt</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span></div>
+
+
+
+<div class="viewcode-block" id="filter_emg">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._filters.filter_emg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_emg</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">filter_type</span><span class="o">=</span><span class="s1">&#39;bandpass&#39;</span><span class="p">,</span> <span class="n">lowcut</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">highcut</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="mi">1259</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Applies a bandpass or lowpass filter to EMG data using numpy arrays.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        emg_data: Numpy array of shape (num_samples, num_channels) with EMG data.</span>
+<span class="sd">        filter_type: Type of filter to apply (&#39;bandpass&#39; or &#39;lowpass&#39;).</span>
+<span class="sd">        lowcut: Low cutoff frequency for the bandpass filter.</span>
+<span class="sd">        highcut: High cutoff frequency for the bandpass filter.</span>
+<span class="sd">        fs: Sampling rate of the EMG data.</span>
+<span class="sd">        order: Filter order.</span>
+<span class="sd">        verbose: Whether to print progress.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Filtered data as a numpy array (same shape as input data).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tic</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">filter_type</span> <span class="o">==</span> <span class="s1">&#39;bandpass&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;| Applying butterworth bandpass filter: </span><span class="si">{</span><span class="n">lowcut</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">highcut</span><span class="si">}</span><span class="s2"> Hz </span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2"> order&quot;</span><span class="p">)</span>
+        <span class="n">filtered_data</span> <span class="o">=</span> <span class="n">bandpass_filter</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">lowcut</span><span class="p">,</span> <span class="n">highcut</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">filter_type</span> <span class="o">==</span> <span class="s1">&#39;lowpass&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;| Applying butterworth lowpass filter: </span><span class="si">{</span><span class="n">lowcut</span><span class="si">}</span><span class="s2"> Hz </span><span class="si">{</span><span class="n">order</span><span class="si">}</span><span class="s2"> order&quot;</span><span class="p">)</span>
+        <span class="n">filtered_data</span> <span class="o">=</span> <span class="n">lowpass_filter</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">lowcut</span><span class="p">,</span> <span class="n">fs</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">toc</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">process_time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;| | Filtering time = </span><span class="si">{</span><span class="mi">1000</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">toc</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">tic</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> ms&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Convert list of arrays to a single 2D numpy array</span>
+    <span class="n">filtered_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">filtered_data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Stack along axis 0 (channels)</span>
+
+    <span class="k">return</span> <span class="n">filtered_data</span></div>
+
+
+
+<div class="viewcode-block" id="process_emg_pipeline">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._filters.process_emg_pipeline">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_emg_pipeline</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">lowcut</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">highcut</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Processing steps to match the CNN-ECA methodology</span>
+<span class="sd">    https://pmc.ncbi.nlm.nih.gov/articles/PMC10669079/</span>
+<span class="sd">    Input data is assumed to have shape (N_channels, N_samples)</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data: 2D numpy array of EMG data (channels, samples).</span>
+<span class="sd">        lowcut: Low cutoff frequency for the bandpass filter.</span>
+<span class="sd">        highcut: High cutoff frequency for the bandpass filter.</span>
+<span class="sd">        order: Order of the Butterworth filter.</span>
+<span class="sd">        window_size: Window size for RMS calculation.</span>
+<span class="sd">        verbose: Whether to print progress.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        smoothed: 2D numpy array of processed EMG data (channels, samples).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">emg_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">]</span>  <span class="c1"># Extract EMG data</span>
+    <span class="n">sample_rate</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;frequency_parameters&#39;</span><span class="p">][</span><span class="s1">&#39;board_dig_in_sample_rate&#39;</span><span class="p">])</span>  <span class="c1"># Extract sampling rate</span>
+
+    <span class="c1"># Overwrite the first and last second of the data with 0 to remove edge effects</span>
+    <span class="c1"># emg_data[:, :sample_rate] = 0.0</span>
+    <span class="n">emg_data</span><span class="p">[:,</span> <span class="o">-</span><span class="n">sample_rate</span><span class="p">:]</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># Just first second</span>
+
+    <span class="c1"># Apply bandpass filter</span>
+    <span class="n">bandpass_filtered</span> <span class="o">=</span> <span class="n">filter_emg</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="s1">&#39;bandpass&#39;</span><span class="p">,</span> <span class="n">lowcut</span><span class="p">,</span> <span class="n">highcut</span><span class="p">,</span> <span class="n">sample_rate</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+
+    <span class="c1"># Rectify</span>
+    <span class="c1"># rectified = rectify_emg(bandpass_filtered)</span>
+    <span class="n">rectified</span> <span class="o">=</span> <span class="n">bandpass_filtered</span>
+
+    <span class="c1"># Apply Smoothing</span>
+    <span class="c1"># smoothed = window_rms(rectified, window_size=window_size)</span>
+    <span class="n">smoothed</span> <span class="o">=</span> <span class="n">envelope_extraction</span><span class="p">(</span><span class="n">rectified</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;hilbert&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">smoothed</span></div>
+
+
+
+<div class="viewcode-block" id="sliding_window">
+<a class="viewcode-back" href="../../../intan_api/intan.processing.html#intan.processing._filters.sliding_window">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sliding_window</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">window_size</span><span class="p">,</span> <span class="n">step_size</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Splits the data into overlapping windows.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        data: 2D numpy array of shape (channels, samples).</span>
+<span class="sd">        window_size: Window size in number of samples.</span>
+<span class="sd">        step_size: Step size in number of samples.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        windows: List of numpy arrays, each representing a window of data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_channels</span><span class="p">,</span> <span class="n">num_samples</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">windows</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_samples</span> <span class="o">-</span> <span class="n">window_size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">step_size</span><span class="p">):</span>
+        <span class="n">window</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:</span><span class="n">start</span> <span class="o">+</span> <span class="n">window_size</span><span class="p">]</span>
+        <span class="n">windows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">window</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">windows</span></div>
+
+
+
+
+
+<span class="c1"># def apply_pca(data, num_components=8, verbose=False):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     Applies PCA to reduce the number of EMG channels to the desired number of components.</span>
+<span class="c1">#</span>
+<span class="c1">#     Parameters:</span>
+<span class="c1">#         data: 2D numpy array of EMG data (channels, samples) -&gt; (128, 500,000).</span>
+<span class="c1">#         num_components: Number of principal components to reduce to (e.g., 8).</span>
+<span class="c1">#</span>
+<span class="c1">#     Returns:</span>
+<span class="c1">#         pca_data: 2D numpy array of reduced EMG data (num_components, samples).</span>
+<span class="c1">#         explained_variance_ratio: Percentage of variance explained by each of the selected components.</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     # Step 1: Standardize the data across the channels</span>
+<span class="c1">#     scaler = StandardScaler()</span>
+<span class="c1">#     features_std = scaler.fit_transform(data)  # Standardizing along the channels</span>
+<span class="c1">#</span>
+<span class="c1">#     # Step 2: Apply PCA</span>
+<span class="c1">#     pca = PCA(n_components=num_components)</span>
+<span class="c1">#     pca_data = pca.fit_transform(features_std)  # Apply PCA on the transposed data</span>
+<span class="c1">#</span>
+<span class="c1">#     if verbose:</span>
+<span class="c1">#         print(&quot;Original shape:&quot;, data.shape)</span>
+<span class="c1">#         print(&quot;PCA-transformed data shape:&quot;, pca_data.shape)</span>
+<span class="c1">#</span>
+<span class="c1">#     # Step 3: Get the explained variance ratio (useful for understanding how much variance is retained)</span>
+<span class="c1">#     explained_variance_ratio = pca.explained_variance_ratio_</span>
+<span class="c1">#</span>
+<span class="c1">#     return pca_data, explained_variance_ratio</span>
+
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../../../index.html">
+              <img class="logo" src="../../../_static/logo.png" alt="Logo of python-intan"/>
+            </a></p>
+<h1 class="logo"><a href="../../../index.html">python-intan</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">User's Guide</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/faqs.html">Frequently asked questions</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Tutorials</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../info/index.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/introduction.html">Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../intan_api/modules.html">intan</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024-2026, Jonathan Shulgach.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
