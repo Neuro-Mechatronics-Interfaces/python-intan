@@ -26,8 +26,8 @@ def test_version_is_consistent():
 def test_readme_logo_uses_an_absolute_url_for_pypi():
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     expected = (
-        'src="https://raw.githubusercontent.com/'
-        'Neuro-Mechatronics-Interfaces/python-intan/main/docs/figs/logo.png"'
+        "![Logo](https://raw.githubusercontent.com/"
+        "Neuro-Mechatronics-Interfaces/python-intan/main/docs/figs/logo.png)"
     )
     assert expected in readme
 
