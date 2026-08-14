@@ -164,7 +164,7 @@ Hardware, LSL, and interactive GUI behavior requires the corresponding devices, 
 
 1. Update the version consistently in `pyproject.toml`, `intan/__init__.py`, and `CITATION.cff`.
 2. Update `CHANGELOG.md`, run the full validation commands above, and inspect both archives.
-3. Commit the release changes, create a matching annotated tag such as `v0.2.1`, and rebuild from that clean tagged commit.
+3. Commit the release changes, create a matching annotated `vX.Y.Z` tag, and rebuild from that clean tagged commit.
 4. Upload to TestPyPI and validate an installation from TestPyPI.
 5. Upload the exact already-validated artifacts to PyPI.
 

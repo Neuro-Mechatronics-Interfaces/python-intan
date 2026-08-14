@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-intan"
-version = "0.2.1"
+version = "0.2.2"
 description = "Python interfaces and utilities for Intan RHX devices and electrophysiology data"
 readme = "README.md"
 requires-python = ">=3.10"

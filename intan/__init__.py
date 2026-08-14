@@ -9,7 +9,7 @@ This package includes modules for:
 - Configuration and device control
 """
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 __author__ = "Jonathan Shulgach"
 __email__ = "jshulgac@andrew.cmu.edu"
 __license__ = "MIT"

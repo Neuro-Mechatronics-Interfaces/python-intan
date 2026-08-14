@@ -9,6 +9,6 @@ authors:
   - family-names: Foy
     given-names: Adrian
     affiliation: Intan Technologies
-version: 0.2.1
+version: 0.2.2
 license: MIT
 repository-code: https://github.com/Neuro-Mechatronics-Interfaces/python-intan
