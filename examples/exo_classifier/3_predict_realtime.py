@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-4_predict_from_device_realtime_paper_style.py
+3_predict_realtime.py
 
 Real-time EMG gesture classification from Intan RHX device using paper-style processing.
 
@@ -11,27 +11,27 @@ Key differences from standard approach:
 - Paper-style neural network (30→512→512→N)
 - 250ms non-overlapping windows
 
-This matches the preprocessing pipeline in 1_build_training_dataset_paper_style.py
-and the model architecture in 2_train_model_paper_style.py
+This matches the preprocessing pipeline in 1_build_training_dataset.py
+and the model architecture in 2_train_model.py
 
 Examples:
 ---------
 # Paper-style: RMS only (default)
-python 4_predict_from_device_realtime_paper_style.py \
-    --root_dir "G:/.../2025_09_01" \
+python 3_predict_realtime.py \
+    --root_dir "./trained_model" \
     --label "exo_gestures" \
     --verbose
 
 # Use multiple features
-python 4_predict_from_device_realtime_paper_style.py \
-    --root_dir "G:/.../2025_09_01" \
+python 3_predict_realtime.py \
+    --root_dir "./trained_model" \
     --label "exo_gestures" \
     --features root_mean_square variance waveform_length \
     --verbose
 
 # With LSL output and majority vote smoothing
-python 4_predict_from_device_realtime_paper_style.py \
-    --root_dir "G:/.../2025_09_01" \
+python 3_predict_realtime.py \
+    --root_dir "./trained_model" \
     --label "exo_gestures" \
     --infer_hz 10 \
     --smooth_k 5 \
@@ -39,8 +39,8 @@ python 4_predict_from_device_realtime_paper_style.py \
     --verbose
 
 # All 7 features (like standard approach)
-python 4_predict_from_device_realtime_paper_style.py \
-    --root_dir "G:/.../2025_09_01" \
+python 3_predict_realtime.py \
+    --root_dir "./trained_model" \
     --label "exo_gestures" \
     --features root_mean_square variance waveform_length zero_crossings \
                slope_sign_changes mean_absolute_value integrated_emg \

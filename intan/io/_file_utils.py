@@ -465,7 +465,7 @@ def glob_first(pattern: str) -> Optional[str]:
     Return the first file matching a glob pattern, or None if no matches.
     
     Args:
-        pattern: Glob pattern (e.g., "/data/events/*.event")
+        pattern: Glob pattern (for example, ``/data/events/*.event``)
     
     Returns:
         First matching file path (sorted), or None

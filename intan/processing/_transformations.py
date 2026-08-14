@@ -74,9 +74,11 @@ def estimate_lag_coarse_to_fine(a, b, fs, max_lag="auto", decim=8, refine_s=1.0,
 
 def normxcorr_offset(a: np.ndarray, b: np.ndarray, max_lag: int | None = None, min_overlap: int = 256,
                      eps: float = 1e-8) -> tuple[int, float]:
-    """
-    Return (best_lag, best_score) where 'best_lag' (samples) means:
-        b shifted by +best_lag aligns to a.
+    """Return the best normalized cross-correlation lag and score.
+
+    A positive lag means that shifting ``b`` forward by that many samples aligns
+    it with ``a``.
+
     Both a and b may be different length; only the first min(len(a), len(b)) is used.
     Normalization: z-score each vector globally, then divide the dot product at
     each lag by the overlap length so scores are comparable across lags.

@@ -80,64 +80,64 @@ def main():
         print("[RHX][ERROR] Connection failed.")
         return 1
 
+    # Configure channels
+    print(f"[RHX] Configuring {args.channels} channels on port '{args.channel_port}'...")
+    rhx.clear_all_data_outputs()
+    rhx.enable_wide_channel(range(args.channels), port=args.channel_port)
+    rhx.start_streaming()
+
+    # Verify data is flowing
+    print("[RHX] Probing for incoming samples...")
+    probe_t0 = time.time()
+    probe_seen = 0
+    last_idx = rhx.circular_idx
+        
+    while time.time() - probe_t0 < 3.0:
+        time.sleep(0.05)
+        with rhx.buffer_lock:
+            cur_idx = rhx.circular_idx
+        if cur_idx != last_idx:
+            probe_seen += (cur_idx - last_idx) % rhx.circular_buffer.shape[1]
+            last_idx = cur_idx
+        print(f"  idx={cur_idx} (+{probe_seen} new)", end="\r")
+
+    print()
+    if probe_seen == 0:
+        print("[RHX][ERROR] No samples arrived in 3s.")
+        print("Checklist:")
+        print("  1. Is RHX in 'Run' mode (not 'Stop')?")
+        print("  2. Are channels properly connected?")
+        print("  3. Check RHX sample rate settings")
+        rhx.stop_streaming()
+        return 1
+    print(f"[RHX][OK] Received ~{probe_seen} samples during probe.")
+
+    fs = float(rhx.sample_rate)
+    n_channels = int(rhx.num_channels)
+    print(f"[RHX] Streaming {fs:.1f} Hz, {n_channels} channels")
+
+    # ---- Start IMU ----
+    print("[IMU] Connecting to Pico...")
+    imu = PicoIMUClient(print_rate_hz=0.0)
+    imu_ok = imu.start(timeout=6.0)
+        
+    if not imu_ok:
+        print(f"[IMU][WARN] Discovery failed: {imu.last_error() or 'unknown'}")
+        print("[IMU][WARN] Continuing without IMU (columns will be NaN)")
+    else:
+        print(f"[IMU][OK] Connected at ~{imu.rate_hz():.1f} Hz")
+
+    # ---- Open CSV file ----
     try:
-        # Configure channels
-        print(f"[RHX] Configuring {args.channels} channels on port '{args.channel_port}'...")
-        rhx.clear_all_data_outputs()
-        rhx.enable_wide_channel(range(args.channels), port=args.channel_port)
-        rhx.start_streaming()
-
-        # Verify data is flowing
-        print("[RHX] Probing for incoming samples...")
-        probe_t0 = time.time()
-        probe_seen = 0
-        last_idx = rhx.circular_idx
-        
-        while time.time() - probe_t0 < 3.0:
-            time.sleep(0.05)
-            with rhx.buffer_lock:
-                cur_idx = rhx.circular_idx
-            if cur_idx != last_idx:
-                probe_seen += (cur_idx - last_idx) % rhx.circular_buffer.shape[1]
-                last_idx = cur_idx
-            print(f"  idx={cur_idx} (+{probe_seen} new)", end="\r")
-
-        print()
-        if probe_seen == 0:
-            print("[RHX][ERROR] No samples arrived in 3s.")
-            print("Checklist:")
-            print("  1. Is RHX in 'Run' mode (not 'Stop')?")
-            print("  2. Are channels properly connected?")
-            print("  3. Check RHX sample rate settings")
-            return 1
-        else:
-            print(f"[RHX][OK] Received ~{probe_seen} samples during probe.")
-
-        fs = float(rhx.sample_rate)
-        n_channels = int(rhx.num_channels)
-        print(f"[RHX] Streaming {fs:.1f} Hz, {n_channels} channels")
-
-        # ---- Start IMU ----
-        print("[IMU] Connecting to Pico...")
-        imu = PicoIMUClient(print_rate_hz=0.0)
-        imu_ok = imu.start(timeout=6.0)
-        
-        if not imu_ok:
-            print(f"[IMU][WARN] Discovery failed: {imu.last_error() or 'unknown'}")
-            print("[IMU][WARN] Continuing without IMU (columns will be NaN)")
-        else:
-            print(f"[IMU][OK] Connected at ~{imu.rate_hz():.1f} Hz")
-
-        # ---- Open CSV file ----
-        try:
-            fout = open(args.outfile, "w", newline="")
-            writer = csv.writer(fout, delimiter=",")
-            write_header(writer, n_channels)
-            rows_written = 1  # header row
-            print(f"[LOG] Writing to {os.path.abspath(args.outfile)}")
-        except IOError as e:
-            print(f"[ERROR] Failed to open output file: {e}")
-            return 1
+        fout = open(args.outfile, "w", newline="")
+        writer = csv.writer(fout, delimiter=",")
+        write_header(writer, n_channels)
+        rows_written = 1  # header row
+        print(f"[LOG] Writing to {os.path.abspath(args.outfile)}")
+    except OSError as e:
+        rhx.stop_streaming()
+        print(f"[ERROR] Failed to open output file: {e}")
+        return 1
 
     # ---- Drain RHX circular buffer to file ----
     buf = rhx.circular_buffer           # shape (C, L)
@@ -214,16 +214,12 @@ def main():
                 # wrap case: write part1 then part2
                 # part1: (C, L-prev_idx_old)
                 start1 = None  # not needed; we directly index from buffer
-                for k in range(L - (prev_idx - n_new) if n_new <= L else L - (prev_idx - n_new) % L):
-                    # This loop logic is a bit hairy; simpler: do two explicit passes:
-                    pass
-                # Simpler approach without clever index math:
                 # We know wrap happened from old prev_idx to end (L-1), then 0..idx-1.
                 old_start = (idx - n_new) % L
                 # first pass: old_start .. L-1
                 k = old_start
                 while k < L:
-                    emg_col = [buf[ch][k] for ch in range(C)]
+                    emg_col = [buf[ch][k] for ch in range(n_channels)]
                     batch_rows.append(
                         emg_col + [imu_seq, roll, pitch, yaw, ax, ay, az, gx, gy, gz, t_write]
                     )
@@ -231,7 +227,7 @@ def main():
                 # second pass: 0 .. idx-1
                 k = 0
                 while k < idx:
-                    emg_col = [buf[ch][k] for ch in range(C)]
+                    emg_col = [buf[ch][k] for ch in range(n_channels)]
                     batch_rows.append(
                         emg_col + [imu_seq, roll, pitch, yaw, ax, ay, az, gx, gy, gz, t_write]
                     )
@@ -257,7 +253,7 @@ def main():
             if int(time.time() - t0) != int(t_write - t0):
                 rate_rows = (t_write - t0)
                 # don’t spam—comment this line out if undesired
-                print(f"[LOG] rows={rows_written} (C={C})  elapsed={t_write - t0:5.1f}s", end="\r")
+                print(f"[LOG] rows={rows_written} (C={n_channels})  elapsed={t_write - t0:5.1f}s", end="\r")
 
     except KeyboardInterrupt:
         print("\n[STOP] Closing…")

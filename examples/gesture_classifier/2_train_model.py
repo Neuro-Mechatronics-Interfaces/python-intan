@@ -38,7 +38,6 @@ import logging
 import numpy as np
 from pathlib import Path
 from intan.io import load_config_file, load_simple_config, save_simple_config, prompt_directory, prompt_file, get_or_prompt_value
-from intan.ml import ModelManager, EMGClassifier, EMGClassifierCNNLSTM
 from sklearn.metrics import classification_report, confusion_matrix
 
 
@@ -171,6 +170,12 @@ def _infer_label_classes(y, class_names, label_to_id):
 
 
 def train_model(cfg: dict, save_eval: bool = False):
+    try:
+        from intan.ml import ModelManager, EMGClassifier, EMGClassifierCNNLSTM
+    except ImportError as exc:
+        raise RuntimeError(
+            "Model training requires the ML extra: pip install 'python-intan[ml]'"
+        ) from exc
     """
     Train an EMG gesture classifier.
     

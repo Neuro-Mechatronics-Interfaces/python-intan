@@ -78,10 +78,10 @@ def parse_event_file(event_files, verbose=False):
 
 def parse_numeric_args(numeric_args, default_channels=[0, 1, 2, 3]):
     """
-    Parses the numeric argument from the command line.
-    Allows for:
-      string "all"
-      in list form: 0 1 2 3, 0:64, etc.
+    Parse a channel argument from the command line.
+
+    Accepts the string ``"all"``, integer lists, or a single slice-like
+    value such as ``"0:64"``.
     """
     print(f"Received argument: {numeric_args}")
     if numeric_args is None:
@@ -323,10 +323,11 @@ def select_training_channels_by_name(
 
 def trained_channel_names_from_meta(meta: dict) -> list[str]:
     """
-    Pull training channel names out of metadata. We accept both:
-      - meta["data"]["channel_names"] (preferred)
-      - meta["channel_names"] (legacy)
-    Returns [] if not found.
+    Pull training channel names from metadata.
+
+    The nested ``meta["data"]["channel_names"]`` location is preferred;
+    ``meta["channel_names"]`` is retained for compatibility. Returns an
+    empty list if neither location is present.
     """
     return list(meta.get("data", {}).get("channel_names") or meta.get("channel_names") or [])
 
@@ -492,10 +493,10 @@ def load_channel_mapping(
         FileNotFoundError: If mapping file doesn't exist
         KeyError: If mapping name not found in file
     
-    Example JSON file:
+    Example JSON file::
+
         {
-            "sleeve_halfcount": ["A-001", "A-002", "A-003", "B-001"],
-            "full_128": ["A-001", "A-002", ..., "B-064"]
+          "sleeve_halfcount": ["A-001", "A-002", "A-003", "B-001"]
         }
     """
     if not os.path.isfile(mapping_file):

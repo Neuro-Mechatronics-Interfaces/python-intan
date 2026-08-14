@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-1_build_training_dataset_paper_style.py
+1_build_training_dataset.py
 
 Build a training dataset following the published paper's approach:
 - 120 Hz high-pass filter (4th-order Butterworth)
@@ -16,20 +16,20 @@ Supports both .rhd (default) and .csv files.
 Examples
 --------
 # RHD files (default)
-python 1_build_training_dataset_paper_style.py \
+python 1_build_training_dataset.py \
     --root_dir /path/to/data \
     --label paper_replication \
     --overwrite --verbose
 
 # CSV files
-python 1_build_training_dataset_paper_style.py \
+python 1_build_training_dataset.py \
     --root_dir /path/to/data \
     --file_type csv \
     --label paper_style_csv \
     --overwrite
 
 # Specific files only
-python 1_build_training_dataset_paper_style.py \
+python 1_build_training_dataset.py \
     --root_dir /path/to/data \
     --file_names recording1.rhd recording2.rhd \
     --label subset_data

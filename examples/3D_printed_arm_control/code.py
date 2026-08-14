@@ -1,5 +1,3 @@
-<<<<<<< Updated upstream:3D_printed_arm_control/code.py
-
 """
   (c) Jonathan Shulgach - Cite and Notice license:
     All modifications to this code or use of it must include this notice and give credit for use.

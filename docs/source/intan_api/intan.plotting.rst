@@ -16,11 +16,6 @@ Submodules
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: intan.plotting._stacked_plot
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 .. automodule:: intan.plotting._waterfall
    :members:
    :undoc-members:

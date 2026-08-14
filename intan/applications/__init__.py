@@ -1,7 +1,7 @@
 """Lightweight package exports for intan.applications.
 
-Make imports lazy/guarded so importing the package doesn't pull heavy
-dependencies (tensorflow, scipy, pandas) during CLI or test runs.
+Make imports lazy/guarded so importing the package doesn't pull optional GUI,
+SciPy, or pandas dependencies during CLI or test runs.
 """
 try:
 	from ._emg_viewer import EMGViewer

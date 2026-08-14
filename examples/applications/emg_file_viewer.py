@@ -592,7 +592,7 @@ if GUI_AVAILABLE and MATPLOTLIB_AVAILABLE:
                     except Exception:
                         initial_dir = None
             if not initial_dir:
-                initial_dir = r"G:\\Shared drives\\NML_shared\\DataShare\\HDEMG Human Healthy\\HD-EMG_Cuff\\Jonathan\\2025_09_15\\raw\\exo_gestures_v3_250915_195637"
+                initial_dir = os.getcwd()
 
             path, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open EMG file', initial_dir,
                                                            'EMG Files (*.npz *.npy *.csv *.dat *.rhd);;RHD Files (*.rhd);;All Files (*)')

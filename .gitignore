@@ -10,9 +10,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# models made with keras or pytorch
-*.keras
-
 # New data files
 *.csv
 *.txt
@@ -27,7 +24,6 @@ gesture_classifier/*.pth
 
 # Temporary files used for debugging 
 /temp/
-/tests/
 temp/*
 /old/
 
@@ -87,6 +83,7 @@ docs/build/*
 pip-log.txt
 pip-delete-this-directory.txt
 /examples/temp/
+excluded_channels.json
 
 # Personal copilot files
  .github/copilot-instructions.md

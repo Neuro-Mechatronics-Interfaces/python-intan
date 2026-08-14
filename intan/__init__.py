@@ -9,25 +9,25 @@ This package includes modules for:
 - Configuration and device control
 """
 
-__version__ = "0.0.3"
+__version__ = "0.2.1"
 __author__ = "Jonathan Shulgach"
 __email__ = "jshulgac@andrew.cmu.edu"
 __license__ = "MIT"
 __url__ = "https://github.com/Neuro-Mechatronics-Interfaces/python-intan"
 __description__ = "Python interface for streaming, parsing, and analyzing Intan Technologies RHX files"
 
-import importlib as _importlib
+from importlib import import_module as _import_module
 
 submodules = [
-    # 'decomposition',
     'applications',
+    'decomposition',
     'io',
+    'ml',
     'plotting',
-    # 'control',
     'processing',
     'interface',
     'samples',
-    # 'stream',
+    'ui',
 ]
 
 __all__ = submodules + [
@@ -40,3 +40,16 @@ __all__ = submodules + [
 
 def __dir__():
     return __all__
+
+
+def __getattr__(name):
+    """Import public subpackages on first access.
+
+    This keeps ``import intan`` lightweight while supporting the documented
+    ``intan.io`` and ``intan.processing`` attribute style.
+    """
+    if name in submodules:
+        module = _import_module(f"{__name__}.{name}")
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

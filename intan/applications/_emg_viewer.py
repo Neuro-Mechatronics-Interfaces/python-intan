@@ -96,34 +96,22 @@ def _downsample_for_plot(y, max_points=2000):
 
 # --- IO helper utilities usable without GUI ---
 def save_model_obj(obj, path):
-    """Save a model object to `path`. Tries joblib, then Keras `save`, then pickle."""
+    """Save a model object with joblib or pickle."""
     try:
         if path.lower().endswith('.joblib') and joblib is not None:
             joblib.dump(obj, path); return
     except Exception:
         pass
-    try:
-        if _HAS_TF and hasattr(obj, 'save') and path:
-            obj.save(path); return
-    except Exception:
-        pass
-    # fallback
     import pickle
     with open(path, 'wb') as f:
         pickle.dump(obj, f)
 
 
 def load_model_obj(path):
-    """Load a model object from `path`. Tries joblib, then Keras load, then pickle."""
+    """Load a model object with joblib or pickle."""
     try:
         if path.lower().endswith('.joblib') and joblib is not None:
             return joblib.load(path)
-    except Exception:
-        pass
-    try:
-        if _HAS_TF:
-            from tensorflow.keras.models import load_model
-            return load_model(path)
     except Exception:
         pass
     import pickle
@@ -269,47 +257,6 @@ if _HAS_PYQT:
             btn_save_feat.clicked.connect(self.save_features)
             feat_layout.addWidget(btn_save_feat)
             tabs.addTab(feat_tab, 'Feature Dataset')
-
-            # --- Model training tab (placeholder) ---
-            train_tab = QtWidgets.QWidget()
-            train_layout = QtWidgets.QVBoxLayout(train_tab)
-
-            # Dataset controls
-            ds_h = QtWidgets.QHBoxLayout()
-            btn_load_ds = QtWidgets.QPushButton('Load Training Dataset')
-            btn_load_ds.clicked.connect(self.load_training_dataset_qt)
-            ds_h.addWidget(btn_load_ds)
-            self.dataset_shape_label = QtWidgets.QLabel('Dataset shape: N/A')
-            ds_h.addWidget(self.dataset_shape_label)
-            train_layout.addLayout(ds_h)
-
-            # Model config
-            cfg_frame = QtWidgets.QGroupBox('Model Configuration')
-            cfg_layout = QtWidgets.QFormLayout(cfg_frame)
-            self.layer_sizes_entry = QtWidgets.QLineEdit('512,256,128')
-            cfg_layout.addRow('Layer sizes (comma):', self.layer_sizes_entry)
-            self.dropout_entry = QtWidgets.QLineEdit('0.5,0.5,0.5')
-            cfg_layout.addRow('Dropout rate (comma):', self.dropout_entry)
-            self.lr_entry = QtWidgets.QLineEdit('0.001')
-            cfg_layout.addRow('Learning rate:', self.lr_entry)
-            self.batch_entry = QtWidgets.QLineEdit('32')
-            cfg_layout.addRow('Batch size:', self.batch_entry)
-            self.epochs_entry = QtWidgets.QLineEdit('30')
-            cfg_layout.addRow('Epochs:', self.epochs_entry)
-            self.train_test_split_entry = QtWidgets.QLineEdit('0.8')
-            cfg_layout.addRow('Train/Test split:', self.train_test_split_entry)
-            train_layout.addWidget(cfg_frame)
-
-            # Train / Save buttons
-            btns_h = QtWidgets.QHBoxLayout()
-            btn_train = QtWidgets.QPushButton('Train Model')
-            btn_train.clicked.connect(self.train_model_action)
-            btns_h.addWidget(btn_train)
-            btn_save_model = QtWidgets.QPushButton('Save Model')
-            btn_save_model.clicked.connect(self.save_model)
-            btns_h.addWidget(btn_save_model)
-            train_layout.addLayout(btns_h)
-            tabs.addTab(train_tab, 'Model Training')
 
             vlay.addWidget(tabs)
 
@@ -489,6 +436,10 @@ if _HAS_PYQT:
                     pass
                 self.play_timer.start(); self.playing = True; self.btn_play.setText('Pause')
 
+        def _on_slider_moved(self, value):
+            self.current_pos = int(value)
+            self.plot_waveforms()
+
         def _on_scrub_pressed(self):
             # pause playback while user scrubs
             self._was_playing_on_scrub = self.playing
@@ -629,16 +580,13 @@ if _HAS_PYQT:
             if not hasattr(self, 'trained_model') or self.trained_model is None:
                 QtWidgets.QMessageBox.information(self, 'Save Model', 'No trained model to save')
                 return
-            path, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Model', '', 'Joblib (*.joblib);;Keras (.keras);;All Files (*)')
+            path, _ = QtWidgets.QFileDialog.getSaveFileName(self, 'Save Model', '', 'Joblib (*.joblib);;Pickle (*.pkl);;All Files (*)')
             if not path:
                 return
             try:
                 if path.lower().endswith('.joblib') and joblib is not None:
                     joblib.dump(self.trained_model, path)
-                elif _HAS_TF and hasattr(self.trained_model, 'save'):
-                    self.trained_model.save(path)
                 else:
-                    # fallback: try numpy save for simple objects
                     import pickle
                     with open(path, 'wb') as f:
                         pickle.dump(self.trained_model, f)
@@ -647,15 +595,12 @@ if _HAS_PYQT:
                 QtWidgets.QMessageBox.warning(self, 'Save Model', str(e))
 
         def load_model(self):
-            path, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Load Model', '', 'Joblib (*.joblib);;Keras (.keras);;All Files (*)')
+            path, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Load Model', '', 'Joblib (*.joblib);;Pickle (*.pkl);;All Files (*)')
             if not path:
                 return
             try:
                 if path.lower().endswith('.joblib') and joblib is not None:
                     model = joblib.load(path)
-                elif _HAS_TF:
-                    from tensorflow.keras.models import load_model
-                    model = load_model(path)
                 else:
                     import pickle
                     with open(path, 'rb') as f:
@@ -692,15 +637,6 @@ if _HAS_PYQT:
                 QtWidgets.QMessageBox.information(self, 'Save Features', f'Saved features to {path}')
             except Exception as e:
                 QtWidgets.QMessageBox.warning(self, 'Save Features', str(e))
-
-        def train_model_action(self):
-            if not _HAS_TF:
-                QtWidgets.QMessageBox.information(self, 'Train Model', 'TensorFlow/Keras not available in this environment')
-                return
-            QtWidgets.QMessageBox.information(self, 'Train Model', 'Training flow not implemented in placeholder')
-
-        def save_model(self):
-            QtWidgets.QMessageBox.information(self, 'Save Model', 'Save model not implemented in placeholder')
 
         def compute_rms_action(self):
             if self.data is None:
@@ -747,48 +683,6 @@ if _HAS_PYQT:
             except Exception as e:
                 QtWidgets.QMessageBox.warning(self, 'Spectrogram', str(e))
 
-        def load_training_dataset_qt(self):
-            path, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Load Training Dataset', '', 'NumPy Compressed (*.npz);;All Files (*)')
-            if not path:
-                return
-            try:
-                data = np.load(path, allow_pickle=True)
-                X = data.get('features') if 'features' in data else data.get('X') if 'X' in data else None
-                y = data.get('labels') if 'labels' in data else data.get('y') if 'y' in data else None
-                if X is None:
-                    QtWidgets.QMessageBox.warning(self, 'Load Dataset', 'No features found in archive')
-                    return
-                self.X_train = X
-                self.y_train = y
-                self.dataset_shape_label.setText(f'Dataset shape: {getattr(X, "shape", "unknown")}')
-                QtWidgets.QMessageBox.information(self, 'Load Dataset', 'Dataset loaded')
-            except Exception as e:
-                QtWidgets.QMessageBox.warning(self, 'Load Dataset', str(e))
-
-        def update_network_diagram(self):
-            # Placeholder: could visualize network architecture in future
-            return
-
-        def train_model_action(self):
-            # If TensorFlow isn't available, inform user
-            if not _HAS_TF:
-                QtWidgets.QMessageBox.information(self, 'Train Model', 'TensorFlow/Keras not available in this environment')
-                return
-            # Read parameters and show confirmation (detailed training not implemented here)
-            try:
-                layers = [int(s.strip()) for s in self.layer_sizes_entry.text().split(',') if s.strip()]
-            except Exception:
-                layers = None
-            try:
-                dropout = [float(s.strip()) for s in self.dropout_entry.text().split(',') if s.strip()]
-            except Exception:
-                dropout = None
-            lr = self.lr_entry.text(); batch = self.batch_entry.text(); epochs = self.epochs_entry.text()
-            QtWidgets.QMessageBox.information(self, 'Train Model', f'Parameters:\nLayers: {layers}\nDropout: {dropout}\nLR: {lr}\nBatch: {batch}\nEpochs: {epochs}\n(Training flow not executed in placeholder)')
-
-    # expose EMGViewer name to rest of package
-    EMGViewer = EMGViewerQt
-
 # TO-DO: implement this into a separate intan module
 try:
     import joblib
@@ -806,23 +700,7 @@ except Exception:
     train_test_split = None
     _HAS_SKLEARN = False
 
-# TensorFlow/Keras is optional for model training; import lazily when available
-try:
-    from tensorflow.keras.models import Sequential
-    from tensorflow.keras.layers import Dense, Dropout
-    from tensorflow.keras.optimizers import Adam
-    from tensorflow.keras.utils import to_categorical
-    _HAS_TF = True
-except Exception:
-    Sequential = None
-    Dense = None
-    Dropout = None
-    Adam = None
-    to_categorical = None
-    _HAS_TF = False
-
-
-class EMGViewer:
+class EMGViewerTk:
     def __init__(self, root):
         self.root = root
         self.root.title("EMG Data Viewer")
@@ -889,13 +767,11 @@ class EMGViewer:
         self.tab_filtering = ttk.Frame(self.tabs)
         self.tab_trials = ttk.Frame(self.tabs)
         self.tab_training = ttk.Frame(self.tabs)
-        self.tab_model_training = ttk.Frame(self.tabs)
 
         self.tabs.add(self.tab_acquisition, text="Data Acquisition")
         self.tabs.add(self.tab_filtering, text="Filtering")
         self.tabs.add(self.tab_trials, text="Trial Utilities")
         self.tabs.add(self.tab_training, text="Feature Dataset")
-        self.tabs.add(self.tab_model_training, text="Model Training")
 
         # === Plotting Area ===
         bottom_frame = ttk.Frame(self.root)
@@ -938,7 +814,6 @@ class EMGViewer:
         self.build_filtering_tab()
         self.build_trials_tab()
         self.build_training_tab()
-        self.build_model_training_tab()
 
     def build_acquisition_tab(self):
         frame = ttk.Frame(self.tab_acquisition)
@@ -1263,83 +1138,6 @@ class EMGViewer:
 
         ttk.Button(right_panel, text="Build Training Set", command=self.build_training_dataset).pack(pady=15)
 
-    def build_model_training_tab(self):
-        # Dataset loading
-        ttk.Button(self.tab_model_training, text="Load Training Dataset", command=self.load_training_dataset).pack(pady=5)
-        self.dataset_shape_label = ttk.Label(self.tab_model_training, text="Dataset shape: N/A")
-        self.dataset_shape_label.pack(pady=2)
-
-        # Model config
-        config_frame = ttk.LabelFrame(self.tab_model_training, text="Model Configuration")
-        config_frame.pack(fill="x", padx=10, pady=10)
-
-        # === Left: Layer controls ===
-        layer_input_frame = ttk.Frame(config_frame)
-        layer_input_frame.pack(side="left", fill="y")
-
-        ttk.Label(layer_input_frame, text="Layer sizes (comma separated):").pack(anchor="w")
-        self.layer_sizes_entry = ttk.Entry(layer_input_frame, width=30)
-        self.layer_sizes_entry.insert(0, "512,256,128")
-        self.layer_sizes_entry.pack(anchor="w", pady=5)
-        self.layer_sizes_entry.bind("<KeyRelease>", lambda e: self.update_network_diagram())
-
-        ttk.Label(layer_input_frame, text="Dropout rate:").pack(anchor="w")
-        self.dropout_entry = ttk.Entry(layer_input_frame, width=30)
-        self.dropout_entry.insert(0, "0.5,0.5,0.5")
-        self.dropout_entry.pack(anchor="w", pady=5)
-        self.layer_sizes_entry.bind("<KeyRelease>", lambda e: self.update_network_diagram())
-
-        # === Right: Neural network diagram ===
-        self.network_canvas = tk.Canvas(config_frame, width=200, height=300, bg="white", highlightthickness=1,
-                                   relief="solid")
-        self.network_canvas.pack(side="left", padx=20, pady=10)
-
-        # === Training Configuration Section ===
-        training_frame = ttk.LabelFrame(self.tab_model_training, text="Training Configuration")
-        training_frame.pack(fill="x", padx=10, pady=10)
-
-        config_inputs = ttk.Frame(training_frame)
-        config_inputs.pack(fill="x", padx=5)
-
-        ttk.Label(config_inputs, text="Learning rate:").grid(row=0, column=0, sticky="w", padx=5)
-        self.lr_entry = ttk.Entry(config_inputs, width=10)
-        self.lr_entry.insert(0, "0.001")
-        self.lr_entry.grid(row=0, column=1, padx=5)
-
-        ttk.Label(config_inputs, text="Batch size:").grid(row=0, column=2, sticky="w", padx=5)
-        self.batch_entry = ttk.Entry(config_inputs, width=10)
-        self.batch_entry.insert(0, "32")
-        self.batch_entry.grid(row=0, column=3, padx=5)
-
-        ttk.Label(config_inputs, text="Epochs:").grid(row=1, column=0, sticky="w", padx=5)
-        self.epochs_entry = ttk.Entry(config_inputs, width=10)
-        self.epochs_entry.insert(0, "30")
-        self.epochs_entry.grid(row=1, column=1, padx=5)
-
-        ttk.Label(config_inputs, text="Train/Test Split:").grid(row=1, column=2, sticky="w", padx=5)
-        self.train_test_split_entry = ttk.Entry(config_inputs, width=10)
-        self.train_test_split_entry.insert(0, "0.8")
-        self.train_test_split_entry.grid(row=1, column=3, padx=5)
-        self.train_test_split_entry.bind("<Return>", lambda e: self.update_network_diagram())
-        self.train_test_split_entry.bind("<FocusOut>", lambda e: self.update_network_diagram())
-
-        # === Accuracy and Train Button Section ===
-        accuracy_frame = ttk.Frame(self.tab_model_training)
-        accuracy_frame.pack(fill="x", padx=10, pady=10)
-
-        # Training button
-        ttk.Button(accuracy_frame, text="Train Model", command=self.train_model).grid(row=0, column=0, padx=5, pady=5,
-                                                                                      sticky="w")
-
-        # Accuracy labels
-        ttk.Label(accuracy_frame, text="Training Accuracy:").grid(row=0, column=1, sticky="w", padx=5)
-        self.train_acc_label = ttk.Label(accuracy_frame, text="N/A")
-        self.train_acc_label.grid(row=0, column=2, sticky="w", padx=5)
-
-        ttk.Label(accuracy_frame, text="Testing Accuracy:").grid(row=0, column=3, sticky="w", padx=5)
-        self.test_acc_label = ttk.Label(accuracy_frame, text="N/A")
-        self.test_acc_label.grid(row=0, column=4, sticky="w", padx=5)
-
     def add_feature_directory(self):
         path = filedialog.askdirectory(title="Select EMG Segment Directory")
         if path:
@@ -1398,15 +1196,6 @@ class EMGViewer:
         self.bp_order_entry.insert(0, self.filter_order.get())
         self.training_features["notch"].set(self.notch_enabled.get())
         self.training_features["car"].set(self.car_enabled.get())
-
-    def load_training_dataset(self):
-        path = filedialog.askopenfilename(filetypes=[("NumPy Compressed", "*.npz")])
-        if not path:
-            return
-        data = np.load(path, allow_pickle=True)
-        self.X_train = data["features"]
-        self.y_train = to_categorical(data["labels"])
-        self.dataset_shape_label.config(text=f"Dataset shape: {self.X_train.shape}")
 
     def load_feature_segments(self):
         self.features_segment_listbox.delete(0, "end")
@@ -1507,65 +1296,6 @@ class EMGViewer:
         self.channel_selector.current(0)
         self.current_channel = 0
         self.plot_channel()
-
-    def train_model(self):
-        if self.X_train is None or self.y_train is None:
-            print("No dataset loaded.")
-            return
-
-        try:
-            layer_sizes = [int(s.strip()) for s in self.layer_sizes_entry.get().split(",")]
-            dropout = [float(s.strip()) for s in self.dropout_entry.get().split(",")]
-            lr = float(self.lr_entry.get())
-            batch_size = int(self.batch_entry.get())
-            epochs = int(self.epochs_entry.get())
-        except ValueError:
-            print("Invalid model or training parameters.")
-            return
-
-        save_path = filedialog.asksaveasfilename(defaultextension=".keras",
-                                                 filetypes=[("keras", "*.keras")],
-                                                 title="Save Trained Model As")
-        if not save_path:
-            return
-
-
-        # Pad dropout if needed
-        if len(dropout) < len(layer_sizes):
-            dropout += [0.0] * (len(layer_sizes) - len(dropout))
-
-        # Split the dataset
-        X_train_split, X_test_split, y_train_split, y_test_split = train_test_split(
-            self.X_train, self.y_train, test_size=0.2, random_state=42
-        )
-
-        # Build model
-        model = Sequential()
-        input_shape = self.X_train.shape[1]
-        model.add(Dense(layer_sizes[0], activation="relu", input_shape=(input_shape,)))
-
-        for i, size in enumerate(layer_sizes[1:], start=1):
-            model.add(Dense(size, activation="relu"))
-            if i < len(dropout) and dropout[i] > 0:
-                model.add(Dropout(dropout[i]))
-
-        model.add(Dense(self.y_train.shape[1], activation="softmax"))
-        model.compile(optimizer=Adam(learning_rate=lr), loss="categorical_crossentropy", metrics=["accuracy"])
-
-        # Train and evaluate
-        model.fit(X_train_split, y_train_split, batch_size=batch_size, epochs=epochs, verbose=1)
-
-        train_loss, train_acc = model.evaluate(X_train_split, y_train_split, verbose=0)
-        test_loss, test_acc = model.evaluate(X_test_split, y_test_split, verbose=0)
-
-        # Display accuracy
-        if hasattr(self, "train_acc_label") and hasattr(self, "test_acc_label"):
-            self.train_acc_label.config(text=f"{train_acc:.3f}")
-            self.test_acc_label.config(text=f"{test_acc:.3f}")
-
-        # Save model
-        model.save(save_path)
-        print(f"Model saved to: {save_path}")
 
     def update_training_labels_from_directory(self):
         """ Helper function to refresh the training labels listbox with all the labels detected from the current directories"""
@@ -1687,75 +1417,6 @@ class EMGViewer:
             label = parts[-2].strip().lower()
             if label and label not in self.training_labels_listbox.get(0, "end"):
                 self.training_labels_listbox.insert("end", label)
-
-    def update_network_diagram(self):
-        self.network_canvas.delete("all")
-
-        layer_text = self.layer_sizes_entry.get()  # e.g., "512,256,128,10"
-        dropout_text = self.dropout_entry.get()  # e.g., "0.5,0.3,0.1"
-        #try:
-        layer_sizes = [int(x.strip()) for x in layer_text.split(",")]
-        dropout_rates = [float(x.strip()) for x in dropout_text.split(",")]
-        # Example usage inside the GUI method:
-        # self.draw_neural_network(self.network_canvas, [512, 256, 128, 10], dropout_rates="0.5,0.3,0.1")
-
-        self.draw_neural_network(self.network_canvas, layer_sizes, dropout_rates)
-        #except Exception as e:
-        #    print(f"Could not render network: {e}")
-
-    def draw_neural_network(self, canvas, layers, dropout_rates=None):
-        import random
-        canvas.delete("all")
-        width = int(canvas["width"])
-        height = int(canvas["height"])
-
-        if dropout_rates is None:
-            dropout_rates = [0.0] * len(layers)
-        elif isinstance(dropout_rates, (float, int)):
-            dropout_rates = [float(dropout_rates)] * len(layers)
-
-        if len(dropout_rates) < len(layers):
-            dropout_rates += [0.0] * (len(layers) - len(dropout_rates))
-
-        vertical_spacing = 80
-        start_y = (height - (len(layers) * vertical_spacing)) // 2 + 20
-        box_size = 12
-        spacing = 6
-        layer_positions = []
-
-        for idx, layer_size in enumerate(layers):
-            num_boxes = min((layer_size + 99) // 100, 5)
-            total_width = num_boxes * (box_size + spacing) - spacing
-            x_start = (width - total_width) // 2
-            y = start_y + idx * vertical_spacing
-
-            positions = []
-            num_dropped = int(num_boxes * dropout_rates[idx])
-            dropped_indices = set(random.sample(range(num_boxes), num_dropped)) if num_dropped > 0 else set()
-
-            for i in range(num_boxes):
-                x0 = x_start + i * (box_size + spacing)
-                y0 = y
-                x1 = x0 + box_size
-                y1 = y0 + box_size
-                fill_color = "gray" if i in dropped_indices else "green"
-                canvas.create_rectangle(x0, y0, x1, y1, fill=fill_color, outline="black")
-                center = ((x0 + x1) // 2, (y0 + y1) // 2)
-                positions.append(center if i not in dropped_indices else None)  # preserve index even if dropped
-
-            layer_positions.append(positions)
-
-        # === Draw arrows ===
-        for i in range(len(layer_positions) - 1):
-            layer_from = layer_positions[i]
-            layer_to = layer_positions[i + 1]
-            for from_node in layer_from:
-                if from_node is None:
-                    continue
-                for to_node in layer_to:
-                    if to_node is None:
-                        continue
-                    canvas.create_line(from_node[0], from_node[1], to_node[0], to_node[1], arrow=tk.LAST, width=1)
 
     def run_trial_segmentation(self):
         """
@@ -2384,3 +2045,8 @@ class EMGViewer:
 
     def on_closing(self):
         self.root.quit()
+
+
+# Prefer the Qt implementation when the GUI extra is installed while keeping
+# the Tk implementation available to callers that rely on it.
+EMGViewer = EMGViewerQt if _HAS_PYQT else EMGViewerTk

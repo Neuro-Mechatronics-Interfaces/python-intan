@@ -201,6 +201,16 @@ except Exception:
     SVG_COLOR_LIGHT = "#1C1C1E"
     SVG_COLOR_DARK = "#E5E7EB"
 
+
+def default_scripts() -> dict[str, str]:
+    """Return repository-relative paths to the maintained pipeline scripts."""
+    base = default_examples_dir()
+    return {
+        "build": str(base / "1_build_dataset.py"),
+        "train": str(base / "2_train_model.py"),
+        "realtime": str(base / "3_predict.py"),
+    }
+
 # ---------------------------------------------------------------------------
 # QProcess-based runner (native, responsive)
 # ---------------------------------------------------------------------------
@@ -1188,7 +1198,7 @@ class MainWindow(QtWidgets.QMainWindow):
         args = [py, script] + self._compose_common()
 
         if (fp := self.ds_file_path.text().strip()):
-            args += ["--file_dir", fp]
+            args += ["--file_path", fp]
 
         ev = self.ds_events.text().strip().format(label=self.le_label.text().strip())
         if not os.path.isabs(ev):
@@ -1213,7 +1223,8 @@ class MainWindow(QtWidgets.QMainWindow):
         args = [py, script] + self._compose_common()
 
         name = self.tr_dataset_name.text().strip().format(label=self.le_label.text().strip())
-        args += ["--dataset_dir", name]
+        dataset_path = os.path.join(self.le_root.text().strip(), name)
+        args += ["--train_npz", dataset_path]
         if self.tr_save_eval.isChecked(): args.append("--save_eval")
         if self.tr_overwrite.isChecked(): args.append("--overwrite")
         if self.tr_verbose.isChecked():   args.append("--verbose")
@@ -1222,22 +1233,20 @@ class MainWindow(QtWidgets.QMainWindow):
     def _on_predict_clicked(self):
         py = self.le_python.text().strip() or which_python()
         script = self.le_rt_script.text().strip()
-        args = [py, script] + self._compose_common()
+        args = [py, script, "file"] + self._compose_common()
 
         if (pf := self.pr_file.text().strip()):
-            args += ["--file_dir", pf]
+            args += ["--file_path", pf]
         ev = self.pr_events.text().strip().format(label=self.le_label.text().strip())
         if not os.path.isabs(ev):
             ev = os.path.join(self.le_root.text().strip(), "events", ev)
         args += ["--events_file", ev]
-        if self.pr_use_lsl.isChecked():
-            args.append("--use_lsl")
         self.runner.run(args)
 
     def _on_stream_start(self):
         py = self.le_python.text().strip() or which_python()
         script = self.le_rt_script.text().strip()
-        args = [py, script] + self._compose_common()
+        args = [py, script, "stream"] + self._compose_common()
 
         def add(flag, w):
             t = w.text().strip()
@@ -1248,7 +1257,7 @@ class MainWindow(QtWidgets.QMainWindow):
         add("--infer_ms",  self.live_infer_ms)
         add("--infer_hz",  self.live_infer_hz)
         add("--smooth_k",  self.live_smooth_k)
-        add("--seconds",   self.live_seconds)
+        add("--seconds_total", self.live_seconds)
         if self.live_use_lsl.isChecked():
             args.append("--use_lsl")
 

@@ -171,7 +171,7 @@ If you use this pipeline in your research, please cite:
 ## Support
 
 - GitHub Issues: https://github.com/Neuro-Mechatronics-Interfaces/python-intan/issues
-- Documentation: https://python-intan.readthedocs.io/
+- Documentation: https://neuro-mechatronics-interfaces.github.io/python-intan/
 - Examples: `examples/finger_kinematics/`
 
 ### Naming Convention
@@ -194,7 +194,7 @@ Modify joint angle computation based on your hand tracking system:
 
 Combine datasets from multiple days:
 ```bash
-python 3_train_model.py \
+python 5_train_model.py \
     --root_dir /data \
     --train_npz day1/kinematics_dataset.npz day2/kinematics_dataset.npz
 ```
@@ -206,7 +206,7 @@ python 3_train_model.py \
 python -c "import torch; print(torch.cuda.is_available())"
 
 # Training automatically uses GPU if available
-python 3_train_model.py --root_dir /data --use_cuda
+python 5_train_model.py --root_dir /data --use_cuda
 ```
 
 ## Example Workflow
@@ -223,21 +223,21 @@ cp angles_*.csv ~/emg_kinematics/joint_angles/
 
 # Build dataset
 cd examples/finger_kinematics
-python 2_build_dataset.py \
+python 4_build_dataset.py \
     --root_dir ~/emg_kinematics \
     --multi_file \
     --window_ms 200 \
     --step_ms 50
 
 # Train model
-python 3_train_model.py \
+python 5_train_model.py \
     --root_dir ~/emg_kinematics \
     --use_pca \
     --pca_variance 0.95 \
     --epochs 150
 
 # Test on new recording
-python 4_predict.py file \
+python 6_predict.py file \
     --file_path ~/emg_kinematics/raw/test_recording.rhd \
     --angles_file ~/emg_kinematics/joint_angles/test_recording_angles.csv \
     --plot

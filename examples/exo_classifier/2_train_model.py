@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-2_train_model_paper_style.py
+2_train_model.py
 
 Train an EMG gesture classifier following the published paper's approach:
 - PCA dimensionality reduction to K=30 components
@@ -16,12 +16,12 @@ Journal of Neural Engineering paper.
 
 Examples
 --------
-python 2_train_model_paper_style.py \
+python 2_train_model.py \
     --root_dir /path/to/data \
     --label paper_replication \
     --overwrite --verbose
 
-python 2_train_model_paper_style.py \
+python 2_train_model.py \
     --root_dir /path/to/data \
     --label paper_style \
     --epochs 200 \

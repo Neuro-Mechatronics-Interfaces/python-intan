@@ -150,7 +150,7 @@ def create_parser():
                               help="Enable verbose logging")
     
     # ============================================================================
-    # STREAM MODE (3d_predict_from_device_realtime.py)
+    # STREAM MODE
     # ============================================================================
     stream_parser = subparsers.add_parser(
         "stream",
@@ -190,7 +190,7 @@ def main():
     
     # Check if running in interactive mode (no mode specified)
     import sys
-    if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] in ['-h', '--help']):
+    if len(sys.argv) == 1:
         # Interactive mode - prompt for mode first
         print("\n=== EMG Gesture Prediction ===\n")
         print("Available modes:")

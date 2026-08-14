@@ -1,7 +1,7 @@
 """Top-level `intan.ml` package.
 
 This module uses lazy imports so importing `intan.ml` does not immediately
-load heavy ML libraries (PyTorch/TensorFlow). Accessing symbols (e.g.
+load PyTorch. Accessing symbols (e.g.
 `EMGRealTimePredictor`, `ModelManager`) will import their defining modules on
 first use.
 """

@@ -24,8 +24,8 @@ Before each new recording session, record a 10-15 second calibration:
 ### 2. Create Calibration File
 
 ```bash
-python 5_calibrate_and_normalize.py calibrate \
-    --root_dir "G:/path/to/project" \
+python 3_calibrate_and_normalize.py calibrate \
+    --root_dir "./finger_kinematics_project" \
     --file_path "raw/calibration_session1.rhd" \
     --rest_duration 5.0 \
     --mvc_duration 5.0 \
@@ -39,8 +39,8 @@ This creates `calibration_session1_calibration.npz` containing:
 ### 3. Predict with Calibration
 
 ```bash
-python 4_predict.py file \
-    --root_dir "G:/path/to/project" \
+python 6_predict.py file \
+    --root_dir "./finger_kinematics_project" \
     --file_path "raw/test_recording.rhd" \
     --calibration_file "raw/calibration_session1_calibration.npz" \
     --label "finger_sweep" \
@@ -84,7 +84,7 @@ For training, you can also normalize entire datasets:
 Standardizes features to zero mean, unit variance:
 
 ```bash
-python 5_calibrate_and_normalize.py normalize \
+python 3_calibrate_and_normalize.py normalize \
     --dataset_path "dataset/finger_sweep_kinematics_dataset.npz" \
     --method zscore \
     --verbose
@@ -120,7 +120,7 @@ If you have multiple training sessions with calibrations:
 2. This creates a "calibration-normalized" training set
 3. Model learns relationships independent of session-specific baseline
 
-**Implementation** (requires modifying `2_build_dataset.py`):
+**Implementation** (see `4_build_dataset.py`):
 
 ```python
 # In preprocessing loop:
@@ -153,7 +153,7 @@ if calibration_file:
 
 See complete examples in the `finger_kinematics/` directory:
 - `1_extract_joint_angles.py` - Extract labels from video
-- `2_build_dataset.py` - Build training dataset
-- `3_train_model.py` - Train regression model
-- `4_predict.py` - Predict with optional calibration
-- `5_calibrate_and_normalize.py` - Calibration utilities (this file)
+- `4_build_dataset.py` - Build training dataset
+- `5_train_model.py` - Train regression model
+- `6_predict.py` - Predict with optional calibration
+- `3_calibrate_and_normalize.py` - Calibration utilities (this file)

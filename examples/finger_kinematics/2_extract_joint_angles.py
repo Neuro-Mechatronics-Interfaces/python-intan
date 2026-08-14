@@ -101,7 +101,7 @@ except ImportError as e:
     print("     pip install opencv-python mediapipe")
     print("     pip install git+https://github.com/Jshulgach/Hand-Landmark-Tracker.git")
     print("\n  3. Install from local clone:")
-    print("     cd _review/Hand-Landmark-Tracker")
+    print("     Install it in a separate environment from its public repository.")
     print("     pip install -e .")
     print(f"\nOriginal error: {e}\n")
     sys.exit(1)

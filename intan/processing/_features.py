@@ -203,15 +203,11 @@ def compute_rms(emg_window, axis=-1):
     Compute RMS of EMG data along a given axis.
 
     Parameters:
-        emg_window (np.ndarray): EMG data. Can be 1D or 2D.
-            - 1D shape: (n_samples,)
-            - 2D shape: (n_channels, n_samples)
+        emg_window (np.ndarray): EMG data with one or two dimensions.
         axis (int): Axis to compute RMS over. Default is -1 (last axis).
 
     Returns:
         np.ndarray or float: RMS value(s) along the given axis.
-            - If input is 1D: returns float
-            - If input is 2D: returns 1D array (n_channels,)
     """
     emg_window = np.asarray(emg_window)
     return np.sqrt(np.mean(emg_window ** 2, axis=axis))

@@ -4,9 +4,9 @@
   "label": "gestures",
   "verbose": false,
   "scripts": {
-    "build": "../gesture_classifier/1a_build_training_dataset_rhd.py",
+    "build": "../gesture_classifier/1_build_dataset.py",
     "train": "../gesture_classifier/2_train_model.py",
-    "realtime": "../gesture_classifier/3d_predict_from_device_realtime.py"
+    "realtime": "../gesture_classifier/3_predict.py"
   },
   "dataset": {
     "file_path": "",

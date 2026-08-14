@@ -68,10 +68,10 @@ key patterns, and concrete file examples.
     - Run examples: `python examples/RHXDevice/record_demo.py`
 
 - Where to look first
-    - Core API surface: [intan/__init__.py](intan/__init__.py)
-    - File I/O: [intan/io](intan/io/__init__.py)
-    - Device & TCP: [intan/interface/_rhx_device.py](intan/interface/_rhx_device.py), [intan/interface/_rhx_config.py](intan/interface/_rhx_config.py)
-    - Processing features: [intan/processing/_features.py](intan/processing/_features.py)
+    - Core API surface: [intan/__init__.py](../intan/__init__.py)
+    - File I/O: [intan/io](../intan/io/__init__.py)
+    - Device & TCP: [intan/interface/_rhx_device.py](../intan/interface/_rhx_device.py), [intan/interface/_rhx_config.py](../intan/interface/_rhx_config.py)
+    - Processing features: [intan/processing/_features.py](../intan/processing/_features.py)
     - Examples: `examples/` (gesture_classifier, RHXDevice, interface/pico)
 
 - Big picture
@@ -84,7 +84,7 @@ key patterns, and concrete file examples.
     - EMG array shape: always (channels, samples). Many functions expect this.
     - Sampling-rate param: pass `fs` explicitly to filters/features.
     - Channel selection: use integer indices or ranges (e.g. `range(128)`), not names.
-    - Feature registry: add new features to [intan/processing/_features.py](intan/processing/_features.py) via `FEATURE_REGISTRY`.
+    - Feature registry: add new features to [intan/processing/_features.py](../intan/processing/_features.py) via `FEATURE_REGISTRY`.
     - Label canonicalization: use the `CANON` mapping in `intan/io/_canonicalizer` for consistent channel names.
 
 - Device integration notes
@@ -103,9 +103,9 @@ key patterns, and concrete file examples.
     - Prefer minimal, focused changes; update the feature registry and examples when adding features.
 
 - Useful concrete examples to reference while coding
-    - Stream + record demo: [examples/RHXDevice/record_demo.py](examples/RHXDevice/record_demo.py)
-    - Build dataset example: [examples/gesture_classifier/1a_build_training_dataset_rhd.py](examples/gesture_classifier/1a_build_training_dataset_rhd.py)
-    - Real-time EMG+IMU integration: [examples/interface/rhx_emg_and_imu.py](examples/interface/rhx_emg_and_imu.py)
+    - TCP performance demo: [examples/RHXDevice/tcp_benchmark.py](../examples/RHXDevice/tcp_benchmark.py)
+    - Build dataset example: [examples/gesture_classifier/1_build_dataset.py](../examples/gesture_classifier/1_build_dataset.py)
+    - Real-time EMG+IMU integration: [examples/interface/rhx_emg_and_imu.py](../examples/interface/rhx_emg_and_imu.py)
 
 If any section should be expanded (CLI, CI, or specific files to reference), tell me which area and I will iterate.
     label_to_id_json=json.dumps(label_to_id),

@@ -98,24 +98,24 @@ def main():
     win = pg.GraphicsLayoutWidget(title="Real-Time EMG Channel QC (Adaptive)")
     win.resize(1600, 600)
 
-# Top plot: RMS bars
-plot = win.addPlot(title="EMG RMS per Channel (adaptive QC)")
-xpos = np.arange(n_channels)
-heights = np.zeros(n_channels, dtype=float)
+    # Top plot: RMS bars
+    plot = win.addPlot(title="EMG RMS per Channel (adaptive QC)")
+    xpos = np.arange(n_channels)
+    heights = np.zeros(n_channels, dtype=float)
 
-bar_item = pg.BarGraphItem(x=xpos, height=heights, width=0.8, brush='dodgerblue')
-plot.addItem(bar_item)
-plot.setYRange(0, ymax)
-plot.setXRange(-1, n_channels)
-plot.setLabel('left', "RMS Amplitude")
-plot.setLabel('bottom', "Channel")
+    bar_item = pg.BarGraphItem(x=xpos, height=heights, width=0.8, brush='dodgerblue')
+    plot.addItem(bar_item)
+    plot.setYRange(0, ymax)
+    plot.setXRange(-1, n_channels)
+    plot.setLabel('left', "RMS Amplitude")
+    plot.setLabel('bottom', "Channel")
 
-# Bottom row: status text
-win.nextRow()
-status_lbl = pg.LabelItem(justify='left')
-win.addItem(status_lbl)
+    # Bottom row: status text
+    win.nextRow()
+    status_lbl = pg.LabelItem(justify='left')
+    win.addItem(status_lbl)
 
-win.show()
+    win.show()
 
     # Keep a reference so we can replace it efficiently
     bar_ref = {'item': bar_item}

@@ -8,12 +8,13 @@ from intan.plotting import waterfall
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Load and visualize Intan .rhd files")
+    parser.add_argument('file', nargs='?', help='RHD file path; omit to open a file picker')
     parser.add_argument('--save_npz', action='store_true', help='Save the loaded data as an NPZ file')
     args = parser.parse_args()
 
     # ========== Load the data ==========
     # result = load_rhd_file(r'C:/absolute/path/to/emg/file.rhd')             # Specify the file path...
-    result = load_rhd_file()                                                  # ...or use the file dialog to select the file
+    result = load_rhd_file(args.file)                                         # Omitting the path opens a file picker
 
     # === If we have multiple files (for example, Intan saves separate files in 60 second increments) we can load and concatenate them ===
     #result = load_rhd_file(merge_files=True)                                 # ...use the file dialog to select all files
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     print(result['channel_names'])
 
     # ==== For multi-channel visualization, we can do a waterfall plot ====
-    waterfall(data=emg, channel_indices=range(0, 127), time_vector=t_s, plot_title='Intan EMG data')
+    waterfall(data=emg, channel_indices=range(emg.shape[0]), time_vector=t_s, plot_title='Intan EMG data')
 
     if args.save_npz:
         save_as_npz(result, os.path.join(result['export_basepath'], f"{result['export_basename']}.npz"))

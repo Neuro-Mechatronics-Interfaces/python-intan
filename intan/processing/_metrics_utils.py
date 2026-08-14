@@ -4,6 +4,7 @@ intan.processing._metrics_utils
 Utilities for loading gesture metrics and creating gesture-label mappings.
 
 This module:
+
 - Loads EMG trial classification metadata from CSV or TXT
 - Parses gesture names into integer class mappings
 - Provides helper functions for checking or retrieving metrics files

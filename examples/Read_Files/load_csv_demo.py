@@ -6,13 +6,15 @@ from intan.plotting import waterfall
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description="Load and visualize Intan .rhd files")
+    parser = argparse.ArgumentParser(description="Load and visualize an EMG CSV file")
+    parser.add_argument('file', nargs='?', help='CSV file path; omit to open a file picker')
+    parser.add_argument('--fs', type=float, default=1000.0, help='Fallback sample rate in Hz')
     parser.add_argument('--save_npz', action='store_true', help='Save the loaded data as an NPZ file')
     args = parser.parse_args()
 
     # Load your CSV (will also work with a file dialog if you omit the path)
     #result = load_csv_file(r"/path/to/emg_imu_data.csv")
-    result = load_csv_file()  # use file dialog
+    result = load_csv_file(args.file, sample_rate=args.fs)
 
     # Result structure highlights
     emg = result["amplifier_data"]            # shape: (n_channels, n_samples)

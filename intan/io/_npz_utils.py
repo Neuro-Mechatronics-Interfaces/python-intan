@@ -453,11 +453,8 @@ def load_npz_files(paths: Union[str, Sequence[str]], verbose: bool = False) -> L
     """
     Load MANY NPZ files, returning a list of dicts (one per NPZ).
 
-    `paths` may be:
-      - a directory (loads all *.npz inside),
-      - a file path,
-      - a glob pattern (e.g., '/data/emg/*.npz'),
-      - a list/tuple of any mix of the above.
+    ``paths`` may be a directory (loads all ``*.npz`` files), a file path,
+    a glob pattern, or a list/tuple containing any combination of those.
     """
     files = list_npz_files(paths)
     if len(files) == 0:

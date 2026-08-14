@@ -18,13 +18,13 @@ Two main approaches:
 
 Usage:
     # Normalize existing dataset
-    python 5_calibrate_and_normalize.py normalize --dataset_path dataset.npz
+    python 3_calibrate_and_normalize.py normalize --dataset_path dataset.npz
     
     # Create calibration file from recording
-    python 5_calibrate_and_normalize.py calibrate --file_path calibration.rhd
+    python 3_calibrate_and_normalize.py calibrate --file_path calibration.rhd
     
     # Predict with calibration
-    python 4_predict.py file --file_path test.rhd --calibration_file calibration.npz
+    python 6_predict.py file --file_path test.rhd --calibration_file calibration.npz
 """
 
 import os
@@ -276,7 +276,7 @@ def create_calibration_file(
     )
     
     logging.info(f"[OK] Calibration file saved: {output_path}")
-    logging.info(f"   Use with: python 4_predict.py file --calibration_file {output_path}")
+    logging.info(f"   Use with: python 6_predict.py file --calibration_file {output_path}")
 
 
 def apply_calibration_to_emg(

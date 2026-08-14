@@ -7,23 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-14
+
 ### Added
-- **Dependencies**: Added `torch>=2.0.0` to dependencies in `pyproject.toml` (required by ML models)
+- Console entry points for the EMG viewer and trial selector.
+- Release-readiness regression tests and explicit test/build dependency group.
+- Complete package metadata, classifiers, project URLs, and source manifest.
+
+### Changed
+- Split PyTorch, GUI, and video stacks into optional dependency groups.
+- Standardized supported model training and inference on PyTorch; removed the legacy TensorFlow/Keras viewer path.
+- Removed the cosmetic splash screen and its Pillow dependency.
+- Reworked the README and maintained documentation around demonstrable workflows.
+- Updated examples to run from the repository root and provide reliable `--help` output.
+- Reduced wheel and source-archive size by removing unused and duplicated image assets.
 
 ### Fixed
-- **Installation**: Fixed missing PyTorch dependency that caused `ModuleNotFoundError` when using ML features
-- **IO**: Fixed event file discovery for multi-file dataset building - now correctly strips timestamps when matching event files to data files
-- **Dataset Building**: Added interactive prompts for multi-file mode with exclude pattern support
-- **Dataset Building**: Added comprehensive error reporting showing missing event files and suggesting solutions
-
-### Planned
-- Performance benchmarking suite
-- Extended LSL marker synchronization features
-- Additional ML model architectures (transformers, attention mechanisms)
-- Mobile device integration
-- Public training datasets
-- Cloud integration for distributed processing
-- Advanced impedance testing tools
+- Repaired three syntax-broken examples and an unresolved merge marker.
+- Restored lazy top-level subpackage access and optional plotting imports.
+- Removed private-drive defaults, stale script references, and a cross-project package dependency.
+- Corrected the gesture pipeline GUI's maintained script paths and command arguments.
 
 ---
 
@@ -273,7 +276,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `pandas`
 - `PySerial`
 - `scikit-learn`
-- `tensorflow==2.19.0`
+- legacy neural-network runtime (removed from the supported stack in 0.2.1)
 - `seaborn`
 - `pyyaml`
 - `PyQt5`

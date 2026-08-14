@@ -1,9 +1,10 @@
 """
-nml_hand_exo.processing._filters
+intan.processing._filters
 
 Comprehensive EMG signal preprocessing module.
 
 Includes:
+
 - Bandpass, lowpass, and notch filters
 - Hilbert envelope extraction
 - RMS and windowed RMS computation
@@ -22,10 +23,6 @@ from ._features import compute_rms, window_rms, common_average_reference, envelo
 
 #from sklearn.decomposition import PCA
 #from sklearn.preprocessing import StandardScaler
-
-from scipy.signal import butter, filtfilt, iirnotch
-
-
 
 def preprocess_emg(emg_data, sample_rate):
     """

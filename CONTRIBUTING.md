@@ -55,7 +55,7 @@ If you find a bug, please create an issue with:
 
 **Environment**:
 - Python 3.10.12
-- python-intan 0.0.3
+- python-intan 0.2.1
 - Ubuntu 22.04
 
 **Code**:
@@ -137,10 +137,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 
 ```bash
 # Install package in editable mode with development dependencies
-pip install -e .
-
-# Install development tools (optional)
-pip install pytest black flake8 mypy
+python -m pip install -e '.[test]'
 ```
 
 ### 4. Install Pre-commit Hooks (Optional)
@@ -180,8 +177,8 @@ git checkout -b fix/issue-description
 ### 3. Test Your Changes
 
 ```bash
-# Run tests (if available)
-pytest tests/
+# Run tests
+python -m pytest
 
 # Check code style
 black intan/
@@ -330,7 +327,7 @@ def filter_emg(data, filter_type, sample_rate, lowcut=None, highcut=None):
 
 ## Testing
 
-We use `pytest` for testing (when tests exist):
+We use `pytest` for testing:
 
 ```bash
 # Run all tests
@@ -376,9 +373,8 @@ def test_window_rms_zeros():
 ### Building Documentation
 
 ```bash
-cd docs
-pip install sphinx sphinx-autodoc-typehints myst-parser
-make html
+python -m pip install -e '.[docs]'
+sphinx-build -W --keep-going -b html docs/source docs/build/html
 ```
 
 View at `docs/build/html/index.html`

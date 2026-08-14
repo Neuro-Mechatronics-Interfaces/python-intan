@@ -14,7 +14,7 @@ Initial analysis revealed time offsets ranging from **-8.0s to +9.7s** between E
 
 ## Solution: Cross-Correlation Based Sync
 
-### Algorithm (`6_synchronize_emg_video.py`)
+### Algorithm (`1_synchronize_emg_video.py`)
 
 1. **Extract Movement Signals**:
    - **EMG Signal**: Average envelope across all channels (bandpass → rectify → lowpass @ 10Hz)
@@ -64,7 +64,7 @@ Example: `train_finger_sweep_251110_125854_sync.json`
 }
 ```
 
-### 2. Dataset Building (`2_build_dataset.py`)
+### 2. Dataset Building (`4_build_dataset.py`)
 
 **Key change**: Line 285
 ```python
@@ -77,7 +77,7 @@ angle_timestamps = angle_timestamps - sync_offset_sec
 2. Subtract from `angle_timestamps` (shifts landmarks backward in time)
 3. Interpolate angles to EMG window timestamps
 
-### 3. Prediction (`4_predict.py`)
+### 3. Prediction (`6_predict.py`)
 
 **Key change**: Lines 161-182
 ```python
@@ -96,18 +96,18 @@ if os.path.exists(sync_dir):
 
 ```bash
 # Single file
-python 6_synchronize_emg_video.py find \
+python 1_synchronize_emg_video.py find \
     --root_dir "path/to/root" \
     --emg_file "train_finger_sweep.rhd" \
     --landmarks_file "train_finger_sweep_landmarks.npz"
 
 # Batch process all recordings
-python 6_synchronize_emg_video.py batch \
+python 1_synchronize_emg_video.py batch \
     --root_dir "path/to/root" \
     --verbose
 
 # Visualize alignment
-python 6_synchronize_emg_video.py plot \
+python 1_synchronize_emg_video.py plot \
     --root_dir "path/to/root" \
     --emg_file "train_finger_sweep.rhd" \
     --landmarks_file "train_finger_sweep_landmarks.npz" \
@@ -118,7 +118,7 @@ python 6_synchronize_emg_video.py plot \
 ### Build Synchronized Dataset
 
 ```bash
-python 2_build_dataset.py \
+python 4_build_dataset.py \
     --file_names train_finger_sweep_251110_125854 train_finger_sweep2_251110_130107 \
     --label finger_sweep_synced
 ```
@@ -129,12 +129,12 @@ python 2_build_dataset.py \
 
 ```bash
 # Train
-python 3_train_model.py \
+python 5_train_model.py \
     --train_npz finger_sweep_synced_kinematics_dataset.npz \
     --label finger_sweep_synced
 
 # Predict (sync applied automatically)
-python 4_predict.py file \
+python 6_predict.py file \
     --root_dir "path/to/root" \
     --label "finger_sweep_synced" \
     --file_path "test_file.rhd" \
@@ -194,9 +194,9 @@ The synchronized model has **lower validation performance but is more honest** -
 
 ## Files Modified
 
-- `6_synchronize_emg_video.py` ✅ NEW - Sync detection tool
-- `2_build_dataset.py` ✅ MODIFIED - Load and apply sync offsets
-- `4_predict.py` ✅ MODIFIED - Apply sync to ground truth during evaluation
+- `1_synchronize_emg_video.py` - Sync detection tool
+- `4_build_dataset.py` - Load and apply sync offsets
+- `6_predict.py` - Apply sync to ground truth during evaluation
 - `SYNCHRONIZATION.md` ✅ NEW - This documentation
 
 ## Next Steps

@@ -13,7 +13,7 @@
 
 # Path to the root directory containing all project data
 # Used by: all scripts
-root_dir=G:/path/to/your/project
+root_dir=./gesture_project
 
 # Model label/tag (e.g., '128ch', 'emg_v1', etc.)
 # Used by: training (2*.py) and prediction (3*.py) scripts
@@ -29,19 +29,19 @@ verbose=false
 
 # Directory containing raw RHD files
 # Used by: 1a, 1b, 1e
-raw_dir=G:/path/to/raw
+raw_dir=./gesture_project/raw
 
 # Directory containing events files
 # Used by: 1a, 1b, 1e
-events_dir=G:/path/to/events
+events_dir=./gesture_project/events
 
 # Directory containing NPZ files (for NPZ-based dataset building)
 # Used by: 1c, 1d
-npz_dir=G:/path/to/npz
+npz_dir=./gesture_project/npz
 
 # Output directory for training datasets
 # Used by: 1a-1e
-output_dir=G:/path/to/output
+output_dir=./gesture_project/output
 
 # Feature extraction window size in milliseconds
 # Used by: 1a-1e, 3a-3d
@@ -57,7 +57,7 @@ step_ms=50
 
 # Path to training dataset (.npz file)
 # Used by: 2, 2b
-dataset_path=G:/path/to/training_dataset.npz
+dataset_path=./gesture_project/training_dataset.npz
 
 # Number of training epochs
 # Used by: 2, 2b
@@ -85,11 +85,11 @@ n_components=30
 
 # Path to RHD file for single-file prediction
 # Used by: 3a, predict.py --mode file
-file_path=G:/path/to/recording.rhd
+file_path=./gesture_project/raw/recording.rhd
 
 # Glob pattern for batch prediction
 # Used by: 3b, predict.py --mode batch
-rhd_glob=G:/path/to/raw/**/*.rhd
+rhd_glob=./gesture_project/raw/**/*.rhd
 
 # Recording duration in seconds (device modes)
 # Used by: 3c, predict.py --mode record

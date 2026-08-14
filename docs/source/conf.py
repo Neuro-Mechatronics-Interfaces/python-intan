@@ -7,14 +7,16 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))  # Ensure intan/ is discoverable
 
+from intan import __version__
+
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'python-intan'
-copyright = '2025, Jonathan Shulgach'
+copyright = '2024-2026, Jonathan Shulgach'
 author = 'Jonathan Shulgach'
-release = '0.1.0'
+release = __version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -39,8 +41,7 @@ add_module_names = False
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'alabaster'
-html_static_path = ['_static']
-html_logo = "../figs/logo.png"  # or path to your logo if desired
+html_logo = "../figs/logo.png"
 
 # For Markdown support:
 source_suffix = ['.rst', '.md']

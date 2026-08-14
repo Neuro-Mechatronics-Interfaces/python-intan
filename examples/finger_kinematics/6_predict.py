@@ -507,7 +507,7 @@ if __name__ == "__main__":
         
         if args.mode == 'batch' or args.mode == 'record' or args.mode == 'stream':
             print(f"\nInteractive mode for '{args.mode}' not yet implemented.")
-            print(f"Please run: python 4_predict.py {args.mode} --help")
+            print(f"Please run: python 6_predict.py {args.mode} --help")
             sys.exit(0)
     
     # Load config

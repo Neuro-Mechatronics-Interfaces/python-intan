@@ -171,7 +171,7 @@ def predict_batch(
     
     Args:
         root_dir: Directory containing trained model/metadata
-        rhd_glob: Glob pattern for RHD files (e.g., "raw/**/*.rhd")
+        rhd_glob: Glob pattern for RHD files (for example, ``raw/**/*.rhd``)
         rhd_files: Explicit list of RHD file paths
         events_dir: Directory containing event files
         label: Model label/tag

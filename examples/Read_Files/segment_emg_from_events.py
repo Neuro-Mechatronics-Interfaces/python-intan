@@ -199,7 +199,7 @@ def process_one_recording(
     """Process a single .poly5 with its matching .event; returns #segments written."""
     event_path = _guess_event_path_for_raw(poly5_path, events_dir)
     if event_path is None or not event_path.exists():
-        print(f"⚠️  No matching .event found for {poly5_path.name}")
+        print(f"WARNING: No matching .event found for {poly5_path.name}")
         return 0
 
     cues = load_events_table(event_path)
@@ -227,7 +227,7 @@ def process_one_recording(
         )
         n_written += 1
 
-    print(f"✓ {poly5_path.name} → wrote {n_written} segments to {out_dir}")
+    print(f"OK: {poly5_path.name} -> wrote {n_written} segments to {out_dir}")
     return n_written
 
 
@@ -237,7 +237,7 @@ def main():
     ap.add_argument("--events", required=True, help="Folder with .event files")
     ap.add_argument("--out", required=True, help="Output folder for .npz")
     ap.add_argument("--include-rest", action="store_true", help="Keep 'Rest' segments")
-    ap.add_argument("--include-last", action="store_true", help="Keep tail (last cue → end)")
+    ap.add_argument("--include-last", action="store_true", help="Keep tail (last cue to end)")
     args = ap.parse_args()
 
     raw_dir   = Path(args.raw)

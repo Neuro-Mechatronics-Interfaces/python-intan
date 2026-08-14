@@ -27,7 +27,7 @@ The paper's approach consists of:
 ### Step 1: Build Training Dataset (Paper Style)
 
 ```bash
-python 1_build_training_dataset_paper_style.py \
+python 1_build_training_dataset.py \
     --root_dir /path/to/your/data \
     --label paper_replication \
     --overwrite \
@@ -44,7 +44,7 @@ python 1_build_training_dataset_paper_style.py \
 ### Step 2: Train Model (Paper Style)
 
 ```bash
-python 2_train_model_paper_style.py \
+python 2_train_model.py \
     --root_dir /path/to/your/data \
     --label paper_replication \
     --overwrite \
@@ -88,21 +88,21 @@ your_data/
 
 ```bash
 # Use specific recordings only
-python 1_build_training_dataset_paper_style.py \
+python 1_build_training_dataset.py \
     --root_dir /path/to/data \
     --label my_experiment \
     --csv_names recording1.csv recording3.csv \
     --verbose
 
 # Select specific channels (e.g., first 32 channels)
-python 1_build_training_dataset_paper_style.py \
+python 1_build_training_dataset.py \
     --root_dir /path/to/data \
     --label subset_32ch \
     --channels 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 \
     --overwrite
 
 # Custom save location
-python 1_build_training_dataset_paper_style.py \
+python 1_build_training_dataset.py \
     --root_dir /path/to/data \
     --label experiment \
     --save_path /custom/path/dataset.npz
@@ -112,7 +112,7 @@ python 1_build_training_dataset_paper_style.py \
 
 ```bash
 # Custom hyperparameters
-python 2_train_model_paper_style.py \
+python 2_train_model.py \
     --root_dir /path/to/data \
     --label my_experiment \
     --epochs 100 \
@@ -121,14 +121,14 @@ python 2_train_model_paper_style.py \
     --verbose
 
 # Different PCA components (not paper-style, but for experimentation)
-python 2_train_model_paper_style.py \
+python 2_train_model.py \
     --root_dir /path/to/data \
     --label pca_50 \
     --pca_components 50 \
     --overwrite
 
 # Custom train/val/test splits
-python 2_train_model_paper_style.py \
+python 2_train_model.py \
     --root_dir /path/to/data \
     --label custom_split \
     --validation_split 0.15 \
@@ -207,7 +207,7 @@ Here's a complete example from start to finish:
 
 ```bash
 # 1. Build dataset from your recordings
-python 1_build_training_dataset_paper_style.py \
+python 1_build_training_dataset.py \
     --root_dir ~/emg_data/experiment_2024 \
     --label paper_replication \
     --overwrite \
@@ -228,7 +228,7 @@ python 1_build_training_dataset_paper_style.py \
 # SUCCESS! Dataset saved to: ~/emg_data/experiment_2024/paper_replication_training_dataset.npz
 
 # 2. Train the model
-python 2_train_model_paper_style.py \
+python 2_train_model.py \
     --root_dir ~/emg_data/experiment_2024 \
     --label paper_replication \
     --epochs 200 \
@@ -322,7 +322,7 @@ If you use this implementation, please cite the original paper:
 - Original scripts:
   - `examples/gesture_classifier/1e_build_training_dataset_any.py` - Standard dataset builder
   - `examples/gesture_classifier/2_train_model.py` - Standard model trainer
-  - `examples/gesture_classifier/3d_predict_from_device_realtime.py` - Real-time inference
+  - `examples/gesture_classifier/3_predict.py stream` - Maintained real-time inference workflow
 
 ## 💡 Tips
 
