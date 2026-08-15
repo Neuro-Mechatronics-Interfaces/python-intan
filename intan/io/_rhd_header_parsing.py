@@ -728,6 +728,26 @@ def calculate_data_size(header, filename, fid, verbose=True):
     if bytes_remaining > 0:
         data_present = True
 
+        # Cloud-backed files can report their remote logical size even when
+        # only a small prefix is readable locally. Probe the final byte before
+        # allocating arrays based on the reported size so the resulting error
+        # explains the storage problem rather than surfacing as a reshape
+        # failure deep in the block parser.
+        data_start = fid.tell()
+        try:
+            fid.seek(filesize - 1)
+            final_byte = fid.read(1)
+        finally:
+            fid.seek(data_start)
+        if len(final_byte) != 1:
+            raise FileSizeError(
+                f"File metadata reports {filesize} bytes, but the final byte "
+                f"could not be read from {filename!r}. The file is truncated "
+                "or its cloud-backed contents are not fully available locally. "
+                "Make the file available offline, re-sync it, or restore it "
+                "from the acquisition copy before loading."
+            )
+
     # If the file size is somehow different than expected, raise an error.
     if bytes_remaining % bytes_per_block != 0:
         raise FileSizeError(

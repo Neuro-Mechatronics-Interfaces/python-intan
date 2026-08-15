@@ -15,6 +15,7 @@ Intended for internal use by the Intan RHX Python interface.
 """
 import numpy as np
 import struct
+from intan.io._exceptions import FileSizeError
 from intan.io._file_utils import print_progress
 
 FRAMES_PER_BLOCK = 128
@@ -22,6 +23,29 @@ MAGIC_NUMBER = 0x2ef07a08
 
 SAMPLE_SCALE_FACTOR = 0.195  # Scale factor for amplifier data
 ANALOG_SCALE_FACTOR = 312.5e-6  # Scale factor for analog data
+
+
+def _read_exact(fid, num_bytes, signal_name):
+    """Read exactly ``num_bytes`` or raise an actionable file-size error."""
+    start = fid.tell()
+    chunks = []
+    remaining = int(num_bytes)
+    while remaining:
+        chunk = fid.read(remaining)
+        if not chunk:
+            break
+        chunks.append(chunk)
+        remaining -= len(chunk)
+
+    raw = b"".join(chunks)
+    if len(raw) != num_bytes:
+        path = getattr(fid, "name", "<binary stream>")
+        raise FileSizeError(
+            f"Short read for {signal_name} at byte offset {start} in {path!r}: "
+            f"expected {num_bytes} bytes, received {len(raw)}. The file may be "
+            "truncated or incompletely synchronized from cloud storage."
+        )
+    return raw
 
 
 # Byte Parsing Functions
@@ -120,8 +144,9 @@ def read_timestamps(fid, data, indices, num_samples, timestamp_signed):
     format_sign = 'i' if timestamp_signed else 'I'
     format_expression = '<' + format_sign * num_samples
     read_length = 4 * num_samples
+    raw = _read_exact(fid, read_length, "amplifier timestamps")
     data['t_amplifier'][start:end] = np.array(struct.unpack(
-        format_expression, fid.read(read_length)))
+        format_expression, raw))
 
 
 def read_analog_signals(fid, data, indices, samples_per_block, header):
@@ -203,7 +228,9 @@ def read_analog_signal_type(fid, dest, start, num_samples, num_channels):
     if num_channels < 1:
         return
     end = start + num_samples
-    tmp = np.fromfile(fid, dtype='uint16', count=num_samples * num_channels)
+    count = num_samples * num_channels
+    raw = _read_exact(fid, 2 * count, "analog samples")
+    tmp = np.frombuffer(raw, dtype='<u2', count=count)
     dest[range(num_channels), start:end] = (
         tmp.reshape(num_channels, num_samples))
 
@@ -227,8 +254,8 @@ def read_digital_signal_type(fid, dest, start, num_samples, num_channels):
     if num_channels < 1:
         return
     end = start + num_samples
-    dest[start:end] = np.array(struct.unpack(
-        '<' + 'H' * num_samples, fid.read(2 * num_samples)))
+    raw = _read_exact(fid, 2 * num_samples, "digital samples")
+    dest[start:end] = np.frombuffer(raw, dtype='<u2', count=num_samples)
 
 
 def read_all_data_blocks(header, num_samples, num_blocks, fid, verbose=True):
@@ -250,7 +277,12 @@ def read_all_data_blocks(header, num_samples, num_blocks, fid, verbose=True):
     print_step = 10
     percent_done = print_step
     for i in range(num_blocks):
-        read_one_data_block(data, header, indices, fid)
+        try:
+            read_one_data_block(data, header, indices, fid)
+        except FileSizeError as exc:
+            raise FileSizeError(
+                f"Failed while reading RHD data block {i + 1} of {num_blocks}: {exc}"
+            ) from exc
         advance_indices(indices, header['num_samples_per_data_block'])
         if verbose:
             percent_done = print_progress(i + 1, num_blocks, print_step, percent_done)
