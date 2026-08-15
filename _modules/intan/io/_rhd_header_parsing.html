@@ -850,6 +850,26 @@
     <span class="k">if</span> <span class="n">bytes_remaining</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">data_present</span> <span class="o">=</span> <span class="kc">True</span>
 
+        <span class="c1"># Cloud-backed files can report their remote logical size even when</span>
+        <span class="c1"># only a small prefix is readable locally. Probe the final byte before</span>
+        <span class="c1"># allocating arrays based on the reported size so the resulting error</span>
+        <span class="c1"># explains the storage problem rather than surfacing as a reshape</span>
+        <span class="c1"># failure deep in the block parser.</span>
+        <span class="n">data_start</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">filesize</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">final_byte</span> <span class="o">=</span> <span class="n">fid</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">fid</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="n">data_start</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_byte</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FileSizeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;File metadata reports </span><span class="si">{</span><span class="n">filesize</span><span class="si">}</span><span class="s2"> bytes, but the final byte &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;could not be read from </span><span class="si">{</span><span class="n">filename</span><span class="si">!r}</span><span class="s2">. The file is truncated &quot;</span>
+                <span class="s2">&quot;or its cloud-backed contents are not fully available locally. &quot;</span>
+                <span class="s2">&quot;Make the file available offline, re-sync it, or restore it &quot;</span>
+                <span class="s2">&quot;from the acquisition copy before loading.&quot;</span>
+            <span class="p">)</span>
+
     <span class="c1"># If the file size is somehow different than expected, raise an error.</span>
     <span class="k">if</span> <span class="n">bytes_remaining</span> <span class="o">%</span> <span class="n">bytes_per_block</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="n">FileSizeError</span><span class="p">(</span>
