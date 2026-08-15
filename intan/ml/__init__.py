@@ -8,6 +8,9 @@ first use.
 from importlib import import_module
 from typing import Dict, Tuple
 
+_ML_DEPENDENCIES = {"joblib", "sklearn", "torch"}
+_ML_INSTALL_HINT = "pip install 'python-intan[ml]'"
+
 # Map exported names to (module_name, attr_name)
 _EXPORTS: Dict[str, Tuple[str, str]] = {
     'EMGRealTimePredictor': ('._ml_utilities', 'EMGRealTimePredictor'),
@@ -35,7 +38,17 @@ def __getattr__(name: str):
     """Lazily import symbols from submodules on first attribute access."""
     if name in _EXPORTS:
         mod_name, attr = _EXPORTS[name]
-        mod = import_module(__name__ + mod_name)
+        try:
+            mod = import_module(__name__ + mod_name)
+        except ModuleNotFoundError as exc:
+            missing_package = (exc.name or "").split(".", maxsplit=1)[0]
+            if missing_package in _ML_DEPENDENCIES:
+                raise ModuleNotFoundError(
+                    f"{name} requires the optional machine-learning dependencies. "
+                    f"Install them with `{_ML_INSTALL_HINT}`. "
+                    f"Missing package: {exc.name}."
+                ) from exc
+            raise
         return getattr(mod, attr)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
