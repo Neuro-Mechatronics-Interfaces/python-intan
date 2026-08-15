@@ -36,8 +36,9 @@ except Exception:
     ttk = None
 
 try:
-    from intan.io import load_rhd_file
+    from intan.io import load_npz_file, load_rhd_file
 except Exception:
+    load_npz_file = None
     load_rhd_file = None
 
 try:
@@ -92,6 +93,77 @@ def _downsample_for_plot(y, max_points=2000):
     y_ds[0::2] = mins
     y_ds[1::2] = maxs
     return y_ds
+
+
+def _load_emg_recording(path):
+    """Load an RHD or NPZ recording as channel-major EMG and metadata."""
+    extension = os.path.splitext(os.fspath(path))[1].lower()
+    if extension == '.rhd':
+        if load_rhd_file is None:
+            raise RuntimeError("RHD loading is unavailable from intan.io")
+        result = load_rhd_file(path, verbose=False)
+    elif extension == '.npz':
+        if load_npz_file is None:
+            raise RuntimeError("NPZ loading is unavailable from intan.io")
+        result = load_npz_file(path, verbose=False)
+    else:
+        raise ValueError(f"Unsupported recording type: {extension or '<none>'}")
+
+    emg = result.get('amplifier_data')
+    if emg is None:
+        emg = result.get('data')
+    if emg is None:
+        raise ValueError("Recording does not contain amplifier/EMG data")
+    emg = np.asarray(emg)
+    if emg.ndim != 2:
+        raise ValueError(f"Recording EMG must be 2-D, received shape {emg.shape}")
+
+    time_vector = result.get('t_amplifier')
+    if time_vector is None:
+        time_vector = result.get('time_vector')
+    if time_vector is None:
+        time_vector = result.get('t')
+    if time_vector is not None:
+        time_vector = np.asarray(time_vector)
+        if time_vector.ndim != 1:
+            raise ValueError(
+                f"Recording time vector must be 1-D, received shape {time_vector.shape}"
+            )
+        if time_vector.size == emg.shape[0] and time_vector.size != emg.shape[1]:
+            emg = emg.T
+
+    labels = result.get('channel_names')
+    if labels is None:
+        labels = result.get('ch_names')
+    if labels is not None:
+        labels = [str(label) for label in labels]
+        if len(labels) == emg.shape[1] and len(labels) != emg.shape[0]:
+            emg = emg.T
+
+    sampling_rate = result.get('_fs_Hz')
+    if sampling_rate is None:
+        sampling_rate = result.get('sample_rate')
+    if sampling_rate is None:
+        sampling_rate = result.get('fs')
+    if sampling_rate is None and isinstance(result.get('frequency_parameters'), dict):
+        sampling_rate = result['frequency_parameters'].get('amplifier_sample_rate')
+    if sampling_rate is None and time_vector is not None and time_vector.size > 1:
+        dt = float(np.median(np.diff(time_vector)))
+        sampling_rate = 1.0 / dt if dt > 0 else None
+    if sampling_rate is not None:
+        sampling_rate = float(sampling_rate)
+
+    if time_vector is None and sampling_rate is not None:
+        time_vector = np.arange(emg.shape[1], dtype=float) / sampling_rate
+    elif time_vector is not None and time_vector.size != emg.shape[1]:
+        raise ValueError(
+            f"Time vector has {time_vector.size} samples but EMG has {emg.shape[1]}"
+        )
+
+    if labels is None or len(labels) != emg.shape[0]:
+        labels = [f"CH{i}" for i in range(emg.shape[0])]
+
+    return emg, time_vector, sampling_rate, labels
 
 
 # --- IO helper utilities usable without GUI ---
@@ -304,8 +376,21 @@ if _HAS_PYQT:
             path, _ = QtWidgets.QFileDialog.getOpenFileName(self, 'Open EMG file', '', 'EMG Files (*.npz *.npy *.csv *.dat *.rhd);;RHD Files (*.rhd);;All Files (*)')
             if not path: return
             try:
-                data = np.load(path) if path.lower().endswith('.npy') else np.loadtxt(path, delimiter=',')
-            except Exception:
+                extension = os.path.splitext(path)[1].lower()
+                if extension in ('.rhd', '.npz'):
+                    emg, _time, sampling_rate, _labels = _load_emg_recording(path)
+                    data = emg.T
+                    if sampling_rate is not None:
+                        self.fs = sampling_rate
+                        self.spin_fs.setValue(int(round(sampling_rate)))
+                elif extension == '.npy':
+                    data = np.load(path)
+                else:
+                    data = np.loadtxt(path, delimiter=',')
+            except Exception as first_error:
+                if os.path.splitext(path)[1].lower() in ('.rhd', '.npz'):
+                    QtWidgets.QMessageBox.critical(self, 'Error', str(first_error))
+                    return
                 try:
                     data = np.loadtxt(path)
                 except Exception as e:
@@ -1240,14 +1325,16 @@ class EMGViewerTk:
         print("Segment loaded and visualized.")
 
     def load_file(self):
-        """ Load a .rhd file and plot the first channel."""
+        """Load an RHD, NPZ, or CSV file and plot the first channel."""
         path = filedialog.askopenfilename(filetypes=[
             ("RHD files", "*.rhd"),
+            ("NumPy archives", "*.npz"),
             ("CSV Files", "*.csv"),
         ])
         if not path:
             return
-        if path.endswith('.csv'):
+        extension = os.path.splitext(path)[1].lower()
+        if extension == '.csv':
             # Load CSV file. first column has timestamp data in milliseconds elapsed, the rest are EMG channels if
             # they have "EMG" in the name. The first row has only header information
             data = np.loadtxt(path, delimiter=',', skiprows=1)
@@ -1260,25 +1347,23 @@ class EMGViewerTk:
             self.emg_data = data[:, emg_columns].T
 
             self.sampling_rate = 1000.0 / (self.time_vector[1] - self.time_vector[0])  # Assuming uniform sampling
-        elif path.endswith('.rhd') and load_rhd_file is not None:
+        elif extension in ('.rhd', '.npz'):
             try:
-                result = load_rhd_file(path)
-                self.emg_data = result.get("amplifier_data") or result.get('data')
-                # fallback keys
-                self.time_vector = result.get("t_amplifier") or result.get('t')
-                self.sampling_rate = result.get("frequency_parameters", {}).get("amplifier_sample_rate")
+                (
+                    self.emg_data,
+                    self.time_vector,
+                    self.sampling_rate,
+                    _labels,
+                ) = _load_emg_recording(path)
             except Exception as e:
-                print(f"Failed to load .rhd with intan.io: {e}")
+                print(f"Failed to load recording with intan.io: {e}")
                 return
         else:
             # fallback: try csv or numpy loader
             try:
-                if path.endswith('.npy') or path.endswith('.npz'):
+                if extension == '.npy':
                     arr = np.load(path)
-                    if isinstance(arr, np.lib.npyio.NpzFile):
-                        self.emg_data = arr[arr.files[0]]
-                    else:
-                        self.emg_data = arr
+                    self.emg_data = arr
                 else:
                     data = np.loadtxt(path, delimiter=',')
                     # assume first column may be time
