@@ -4,7 +4,9 @@ A realtime plotter for visualizing EMG data from a client.
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+from .._optional import require_optional
+
+plt = require_optional("matplotlib.pyplot", "plot")
 from matplotlib.widgets import Slider
 from matplotlib.animation import FuncAnimation
 from scipy.signal import iirnotch, butter, filtfilt

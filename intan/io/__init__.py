@@ -1,4 +1,5 @@
 from ._canonicalizer import CANON, SYNONYMS, canonical_label
+from ._digital_edges import read_digital_edges
 from ._config_utils import (
     load_simple_config,
     save_simple_config,

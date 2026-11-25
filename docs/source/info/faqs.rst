@@ -25,6 +25,8 @@ Are GUI and ML libraries installed by default?
 -----------------------------------------------
 
 No. Install ``python-intan[gui]`` for the supported GUI applications and ``python-intan[ml]`` for PyTorch workflows.
+Use ``python-intan[data]`` for CSV/event tables, ``python-intan[plot]`` for
+Matplotlib, or ``python-intan[analysis]`` for both plus scikit-learn PCA.
 
 Does the video extra install ``handtrack``?
 --------------------------------------------

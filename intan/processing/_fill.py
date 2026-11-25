@@ -4,7 +4,7 @@ import os, math
 from pathlib import Path
 from dataclasses import dataclass
 import numpy as np
-import matplotlib.pyplot as plt
+from .._optional import require_optional
 
 
 @dataclass
@@ -171,6 +171,7 @@ def _fill_median(x: np.ndarray) -> np.ndarray:
 
 
 def _plot_nan_map(bad: np.ndarray, fs: float | None, out_path: Path, title: str):
+    plt = require_optional("matplotlib.pyplot", "plot")
     # bad is (C, S) bool
     C, S = bad.shape
     # downsample columns for faster plotting if very long
@@ -199,6 +200,7 @@ def _plot_nan_map(bad: np.ndarray, fs: float | None, out_path: Path, title: str)
 
 
 def _plot_overlays(raw: np.ndarray, fixed: np.ndarray, fs: float | None, out_path: Path, channels=(0,1,2)):
+    plt = require_optional("matplotlib.pyplot", "plot")
     t = np.arange(raw.shape[1], dtype=np.float64)
     if fs and fs > 0:
         t = t / float(fs)

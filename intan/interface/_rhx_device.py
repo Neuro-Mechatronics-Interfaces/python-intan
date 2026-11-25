@@ -24,17 +24,29 @@ SOFTWARE.
 
 import time
 import socket
+import logging
 import numpy as np
 from struct import unpack
 from collections import deque
+from functools import lru_cache
 import threading
-from typing import Optional
+from typing import Callable, Iterable, Optional
+from pylsl import local_clock
+from .._sample_clock import DigitalInputs, LSLClock, SampleClock
+from ..sync import RHXChunk
 from ._lsl_options import LSLOptions
 from ._lsl_publisher import LSLNumericPublisher, LSLMarkerPublisher
 from ._rhx_config import RHXConfig
 
 FRAMES_PER_BLOCK = 128  # Software hard coded but will
 MAGIC_NUMBER = 0x2ef07a08
+log = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=16)
+def _waveform_block_dtype(words_per_frame):
+    frame = np.dtype([("ts", "<i4"), ("v", ("<u2", words_per_frame))])
+    return np.dtype([("magic", "<u4"), ("data", (frame, FRAMES_PER_BLOCK))])
 
 
 class IntanRHXDevice(RHXConfig):
@@ -67,7 +79,10 @@ class IntanRHXDevice(RHXConfig):
                  auto_start=False,
                  use_lsl: bool = False,
                  lsl_options: Optional[LSLOptions] = None,
-                 verbose=False):
+                 verbose=False, *,
+                 on_chunk: Optional[Callable[[RHXChunk], None]] = None,
+                 digital_input_lines: Iterable[int] = (),
+                 stream_id: Optional[str] = None):
         self.host = host
         self.command_port = command_port
         self.data_port = data_port
@@ -75,6 +90,14 @@ class IntanRHXDevice(RHXConfig):
         self.sample_rate = sample_rate
         self.verbose = verbose
         self.connected = False
+        self.on_chunk = on_chunk
+        digital_input_lines = tuple(digital_input_lines)
+        if any(isinstance(line, bool) or not isinstance(line, (int, np.integer))
+               or not 1 <= line <= 16 for line in digital_input_lines):
+            raise ValueError("RHX digital input lines must be integers from 1 to 16.")
+        self.digital_input_lines = tuple(sorted({int(line) for line in digital_input_lines}))
+        self.stream_id = stream_id or f"rhx:{host}:{data_port}"
+        self._sample_clock = SampleClock()
 
         # ---- Streaming buffer for real-time access ----
         self.buffer_duration_sec = buffer_duration_sec  # Seconds of history to keep, adjust as needed
@@ -86,7 +109,7 @@ class IntanRHXDevice(RHXConfig):
         self.connected = False
 
         # streaming constants (bytes math)
-        self.bytes_per_frame = 4 + 2 * self.num_channels  # ts(int32) + C*uint16
+        self.bytes_per_frame = self._frame_size()
         self.bytes_per_block = 4 + FRAMES_PER_BLOCK * self.bytes_per_frame
         self.blocks_per_write = 1
         self.read_size = self.bytes_per_block * 1  # request ≥4 blocks per recv by default
@@ -99,7 +122,6 @@ class IntanRHXDevice(RHXConfig):
             # Initialize buffer after sample_rate is known
             if self.sample_rate is None:
                 self.sample_rate = self.get_sample_rate()
-            self._sample_counter = 0
             self.effective_fs = float(self.sample_rate)
             self.init_circular_buffer()
 
@@ -127,6 +149,8 @@ class IntanRHXDevice(RHXConfig):
 
             # Create numeric outlet if missing
             if self._lsl_numeric is None:
+                metadata = ({"timestamp_source": "rhx_counter_anchored_to_lsl_receipt"}
+                            if self.lsl.device_timestamps else {})
                 self._lsl_numeric = LSLNumericPublisher(
                     name=self.lsl.numeric_name,
                     stype=self.lsl.numeric_type,
@@ -134,6 +158,7 @@ class IntanRHXDevice(RHXConfig):
                     channels=ch,
                     source_id=self.lsl.source_id,
                     channel_labels=self.lsl.channel_labels,
+                    **metadata,
                 )
 
             # (Optional) markers
@@ -165,13 +190,27 @@ class IntanRHXDevice(RHXConfig):
 
     def _streaming_worker(self):
         rolling_buffer = bytearray()
-        #buffer_size = 4 + FRAMES_PER_BLOCK * (4 + 2 * self.num_channels)
+        inputs = DigitalInputs(self.digital_input_lines, self.effective_fs, self.stream_id)
+        clock = self._sample_clock
+        callback = self.on_chunk
+        lsl_clock = LSLClock(self.effective_fs)
         self.set_run_mode("run")
 
         try:
             while self.streaming:
                 rolling_buffer = self.receive_data(rolling_buffer, self.read_size)
-                emg_data, timestamps, consumed, self._synced = self.parse_emg_stream_fast(rolling_buffer)
+                device_time = self._lsl_numeric is not None and self.lsl.device_timestamps
+                observed_time = local_clock() if device_time else None
+                received = time.monotonic() if callback is not None else None
+                if self.digital_input_lines:
+                    emg_data, timestamps, words, consumed, self._synced = self._decode_waveform(
+                        rolling_buffer, synced=self._synced,
+                    )
+                else:
+                    emg_data, timestamps, consumed, self._synced = self.parse_emg_stream_fast(
+                        rolling_buffer, synced=self._synced,
+                    )
+                    words = None
                 rolling_buffer = rolling_buffer[consumed:]
 
                 if emg_data is not None:
@@ -192,36 +231,68 @@ class IntanRHXDevice(RHXConfig):
                                 self.circular_buffer[:, :n - part1] = emg_data[:, part1:]
                             self.circular_idx = (idx + n) % buf_len
 
-                    if self.use_lsl and self._lsl_numeric is not None:
-                        try:
-                            C, N = emg_data.shape
-                            cs = self._lsl_chunk  # e.g., 32 samples/packet
-                            # precompute timestamps once for this burst (device timebase in seconds)
-                            t_all = self._make_timestamps(N)  # shape (N,)
-
-                            for i0 in range(0, N, cs):
-                                i1 = min(i0 + cs, N)
-                                blk = emg_data[:, i0:i1]  # (C, K)
-                                self._lsl_numeric.push_chunk(blk.T)  # stamp on send
-
-                        except Exception as e:
-                            if self.verbose:
-                                print(f"[LSL] push failed: {e}")
-                            # Don’t kill the stream; just drop LSL outlet if it misbehaves
-                            self._lsl_numeric = None
+                    if not device_time:
+                        self._publish_numeric(emg_data)
+                    if callback is not None or device_time:
+                        sections = [(selection, numbers, missing, clock.segment, None)
+                                    for selection, numbers, missing in clock.split(timestamps)]
+                        if device_time:
+                            # Include gaps in the receipt anchor. A reset starts a
+                            # new clock; assume one nominal tick across its boundary.
+                            samples_to_end = 0
+                            for index in range(len(sections) - 1, -1, -1):
+                                selection, numbers, missing, segment, _ = sections[index]
+                                samples_to_end += len(numbers) - 1
+                                sections[index] = (selection, numbers, missing, segment, samples_to_end)
+                                samples_to_end += missing + 1
+                        for selection, numbers, missing, segment, samples_to_end in sections:
+                            block = emg_data[:, selection]
+                            if device_time:
+                                first_time = lsl_clock.first_time(
+                                    segment, numbers, observed_time, samples_to_end,
+                                )
+                                self._publish_numeric(block, first_time)
+                            if callback is not None:
+                                edges = () if words is None else inputs.edges(
+                                    words[selection], numbers, segment, missing,
+                                )
+                                block.setflags(write=False)
+                                numbers.setflags(write=False)
+                                try:
+                                    callback(RHXChunk(
+                                        block, numbers, self.effective_fs, self.stream_id, segment,
+                                        missing, received, edges,
+                                    ))
+                                except Exception:
+                                    log.exception("RHX on_chunk failed and was disabled for this stream run.")
+                                    callback = None
 
                 # Optional: Sleep a tiny bit if you want to reduce CPU usage
                 # time.sleep(0.001)
         finally:
             self.set_run_mode("stop")
 
-    def _make_timestamps(self, n: int) -> np.ndarray:
-        i0 = self._sample_counter
-        self._sample_counter += n
-        return (i0 + np.arange(n, dtype=float)) / self.effective_fs
+    def _publish_numeric(self, samples, first_time=None):
+        if not self.use_lsl or self._lsl_numeric is None:
+            return
+        try:
+            for start in range(0, samples.shape[1], self._lsl_chunk):
+                end = min(start + self._lsl_chunk, samples.shape[1])
+                block = samples[:, start:end].T
+                if first_time is None:
+                    self._lsl_numeric.push_chunk(block)
+                else:
+                    self._lsl_numeric.push_chunk(block, ts=first_time + (end - 1) / self.effective_fs)
+        except Exception as exc:
+            if self.verbose:
+                print(f"[LSL] push failed: {exc}")
+            self._lsl_numeric = None
+
+    def _frame_size(self):
+        return 4 + 2 * (self.num_channels + bool(self.digital_input_lines))
 
     def _update_read_size(self):
-        self.bytes_per_frame = 4 + 2 * self.num_channels
+        self.bytes_per_frame = self._frame_size()
         self.bytes_per_block = 4 + FRAMES_PER_BLOCK * self.bytes_per_frame
         #  allow 1 block (previously max(4, …) forced bigger reads → higher latency)
         self.read_size = self.bytes_per_block * max(1, int(getattr(self, "blocks_per_write", 1)))
@@ -283,10 +354,16 @@ class IntanRHXDevice(RHXConfig):
         self.circular_idx = 0
 
     def parse_emg_stream_fast(self, raw_bytes: bytearray, synced=True):
+        """Return amplifier samples, raw hardware counters, and parser position."""
+        emg, counters, _, consumed, synced = self._decode_waveform(raw_bytes, synced)
+        return emg, counters, consumed, synced
+
+    def _decode_waveform(self, raw_bytes, synced):
         C = self.num_channels
         frames = FRAMES_PER_BLOCK
         # sizes
-        bytes_per_frame = 4 + 2 * C  # ts(int32) + C * uint16
+        has_digital = bool(self.digital_input_lines)
+        bytes_per_frame = self._frame_size()
         bytes_per_block = 4 + frames * bytes_per_frame  # magic + frames
         mv = memoryview(raw_bytes)
 
@@ -296,41 +373,46 @@ class IntanRHXDevice(RHXConfig):
             magic = MAGIC_NUMBER.to_bytes(4, "little")
             pos = raw_bytes.find(magic)
             if pos == -1:
-                return None, None, 0, False
+                return None, None, None, max(0, len(raw_bytes) - 3), False
             start = pos
 
         # how many full blocks do we have?
         available = (len(raw_bytes) - start)
         nblocks = available // bytes_per_block
         if nblocks <= 0:
-            return None, None, start, True
+            return None, None, None, start, True
 
         # dtype: one frame = {'ts': int32, 'v': (uint16, C)}
-        frame_dtype = np.dtype([('ts', '<i4'), ('v', ('<u2', C))])
-        block_dtype = np.dtype([('magic', '<u4'), ('data', (frame_dtype, frames))])
+        block_dtype = _waveform_block_dtype(C + has_digital)
 
         # view all full blocks at once
         blocks = np.frombuffer(mv[start:start + nblocks * bytes_per_block], dtype=block_dtype)
 
         # sanity: mask blocks with correct magic
         good = (blocks['magic'] == MAGIC_NUMBER)
-        blocks = blocks[good]
+        if not good.all():
+            blocks = blocks[good]
         if blocks.size == 0:
-            return None, None, start + nblocks * bytes_per_block, True
+            # An incorrect boundary or changed layout must resync on the next read.
+            return None, None, None, start + 1, False
 
         # stack frames across blocks → (total_frames, C)
         frames_arr = blocks['data'].reshape(-1)  # (nblocks*frames,)
         ts = frames_arr['ts'].astype(np.int64)  # (total_frames,)
-        v = frames_arr['v'].astype(np.int32, copy=False)  # (total_frames, C)
-        v -= 32768
-        v *= 195
-        #emg = (0.195 * (v - 32768)).astype(np.float32)  # µV
-        emg = (v.astype(np.float32, copy=False) / 1000.0).T
-
-        # rearrange to (C, total_frames) like your current API
-        #emg = emg.T
+        values = frames_arr['v']
+        words = None
+        if has_digital:
+            words = values[:, C]
+            values = values[:, :C]
+        # All intermediate integers fit exactly in float32. Scale in place
+        # to preserve the existing rounding with one sample-sized allocation.
+        emg = values.astype(np.float32)
+        emg -= 32768
+        emg *= 195
+        emg /= 1000
+        emg = emg.T
         consumed = start + nblocks * bytes_per_block
-        return emg, ts, consumed, True
+        return emg, ts, words, consumed, True
 
     def parse_emg_stream(self, raw_bytes, return_all_timestamps=True):
         """Slow reference parser (struct.unpack in Python loops). Prefer parse_emg_stream_fast."""
@@ -338,7 +420,7 @@ class IntanRHXDevice(RHXConfig):
         timestamps = []
         channel_data = [[] for _ in range(self.num_channels)]
 
-        bytes_per_sample = 4 + 2 * self.num_channels
+        bytes_per_sample = self._frame_size()
         bytes_per_block = 4 + FRAMES_PER_BLOCK * bytes_per_sample
 
         while idx + bytes_per_block <= len(raw_bytes):
@@ -359,6 +441,8 @@ class IntanRHXDevice(RHXConfig):
                     voltage = 0.195 * (val - 32768)
                     channel_data[ch].append(voltage)
                     idx += 2
+                if self.digital_input_lines:
+                    idx += 2
 
         emg_array = np.array(channel_data, dtype=np.float32)
         bytes_consumed = idx
@@ -377,6 +461,8 @@ class IntanRHXDevice(RHXConfig):
             self.sample_rate = self.get_sample_rate()
         self.effective_fs = float(self.sample_rate)
         self.init_circular_buffer()
+        self._synced = False
+        self._sample_clock = SampleClock(segment=self._sample_clock.segment)
 
         # Force low-latency mode (if possible)
         try:

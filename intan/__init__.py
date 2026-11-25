@@ -27,6 +27,7 @@ submodules = [
     'processing',
     'interface',
     'samples',
+    'sync',
     'ui',
 ]
 

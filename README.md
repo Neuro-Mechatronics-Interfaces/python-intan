@@ -35,6 +35,11 @@ Python 3.10 or later is required.
 python -m pip install python-intan
 ```
 
+The base install supports RHD/DAT/NPZ I/O, RHX/LSL streaming, and signal
+processing. CSV/event tables, plotting, and scikit-learn are optional. To
+retain the analysis features previously installed by default, use
+`python -m pip install 'python-intan[analysis]'`.
+
 For development from a repository checkout:
 
 ```bash
@@ -50,8 +55,11 @@ On Windows PowerShell, use double quotes around extras if your shell configurati
 Install only the groups required by your workflow:
 
 ```bash
-python -m pip install 'python-intan[gui]'    # PyQt5 and pyqtgraph
-python -m pip install 'python-intan[ml]'     # PyTorch model training/inference
+python -m pip install 'python-intan[data]'   # pandas CSV/event/metrics tables
+python -m pip install 'python-intan[plot]'   # Matplotlib plots
+python -m pip install 'python-intan[analysis]' # data, plotting, and scikit-learn PCA
+python -m pip install 'python-intan[gui]'    # analysis features, PyQt5 and pyqtgraph
+python -m pip install 'python-intan[ml]'     # analysis features and PyTorch
 python -m pip install 'python-intan[video]'  # OpenCV and MediaPipe
 python -m pip install 'python-intan[docs]'   # Sphinx documentation build
 python -m pip install 'python-intan[test]'   # tests and release validation
@@ -87,6 +95,58 @@ with IntanRHXDevice(num_channels=32, auto_start=False) as device:
     window = device.get_latest_window(1000)
     print(window.shape)
 ```
+
+## Synchronize with a digital pulse
+
+Enable recording on the RHX digital input wired to the Pico. Start the
+recording before triggering the Pico, and keep the LED visible to the cameras.
+Read transitions without loading the amplifier data:
+
+```python
+from intan.io import read_digital_edges
+
+for edge in read_digital_edges("trial.rhd", stream_id="rhx-bench"):
+    if edge.line == 4:
+        print(edge.segment, edge.sample_number, edge.sample_rate, edge.rising)
+```
+
+Lines are one-based, so line 4 corresponds to packed bit 3. Use the sample
+number difference divided by the sample rate to compare pulse intervals
+within a segment. Match the same sequence of rising and falling transitions
+to the LED turning on and off in the video. Keep `time.dat` and the digital
+input files beside `info.rhd` for split recordings. Gaps and counter resets
+suppress transitions at the first sample after the discontinuity.
+
+For live timing, enable only the amplifier waveforms and the desired digital
+inputs under **Output to TCP** in RHX. The parser expects one 16-bit packed
+input word after the amplifier samples in each frame. Set `num_channels`
+to the number of streamed amplifier values. For example:
+
+```python
+from intan.interface import IntanRHXDevice, LSLOptions
+
+def on_chunk(chunk):
+    for edge in chunk.digital_edges:
+        print(edge.sample_number, edge.rising)
+
+with IntanRHXDevice(
+    num_channels=32,
+    digital_input_lines=(4,),
+    on_chunk=on_chunk,
+    use_lsl=True,
+    lsl_options=LSLOptions(device_timestamps=True),
+) as device:
+    device.start_streaming()
+    input("Press Enter to stop.\n")
+```
+
+The callback runs on the receive thread and also gets the samples, unwrapped
+sample numbers, count of missing samples before the chunk, and host receipt
+time. Keep callback work short. The optional LSL mode anchors the device
+counter to the local LSL clock when the first chunk of each segment arrives
+and advances it at the nominal sample rate. TCP latency affects that anchor
+and hardware clocks can drift. Use the shared Pico pulse for measuring
+alignment. The default LSL mode continues to timestamp chunks at send time.
 
 ## CLI usage
 
@@ -141,7 +201,7 @@ intan/
 
 ## Documentation
 
-Published documentation is available on [GitHub Pages](https://neuro-mechatronics-interfaces.github.io/python-intan/). To build it locally:
+Published documentation is available on [GitHub Pages](https://neuro-mechatronics-interfaces.github.io/python-intan/). To build it locally, run these commands from a repository checkout. Documentation sources and media are kept in the repository rather than bundled in package distributions:
 
 ```bash
 python -m pip install -e '.[docs]'

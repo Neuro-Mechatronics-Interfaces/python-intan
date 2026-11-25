@@ -24,7 +24,7 @@ from intan.io._exceptions import UnknownChannelTypeError, QStringError, Unrecogn
 
 # === Public API ===
 
-def read_header(fid):
+def read_header(fid, *, verbose=True):
     """"
     Parse the binary file header from an Intan `.rhd` data file.
 
@@ -33,6 +33,7 @@ def read_header(fid):
 
     Parameters:
         fid (file): Opened file object positioned at the start of the file.
+        verbose (bool): Print the RHD version.
 
     Returns:
         dict: Parsed header metadata.
@@ -41,7 +42,7 @@ def read_header(fid):
 
     header = {}
 
-    read_version_number(header, fid)
+    read_version_number(header, fid, verbose=verbose)
     set_num_samples_per_data_block(header)
 
     freq = {}
@@ -449,7 +450,8 @@ def add_signal_group_information(header, fid, signal_group):
     (signal_group_enabled, signal_group_num_channels, _) = struct.unpack(
         '<hhh', fid.read(6))
 
-    if signal_group_num_channels > 0 and signal_group_enabled > 0:
+    # RHX 3.x writes channel descriptions even for disabled signal groups.
+    if signal_group_num_channels > 0 and (signal_group_enabled > 0 or header['version']['major'] >= 3):
         for _ in range(0, signal_group_num_channels):
             add_channel_information(header, fid, signal_group_name,
                                     signal_group_prefix, signal_group)

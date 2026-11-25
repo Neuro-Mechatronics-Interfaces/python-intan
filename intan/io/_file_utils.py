@@ -25,10 +25,7 @@ from pathlib import Path
 import yaml
 import platform
 import pathlib
-try:
-    import pandas as pd
-except Exception:
-    pd = None
+from .._optional import require_optional
 try:
     from tkinter import filedialog
 except ImportError:
@@ -224,6 +221,7 @@ def load_labeled_file(path=None):
         pd.DataFrame: Labeled samples with columns ["Sample", "Time", "Label"],
                       cleaned and sorted by sample index.
     """
+    pd = require_optional("pandas", "data")
     if path is None:
         path = filedialog.askopenfilename(title="Select Notes File", filetypes=[("Text files", "*.txt")])
         if not path:
@@ -368,6 +366,7 @@ def labels_from_events(event_path, window_starts, *, strict_segment=False, fs=20
 
     strict_segment=True: drops any window whose [start, start+step) crosses an event boundary.
     """
+    pd = require_optional("pandas", "data")
     df = pd.read_csv(event_path)
     if 'Sample Index' not in df.columns or 'Label' not in df.columns:
         raise ValueError("Event file must have 'Sample Index' and 'Label' columns")

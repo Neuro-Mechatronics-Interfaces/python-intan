@@ -1,7 +1,7 @@
 import os
 import json
 import numpy as np
-import pandas as pd
+from .._optional import require_optional
 from typing import List, Optional, Dict, Tuple, Any, Sequence, Callable
 
 
@@ -19,6 +19,7 @@ def parse_event_file(event_files, verbose=False):
             - 'timestamp': Timestamp string (str or None if missing)
             - 'label': Cleaned label string (str)
     """
+    pd = require_optional("pandas", "data")
     if isinstance(event_files, str):
         event_files = [event_files]
 

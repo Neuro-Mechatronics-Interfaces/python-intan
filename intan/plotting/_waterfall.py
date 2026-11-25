@@ -1,7 +1,9 @@
 """
 Waterfall Plotting Module
 """
-import matplotlib.pyplot as plt
+from .._optional import require_optional
+
+plt = require_optional("matplotlib.pyplot", "plot")
 import numpy as np
 
 

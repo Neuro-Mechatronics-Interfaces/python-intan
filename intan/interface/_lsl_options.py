@@ -13,3 +13,4 @@ class LSLOptions:
     marker_name: str = "EMG-Markers"
     marker_type: str = "Markers"
     channel_labels: Optional[Sequence[str]] = None
+    device_timestamps: bool = False  # Estimate LSL time from RHX sample counters

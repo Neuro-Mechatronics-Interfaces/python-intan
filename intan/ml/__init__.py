@@ -8,7 +8,7 @@ first use.
 from importlib import import_module
 from typing import Dict, Tuple
 
-_ML_DEPENDENCIES = {"joblib", "sklearn", "torch"}
+_ML_DEPENDENCIES = {"joblib", "sklearn", "torch", "pandas", "matplotlib"}
 _ML_INSTALL_HINT = "pip install 'python-intan[ml]'"
 
 # Map exported names to (module_name, attr_name)

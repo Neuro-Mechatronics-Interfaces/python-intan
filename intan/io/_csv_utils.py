@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from typing import Optional, Sequence, Dict, Any, Tuple, List
 
 import numpy as np
-import pandas as pd
+from .._optional import require_optional
 
 try:
     # Optional GUI file picker (kept consistent with other loaders)
@@ -46,7 +46,7 @@ def _pick_file(path: Optional[str]) -> str:
     raise FileNotFoundError("CSV path not provided or not found; and GUI picker unavailable.")
 
 
-def _guess_layout(df: pd.DataFrame,
+def _guess_layout(df: Any,
                   sample_rate_hint: Optional[float]) -> _Guess:
     cols = list(df.columns)
 
@@ -140,8 +140,8 @@ def load_csv_file(path: Optional[str] = None,
         - 'meta'                : dict with lightweight details (column maps, etc.)
         - optionally 'dataframe': the raw pandas DataFrame (if return_dataframe=True)
     """
+    pd = require_optional("pandas", "data")
     path = _pick_file(path)
-
     df = pd.read_csv(path)
     guess = _guess_layout(df, sample_rate_hint=sample_rate)
     if not guess.emg_cols:
@@ -232,6 +232,9 @@ def load_csv_files(root_dir: str, csv_sample_rate: float = 1000.0, verbose: bool
             return []
 
     csv_paths = sorted(glob.glob(os.path.join(csv_dir, "*.csv")))
+    if csv_paths:
+        # Do not turn a missing dependency into a skipped file or empty dataset.
+        require_optional("pandas", "data")
     items = []
     for path in csv_paths:
         try:

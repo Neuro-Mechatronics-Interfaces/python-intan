@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Keep pandas, Matplotlib, and scikit-learn out of the base install. Use the new
+  `data`, `plot`, or `analysis` extras; `gui`, `ml`, and `docs` include the
+  analysis dependencies they need.
+- Load table, plotting, and PCA dependencies on demand, with installation
+  guidance when an optional feature is requested.
+- Keep documentation sources and media in the repository rather than source
+  distributions. Local documentation builds require a repository checkout.
+
+### Fixed
+- Account for counter gaps when anchoring the first RHX batch to the LSL clock.
+- Reduce allocations in amplifier scaling and digital-edge detection while
+  preserving sample values and transition behavior.
+
 ## [0.2.3] - 2026-08-14
 
 ### Fixed

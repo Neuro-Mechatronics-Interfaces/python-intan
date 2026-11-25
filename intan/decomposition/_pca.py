@@ -1,6 +1,5 @@
 import numpy as np
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
+from .._optional import require_optional
 
 def pca(X, n_components=15, variance_threshold=0.95, show_plot=False, verbose=False):
     """
@@ -15,6 +14,7 @@ def pca(X, n_components=15, variance_threshold=0.95, show_plot=False, verbose=Fa
         n_pca_95: Number of components needed to reach 95% variance.
     """
 
+    PCA = require_optional("sklearn.decomposition", "analysis").PCA
     pca = PCA(n_components=n_components)
     X_pca = pca.fit_transform(X)  # Shape: (samples, components)
     X_reconstructed = pca.inverse_transform(X_pca).T  # Shape: (channels, samples)
@@ -26,6 +26,7 @@ def pca(X, n_components=15, variance_threshold=0.95, show_plot=False, verbose=Fa
         print(f"Number of components to retain 95% variance: {n_pca_95}")
 
     if show_plot:
+        plt = require_optional("matplotlib.pyplot", "plot")
         plt.plot(cumulative_variance * 100)
         plt.axhline(y=95, color='r', linestyle='--', label='95% threshold')
         plt.xlabel("Number of Components")

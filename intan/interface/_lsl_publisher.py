@@ -8,11 +8,14 @@ from pylsl import StreamInfo, StreamOutlet, local_clock, cf_string, IRREGULAR_RA
 
 class LSLNumericPublisher:
     def __init__(self, name: str, stype: str, fs: float, channels: int,
-                 source_id: str, channel_labels: Optional[Sequence[str]] = None):
+                 source_id: str, channel_labels: Optional[Sequence[str]] = None,
+                 *, timestamp_source: Optional[str] = None):
         if StreamInfo is None:
             raise RuntimeError("pylsl is not available; install pylsl to enable LSL streaming.")
         info = StreamInfo(name=name, type=stype, channel_count=channels,
                           nominal_srate=fs, channel_format='float32', source_id=source_id)
+        if timestamp_source is not None:
+            info.desc().append_child_value("timestamp_source", timestamp_source)
         # Optional metadata
         chns = info.desc().append_child("channels")
         labels = list(channel_labels) if channel_labels else [f"ch_{i}" for i in range(channels)]
