@@ -4,12 +4,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>intan.decomposition._cfica &#8212; python-intan 0.2.2 documentation</title>
+    <title>intan.decomposition._cfica &#8212; python-intan 0.3.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
-    <script src="../../../_static/documentation_options.js?v=000c92bf"></script>
+    <script src="../../../_static/documentation_options.js?v=e259d695"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -41,59 +41,59 @@
 <div class="viewcode-block" id="CFICA2">
 <a class="viewcode-back" href="../../../intan_api/intan.decomposition.html#intan.decomposition._cfica.CFICA2">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">CFICA2</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">Mu</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Python version of CFICA2: Kernel and Correlation Constrained FastICA for HD-EMG</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="c1"># Default parameter initialization</span>
     <span class="k">if</span> <span class="n">param</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">param</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;delay&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
-    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;fs&#39;</span><span class="p">,</span> <span class="mi">2048</span><span class="p">)</span>
-    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;wavelength&#39;</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">]</span> <span class="o">//</span> <span class="mi">20</span><span class="p">)</span>
-    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;peakinterval&#39;</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;fs&#39;</span><span class="p">]</span> <span class="o">//</span> <span class="mi">40</span><span class="p">)</span>
-    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;convergethreshold&#39;</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
-    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;valleymode&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">'delay'</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">'fs'</span><span class="p">,</span> <span class="mi">2048</span><span class="p">)</span>
+    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">'wavelength'</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">'fs'</span><span class="p">]</span> <span class="o">//</span> <span class="mi">20</span><span class="p">)</span>
+    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">'peakinterval'</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">'fs'</span><span class="p">]</span> <span class="o">//</span> <span class="mi">40</span><span class="p">)</span>
+    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">'convergethreshold'</span><span class="p">,</span> <span class="mf">1e-6</span><span class="p">)</span>
+    <span class="n">param</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">'valleymode'</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 
     <span class="c1"># Initialize Mu structure if not provided</span>
     <span class="k">if</span> <span class="n">Mu</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">Mu</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Wave&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;MUpulse&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="n">Mu</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'Wave'</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">'MUpulse'</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">'S'</span><span class="p">:</span> <span class="p">[]}</span>
 
     <span class="c1"># Whitening and delay embedding</span>
-    <span class="n">Xt</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">whitening_pca</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;delay&#39;</span><span class="p">])</span>
+    <span class="n">Xt</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">whitening_pca</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">'delay'</span><span class="p">])</span>
 
-    <span class="k">if</span> <span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;MUpulse&#39;</span><span class="p">]:</span>
-        <span class="n">YT</span> <span class="o">=</span> <span class="n">delay_embed</span><span class="p">(</span><span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;MUpulse&#39;</span><span class="p">],</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;delay&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">Mu</span><span class="p">[</span><span class="s1">'MUpulse'</span><span class="p">]:</span>
+        <span class="n">YT</span> <span class="o">=</span> <span class="n">delay_embed</span><span class="p">(</span><span class="n">Mu</span><span class="p">[</span><span class="s1">'MUpulse'</span><span class="p">],</span> <span class="n">param</span><span class="p">[</span><span class="s1">'delay'</span><span class="p">])</span>
         <span class="n">C</span> <span class="o">=</span> <span class="n">YT</span> <span class="o">@</span> <span class="n">Xt</span><span class="o">.</span><span class="n">T</span>
-        <span class="n">MUnum</span> <span class="o">=</span> <span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;S&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">MUnum</span> <span class="o">=</span> <span class="n">Mu</span><span class="p">[</span><span class="s1">'S'</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">C</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="n">YT</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">MUnum</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="n">total_num</span> <span class="o">=</span> <span class="n">Xt</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;delay&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">total_num</span> <span class="o">=</span> <span class="n">Xt</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">param</span><span class="p">[</span><span class="s1">'delay'</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 
     <span class="k">while</span> <span class="n">MUnum</span> <span class="o">&lt;</span> <span class="n">total_num</span><span class="p">:</span>
-        <span class="n">Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kernel_fastica</span><span class="p">(</span><span class="n">Xt</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;convergethreshold&#39;</span><span class="p">])</span>
+        <span class="n">Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kernel_fastica</span><span class="p">(</span><span class="n">Xt</span><span class="p">,</span> <span class="n">C</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">'convergethreshold'</span><span class="p">])</span>
 
-        <span class="n">threshold</span><span class="p">,</span> <span class="n">St</span> <span class="o">=</span> <span class="n">threshold_cov</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;peakinterval&#39;</span><span class="p">])</span>
+        <span class="n">threshold</span><span class="p">,</span> <span class="n">St</span> <span class="o">=</span> <span class="n">threshold_cov</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">'peakinterval'</span><span class="p">])</span>
 
         <span class="c1"># For now, auto-accept threshold (interactive GUI option later)</span>
-        <span class="n">Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">corr_constrained_ica</span><span class="p">(</span><span class="n">Xt</span><span class="p">,</span> <span class="n">St</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;convergethreshold&#39;</span><span class="p">])</span>
+        <span class="n">Y</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">corr_constrained_ica</span><span class="p">(</span><span class="n">Xt</span><span class="p">,</span> <span class="n">St</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">'convergethreshold'</span><span class="p">])</span>
 
-        <span class="n">YT</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">delay_embed</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;delay&#39;</span><span class="p">]))</span>
+        <span class="n">YT</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">delay_embed</span><span class="p">(</span><span class="n">Y</span><span class="p">,</span> <span class="n">param</span><span class="p">[</span><span class="s1">'delay'</span><span class="p">]))</span>
         <span class="n">C</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">YT</span><span class="p">)</span> <span class="o">@</span> <span class="n">Xt</span><span class="o">.</span><span class="n">T</span> <span class="k">if</span> <span class="n">YT</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;MUpulse&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
-        <span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;S&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">St</span><span class="p">)</span>
+        <span class="n">Mu</span><span class="p">[</span><span class="s1">'MUpulse'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+        <span class="n">Mu</span><span class="p">[</span><span class="s1">'S'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">St</span><span class="p">)</span>
         <span class="n">MUnum</span> <span class="o">+=</span> <span class="mi">1</span>
 
     <span class="c1"># Discard redundant units</span>
-    <span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;S&#39;</span><span class="p">],</span> <span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;MUpulse&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">discard_redundant_spikes</span><span class="p">(</span><span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;S&#39;</span><span class="p">],</span> <span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;MUpulse&#39;</span><span class="p">])</span>
+    <span class="n">Mu</span><span class="p">[</span><span class="s1">'S'</span><span class="p">],</span> <span class="n">Mu</span><span class="p">[</span><span class="s1">'MUpulse'</span><span class="p">]</span> <span class="o">=</span> <span class="n">discard_redundant_spikes</span><span class="p">(</span><span class="n">Mu</span><span class="p">[</span><span class="s1">'S'</span><span class="p">],</span> <span class="n">Mu</span><span class="p">[</span><span class="s1">'MUpulse'</span><span class="p">])</span>
 
     <span class="c1"># Extract waveforms</span>
-    <span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;Wave&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">waveform_estimation</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;S&#39;</span><span class="p">],</span> <span class="n">param</span><span class="p">[</span><span class="s1">&#39;wavelength&#39;</span><span class="p">])</span>
+    <span class="n">Mu</span><span class="p">[</span><span class="s1">'Wave'</span><span class="p">]</span> <span class="o">=</span> <span class="n">waveform_estimation</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">Mu</span><span class="p">[</span><span class="s1">'S'</span><span class="p">],</span> <span class="n">param</span><span class="p">[</span><span class="s1">'wavelength'</span><span class="p">])</span>
 
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Mu</span><span class="p">[</span><span class="s1">&#39;S&#39;</span><span class="p">]),</span> <span class="n">Mu</span></div>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Mu</span><span class="p">[</span><span class="s1">'S'</span><span class="p">]),</span> <span class="n">Mu</span></div>
 
 
 <div class="viewcode-block" id="whitening_pca">
@@ -121,10 +121,10 @@
 <div class="viewcode-block" id="delay_embed">
 <a class="viewcode-back" href="../../../intan_api/intan.decomposition.html#intan.decomposition._cfica.delay_embed">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">delay_embed</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">delay</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Emulates the yanchi() function from MATLAB&#39;s CFICA2.</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Emulates the yanchi() function from MATLAB's CFICA2.</span>
 <span class="sd">    Returns (2*delay + 1)*channels x samples matrix</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># shape (1, N)</span>
 

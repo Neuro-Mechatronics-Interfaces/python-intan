@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Plotting EMG Data &#8212; python-intan 0.2.2 documentation</title>
+    <title>Plotting EMG Data &#8212; python-intan 0.3.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <script src="../_static/documentation_options.js?v=000c92bf"></script>
+    <script src="../_static/documentation_options.js?v=e259d695"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -44,12 +44,12 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rhd_file</span>
 <span class="n">result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">()</span>  <span class="c1"># Opens a file dialog to select a .rhd file</span>
 
-<span class="n">emg_data</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">]</span>                <span class="c1"># (num_channels, num_samples)</span>
-<span class="n">t_s</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;t_amplifier&#39;</span><span class="p">]</span>
+<span class="n">emg_data</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">'amplifier_data'</span><span class="p">]</span>                <span class="c1"># (num_channels, num_samples)</span>
+<span class="n">t_s</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s1">'t_amplifier'</span><span class="p">]</span>
 
 <span class="c1"># Optional: load analog data if present</span>
-<span class="n">analog_data</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;board_adc_data&#39;</span><span class="p">)</span>         <span class="c1"># (num_channels, num_samples)</span>
-<span class="n">t_analog</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;t_board_adc&#39;</span><span class="p">)</span>                   <span class="c1"># (num_samples,)</span>
+<span class="n">analog_data</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'board_adc_data'</span><span class="p">)</span>         <span class="c1"># (num_channels, num_samples)</span>
+<span class="n">t_analog</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'t_board_adc'</span><span class="p">)</span>                   <span class="c1"># (num_samples,)</span>
 </pre></div>
 </div>
 <hr class="docutils" />
@@ -59,7 +59,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_channel_by_name</span>
 
 <span class="c1"># Get the name of the 5th channel</span>
-<span class="n">ch_name</span> <span class="o">=</span> <span class="n">ch_info</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="s1">&#39;native_channel_name&#39;</span><span class="p">]</span>
+<span class="n">ch_name</span> <span class="o">=</span> <span class="n">ch_info</span><span class="p">[</span><span class="mi">4</span><span class="p">][</span><span class="s1">'native_channel_name'</span><span class="p">]</span>
 <span class="n">plot_channel_by_name</span><span class="p">(</span><span class="n">ch_name</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -81,11 +81,11 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">plot_figure</span>
 
 <span class="c1"># Plot the first EMG channel</span>
-<span class="n">plot_figure</span><span class="p">(</span><span class="n">emg_data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">t_s</span><span class="p">,</span> <span class="s2">&quot;EMG Channel 0&quot;</span><span class="p">,</span> <span class="n">x_label</span><span class="o">=</span><span class="s2">&quot;Time (s)&quot;</span><span class="p">,</span> <span class="n">y_label</span><span class="o">=</span><span class="s2">&quot;Amplitude (µV)&quot;</span><span class="p">)</span>
+<span class="n">plot_figure</span><span class="p">(</span><span class="n">emg_data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">t_s</span><span class="p">,</span> <span class="s2">"EMG Channel 0"</span><span class="p">,</span> <span class="n">x_label</span><span class="o">=</span><span class="s2">"Time (s)"</span><span class="p">,</span> <span class="n">y_label</span><span class="o">=</span><span class="s2">"Amplitude (µV)"</span><span class="p">)</span>
 
 <span class="c1"># If analog data is present, plot the first analog channel</span>
 <span class="k">if</span> <span class="n">analog_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">plot_figure</span><span class="p">(</span><span class="n">analog_data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">t_s</span><span class="p">,</span> <span class="s2">&quot;Analog Channel 0&quot;</span><span class="p">,</span> <span class="n">x_label</span><span class="o">=</span><span class="s2">&quot;Time (s)&quot;</span><span class="p">,</span> <span class="n">y_label</span><span class="o">=</span><span class="s2">&quot;Voltage (V)&quot;</span><span class="p">)</span>
+    <span class="n">plot_figure</span><span class="p">(</span><span class="n">analog_data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">t_s</span><span class="p">,</span> <span class="s2">"Analog Channel 0"</span><span class="p">,</span> <span class="n">x_label</span><span class="o">=</span><span class="s2">"Time (s)"</span><span class="p">,</span> <span class="n">y_label</span><span class="o">=</span><span class="s2">"Voltage (V)"</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -96,7 +96,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.plotting</span><span class="w"> </span><span class="kn">import</span> <span class="n">waterfall</span>
 
 <span class="c1"># Plot channels 64 to 127 in a waterfall plot</span>
-<span class="n">waterfall</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">channel_indices</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">time_vector</span><span class="o">=</span><span class="n">t_s</span><span class="p">,</span> <span class="n">plot_title</span><span class="o">=</span><span class="s1">&#39;Intan EMG data&#39;</span><span class="p">)</span>
+<span class="n">waterfall</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">channel_indices</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">time_vector</span><span class="o">=</span><span class="n">t_s</span><span class="p">,</span> <span class="n">plot_title</span><span class="o">=</span><span class="s1">'Intan EMG data'</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>

@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Intan RHX Controller Device &#8212; python-intan 0.2.2 documentation</title>
+    <title>Intan RHX Controller Device &#8212; python-intan 0.3.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <script src="../_static/documentation_options.js?v=000c92bf"></script>
+    <script src="../_static/documentation_options.js?v=e259d695"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -50,7 +50,7 @@ The default ports are 5000 (Command) and 5001 (Data).</p>
 <p>The following example show how simple it is to connect to an RHX device:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.rhx_interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntanRHXDevice</span>
 
-<span class="n">SAMPLE_RATE</span> <span class="o">=</span> <span class="mf">4000.0</span>      <span class="c1"># Specify sampling rate in Hz, ignored if using &#39;playback&#39; mode</span>
+<span class="n">SAMPLE_RATE</span> <span class="o">=</span> <span class="mf">4000.0</span>      <span class="c1"># Specify sampling rate in Hz, ignored if using 'playback' mode</span>
 <span class="n">NUM_CHANNELS</span> <span class="o">=</span> <span class="mi">32</span>         <span class="c1"># Number of channels to read from the intan device</span>
 
 <span class="c1"># Initialize device</span>
@@ -59,7 +59,7 @@ The default ports are 5000 (Command) and 5001 (Data).</p>
 </div>
 <hr class="docutils" />
 <p>We can enable streaming for all channels:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Enable &quot;wide&quot; channel streaming for all channels (or indices for specific channels)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Enable "wide" channel streaming for all channels (or indices for specific channels)</span>
  <span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">NUM_CHANNELS</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -77,12 +77,12 @@ The default ports are 5000 (Command) and 5001 (Data).</p>
 <span class="n">emg</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="n">duration_sec</span><span class="o">=</span><span class="n">DURATION_SEC</span><span class="p">)</span>
 
 <span class="c1"># Safely stop the device and close sockets</span>
-<span class="n">device</span><span class="o">.</span><span class="n">set_run_mode</span><span class="p">(</span><span class="s2">&quot;stop&quot;</span><span class="p">)</span>
+<span class="n">device</span><span class="o">.</span><span class="n">set_run_mode</span><span class="p">(</span><span class="s2">"stop"</span><span class="p">)</span>
 
 <span class="c1"># Plot the EMG data from channel 6 (index 5)</span>
 <span class="k">if</span> <span class="n">emg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">emg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">SAMPLE_RATE</span>
-    <span class="n">plot_figure</span><span class="p">(</span><span class="n">emg</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">t</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;EMG Signal&quot;</span><span class="p">,</span> <span class="n">x_label</span><span class="o">=</span><span class="s2">&quot;Time (s)&quot;</span><span class="p">,</span> <span class="n">y_label</span><span class="o">=</span><span class="s2">&quot;Amplitude (μV)&quot;</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">plot_figure</span><span class="p">(</span><span class="n">emg</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">t</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">"EMG Signal"</span><span class="p">,</span> <span class="n">x_label</span><span class="o">=</span><span class="s2">"Time (s)"</span><span class="p">,</span> <span class="n">y_label</span><span class="o">=</span><span class="s2">"Amplitude (μV)"</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
 <hr class="docutils" />

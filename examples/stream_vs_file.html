@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Comparing RHD File Data to Live TCP Stream &#8212; python-intan 0.2.2 documentation</title>
+    <title>Comparing RHD File Data to Live TCP Stream &#8212; python-intan 0.3.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <script src="../_static/documentation_options.js?v=000c92bf"></script>
+    <script src="../_static/documentation_options.js?v=e259d695"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -50,9 +50,9 @@ This is useful for verifying that your live streaming pipeline matches the saved
 - Plot and visually compare both traces</p>
 <hr class="docutils" />
 <p><strong>Example code:</strong></p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">"""</span>
 <span class="sd">Example: Compare saved .rhd file data to live TCP streamed data from Intan RHX.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">intan.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_rhd_file</span>
@@ -63,34 +63,34 @@ This is useful for verifying that your live streaming pipeline matches the saved
 <span class="n">CHANNEL_INDEX</span> <span class="o">=</span> <span class="mi">15</span>           <span class="c1"># Channel to compare</span>
 
 <span class="c1"># --- 1. Stream data live from RHX device ---</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Connecting to RHX TCP client...&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Connecting to RHX TCP client..."</span><span class="p">)</span>
 <span class="n">device</span> <span class="o">=</span> <span class="n">IntanRHXDevice</span><span class="p">()</span>
-<span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">([</span><span class="n">CHANNEL_INDEX</span><span class="p">],</span> <span class="n">port</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">device</span><span class="o">.</span><span class="n">enable_wide_channel</span><span class="p">([</span><span class="n">CHANNEL_INDEX</span><span class="p">],</span> <span class="n">port</span><span class="o">=</span><span class="s1">'a'</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Streaming data...&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Streaming data..."</span><span class="p">)</span>
 <span class="n">timestamps</span><span class="p">,</span> <span class="n">voltages</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">stream</span><span class="p">(</span><span class="n">duration_sec</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">voltages</span> <span class="o">=</span> <span class="n">voltages</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Use the single channel directly</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ Client data collection complete.&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"✅ Client data collection complete."</span><span class="p">)</span>
 <span class="n">device</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
 <span class="c1"># --- 2. Load same channel from RHD file ---</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading RHD file...&quot;</span><span class="p">)</span>
-<span class="n">RHD_PATH</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;PATH/TO/YOUR_FILE.rhd&quot;</span>  <span class="c1"># &lt;-- Update this path as needed</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Loading RHD file..."</span><span class="p">)</span>
+<span class="n">RHD_PATH</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"PATH/TO/YOUR_FILE.rhd"</span>  <span class="c1"># &lt;-- Update this path as needed</span>
 <span class="n">rhd_result</span> <span class="o">=</span> <span class="n">load_rhd_file</span><span class="p">(</span><span class="n">RHD_PATH</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Shape of emg data: </span><span class="si">{</span><span class="n">rhd_result</span><span class="p">[</span><span class="s1">&#39;amplifier_data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Shape of emg data: </span><span class="si">{</span><span class="n">rhd_result</span><span class="p">[</span><span class="s1">'amplifier_data'</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="n">rhd_data</span> <span class="o">=</span> <span class="n">rhd_result</span><span class="p">[</span><span class="s2">&quot;amplifier_data&quot;</span><span class="p">][</span><span class="n">CHANNEL_INDEX</span><span class="p">,</span> <span class="p">:</span><span class="n">SAMPLES_TO_COMPARE</span><span class="p">]</span>
-<span class="n">fs_rhd</span> <span class="o">=</span> <span class="n">rhd_result</span><span class="p">[</span><span class="s2">&quot;frequency_parameters&quot;</span><span class="p">][</span><span class="s2">&quot;amplifier_sample_rate&quot;</span><span class="p">]</span>
-<span class="n">ts_rhd</span> <span class="o">=</span> <span class="n">rhd_result</span><span class="p">[</span><span class="s2">&quot;t_amplifier&quot;</span><span class="p">][:</span><span class="n">SAMPLES_TO_COMPARE</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;RHD file sampling rate: </span><span class="si">{</span><span class="n">fs_rhd</span><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+<span class="n">rhd_data</span> <span class="o">=</span> <span class="n">rhd_result</span><span class="p">[</span><span class="s2">"amplifier_data"</span><span class="p">][</span><span class="n">CHANNEL_INDEX</span><span class="p">,</span> <span class="p">:</span><span class="n">SAMPLES_TO_COMPARE</span><span class="p">]</span>
+<span class="n">fs_rhd</span> <span class="o">=</span> <span class="n">rhd_result</span><span class="p">[</span><span class="s2">"frequency_parameters"</span><span class="p">][</span><span class="s2">"amplifier_sample_rate"</span><span class="p">]</span>
+<span class="n">ts_rhd</span> <span class="o">=</span> <span class="n">rhd_result</span><span class="p">[</span><span class="s2">"t_amplifier"</span><span class="p">][:</span><span class="n">SAMPLES_TO_COMPARE</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"RHD file sampling rate: </span><span class="si">{</span><span class="n">fs_rhd</span><span class="si">}</span><span class="s2"> Hz"</span><span class="p">)</span>
 
 <span class="c1"># --- 3. Plot both signals ---</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts_rhd</span><span class="p">,</span> <span class="n">rhd_data</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;RHD File&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">voltages</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;Live TCP&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Channel </span><span class="si">{</span><span class="n">CHANNEL_INDEX</span><span class="si">}</span><span class="s2"> — First </span><span class="si">{</span><span class="n">SAMPLES_TO_COMPARE</span><span class="si">}</span><span class="s2"> Samples&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time (s)&quot;</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Amplitude (µV)&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ts_rhd</span><span class="p">,</span> <span class="n">rhd_data</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"RHD File"</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">timestamps</span><span class="p">,</span> <span class="n">voltages</span><span class="p">,</span> <span class="s1">'--'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">"Live TCP"</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Channel </span><span class="si">{</span><span class="n">CHANNEL_INDEX</span><span class="si">}</span><span class="s2"> — First </span><span class="si">{</span><span class="n">SAMPLES_TO_COMPARE</span><span class="si">}</span><span class="s2"> Samples"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Time (s)"</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Amplitude (µV)"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>

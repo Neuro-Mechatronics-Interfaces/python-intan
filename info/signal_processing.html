@@ -5,12 +5,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Signal Processing and Feature Extraction &#8212; python-intan 0.2.2 documentation</title>
+    <title>Signal Processing and Feature Extraction &#8212; python-intan 0.3.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <script src="../_static/documentation_options.js?v=000c92bf"></script>
+    <script src="../_static/documentation_options.js?v=e259d695"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
     <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -76,7 +76,7 @@ All functions are compatible with multi-channel EMG arrays loaded from <cite>.rh
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">intan.processing</span><span class="w"> </span><span class="kn">import</span> <span class="n">envelope_extraction</span>
 
 <span class="c1"># Returns same shape as input</span>
-<span class="n">envelope</span> <span class="o">=</span> <span class="n">envelope_extraction</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;hilbert&#39;</span><span class="p">)</span>
+<span class="n">envelope</span> <span class="o">=</span> <span class="n">envelope_extraction</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">'hilbert'</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -105,7 +105,7 @@ All functions are compatible with multi-channel EMG arrays loaded from <cite>.rh
 
 <span class="c1"># Reduce to 8 principal components</span>
 <span class="n">pca_data</span><span class="p">,</span> <span class="n">explained_var</span> <span class="o">=</span> <span class="n">apply_pca</span><span class="p">(</span><span class="n">emg_data</span><span class="p">,</span> <span class="n">num_components</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Explained variance ratio:&quot;</span><span class="p">,</span> <span class="n">explained_var</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Explained variance ratio:"</span><span class="p">,</span> <span class="n">explained_var</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -139,12 +139,12 @@ All functions are compatible with multi-channel EMG arrays loaded from <cite>.rh
 
 <span class="c1"># Example: compute all features for every channel in a segment</span>
 <span class="n">feats</span> <span class="o">=</span> <span class="n">extract_features</span><span class="p">(</span><span class="n">emg_window</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Feature vector shape:&quot;</span><span class="p">,</span> <span class="n">feats</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Feature vector shape:"</span><span class="p">,</span> <span class="n">feats</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </pre></div>
 </div>
 <hr class="docutils" />
 <p>You can also specify which features to extract:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">feature_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;mean_absolute_value&#39;</span><span class="p">,</span> <span class="s1">&#39;zero_crossings&#39;</span><span class="p">,</span> <span class="s1">&#39;waveform_length&#39;</span><span class="p">]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">feature_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'mean_absolute_value'</span><span class="p">,</span> <span class="s1">'zero_crossings'</span><span class="p">,</span> <span class="s1">'waveform_length'</span><span class="p">]</span>
 <span class="n">feats</span> <span class="o">=</span> <span class="n">extract_features</span><span class="p">(</span><span class="n">emg_window</span><span class="p">,</span> <span class="n">feature_fns</span><span class="o">=</span><span class="n">feature_list</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -186,8 +186,8 @@ All functions are compatible with multi-channel EMG arrays loaded from <cite>.rh
 <span class="n">rms_dry</span> <span class="o">=</span> <span class="n">compute_rms</span><span class="p">(</span><span class="n">emg_dry_filt</span><span class="p">)</span>
 <span class="n">rms_wet</span> <span class="o">=</span> <span class="n">compute_rms</span><span class="p">(</span><span class="n">emg_wet_filt</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dry mean RMS:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rms_dry</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Wet mean RMS:&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rms_wet</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Dry mean RMS:"</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rms_dry</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Wet mean RMS:"</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rms_wet</span><span class="p">))</span>
 </pre></div>
 </div>
 </section>

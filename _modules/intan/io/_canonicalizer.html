@@ -4,12 +4,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>intan.io._canonicalizer &#8212; python-intan 0.2.2 documentation</title>
+    <title>intan.io._canonicalizer &#8212; python-intan 0.3.0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
     <link rel="stylesheet" type="text/css" href="../../../_static/basic.css?v=686e5160" />
     <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=27fed22d" />
     <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
-    <script src="../../../_static/documentation_options.js?v=000c92bf"></script>
+    <script src="../../../_static/documentation_options.js?v=e259d695"></script>
     <script src="../../../_static/doctools.js?v=9bcbadda"></script>
     <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -39,85 +39,85 @@
 
 <span class="c1"># 1) Define your official label set (CamelCase)</span>
 <span class="n">CANON</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;rest&quot;</span><span class="p">:</span> <span class="s2">&quot;Rest&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;handopen&quot;</span><span class="p">:</span> <span class="s2">&quot;HandOpen&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;handclose&quot;</span><span class="p">:</span> <span class="s2">&quot;HandClose&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;fingersopen&quot;</span><span class="p">:</span> <span class="s2">&quot;FingersOpen&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;fingersclose&quot;</span><span class="p">:</span> <span class="s2">&quot;FingersClose&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;indexflexion&quot;</span><span class="p">:</span> <span class="s2">&quot;IndexFlexion&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;indexextension&quot;</span><span class="p">:</span> <span class="s2">&quot;IndexExtension&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;thumbflexion&quot;</span><span class="p">:</span> <span class="s2">&quot;ThumbFlexion&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;thumbextension&quot;</span><span class="p">:</span> <span class="s2">&quot;ThumbExtension&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;middleflexion&quot;</span><span class="p">:</span> <span class="s2">&quot;MiddleFlexion&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;middleextension&quot;</span><span class="p">:</span> <span class="s2">&quot;MiddleExtension&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ringflexion&quot;</span><span class="p">:</span> <span class="s2">&quot;RingFlexion&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ringextension&quot;</span><span class="p">:</span> <span class="s2">&quot;RingExtension&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;pinkyflexion&quot;</span><span class="p">:</span> <span class="s2">&quot;PinkyFlexion&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;pinkyextension&quot;</span><span class="p">:</span> <span class="s2">&quot;PinkyExtension&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;twofingerpinch&quot;</span><span class="p">:</span> <span class="s2">&quot;TwoFingerPinch&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;threefingerchuck&quot;</span><span class="p">:</span> <span class="s2">&quot;ThreeFingerChuck&quot;</span><span class="p">,</span>
+    <span class="s2">"rest"</span><span class="p">:</span> <span class="s2">"Rest"</span><span class="p">,</span>
+    <span class="s2">"handopen"</span><span class="p">:</span> <span class="s2">"HandOpen"</span><span class="p">,</span>
+    <span class="s2">"handclose"</span><span class="p">:</span> <span class="s2">"HandClose"</span><span class="p">,</span>
+    <span class="s2">"fingersopen"</span><span class="p">:</span> <span class="s2">"FingersOpen"</span><span class="p">,</span>
+    <span class="s2">"fingersclose"</span><span class="p">:</span> <span class="s2">"FingersClose"</span><span class="p">,</span>
+    <span class="s2">"indexflexion"</span><span class="p">:</span> <span class="s2">"IndexFlexion"</span><span class="p">,</span>
+    <span class="s2">"indexextension"</span><span class="p">:</span> <span class="s2">"IndexExtension"</span><span class="p">,</span>
+    <span class="s2">"thumbflexion"</span><span class="p">:</span> <span class="s2">"ThumbFlexion"</span><span class="p">,</span>
+    <span class="s2">"thumbextension"</span><span class="p">:</span> <span class="s2">"ThumbExtension"</span><span class="p">,</span>
+    <span class="s2">"middleflexion"</span><span class="p">:</span> <span class="s2">"MiddleFlexion"</span><span class="p">,</span>
+    <span class="s2">"middleextension"</span><span class="p">:</span> <span class="s2">"MiddleExtension"</span><span class="p">,</span>
+    <span class="s2">"ringflexion"</span><span class="p">:</span> <span class="s2">"RingFlexion"</span><span class="p">,</span>
+    <span class="s2">"ringextension"</span><span class="p">:</span> <span class="s2">"RingExtension"</span><span class="p">,</span>
+    <span class="s2">"pinkyflexion"</span><span class="p">:</span> <span class="s2">"PinkyFlexion"</span><span class="p">,</span>
+    <span class="s2">"pinkyextension"</span><span class="p">:</span> <span class="s2">"PinkyExtension"</span><span class="p">,</span>
+    <span class="s2">"twofingerpinch"</span><span class="p">:</span> <span class="s2">"TwoFingerPinch"</span><span class="p">,</span>
+    <span class="s2">"threefingerchuck"</span><span class="p">:</span> <span class="s2">"ThreeFingerChuck"</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="c1"># 2) Add common synonyms / file-name aliases → canonical key (lowercase, no separators)</span>
 <span class="n">SYNONYMS</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;fingersopen&quot;</span><span class="p">:</span> <span class="s2">&quot;handopen&quot;</span><span class="p">,</span>          <span class="c1"># if you want FingersOpen → HandOpen, change target to &quot;fingersopen&quot;</span>
-    <span class="s2">&quot;fingersclose&quot;</span><span class="p">:</span> <span class="s2">&quot;handclose&quot;</span><span class="p">,</span>        <span class="c1"># likewise, set to &quot;fingersclose&quot; if that’s your canonical choice</span>
-    <span class="s2">&quot;resting&quot;</span><span class="p">:</span> <span class="s2">&quot;rest&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;null&quot;</span><span class="p">:</span> <span class="s2">&quot;rest&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;nan&quot;</span><span class="p">:</span> <span class="s2">&quot;rest&quot;</span><span class="p">,</span>                      <span class="c1"># treat missing labels as Rest; change to &quot;unknown&quot; if you prefer</span>
-    <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="s2">&quot;indexflexion&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;index2&quot;</span><span class="p">:</span> <span class="s2">&quot;indexflexion&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;2fingerinch&quot;</span><span class="p">:</span> <span class="s2">&quot;twofingerpinch&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;3fingerchuck&quot;</span><span class="p">:</span> <span class="s2">&quot;threefingerchuck&quot;</span><span class="p">,</span>
+    <span class="s2">"fingersopen"</span><span class="p">:</span> <span class="s2">"handopen"</span><span class="p">,</span>          <span class="c1"># if you want FingersOpen → HandOpen, change target to "fingersopen"</span>
+    <span class="s2">"fingersclose"</span><span class="p">:</span> <span class="s2">"handclose"</span><span class="p">,</span>        <span class="c1"># likewise, set to "fingersclose" if that’s your canonical choice</span>
+    <span class="s2">"resting"</span><span class="p">:</span> <span class="s2">"rest"</span><span class="p">,</span>
+    <span class="s2">"null"</span><span class="p">:</span> <span class="s2">"rest"</span><span class="p">,</span>
+    <span class="s2">"nan"</span><span class="p">:</span> <span class="s2">"rest"</span><span class="p">,</span>                      <span class="c1"># treat missing labels as Rest; change to "unknown" if you prefer</span>
+    <span class="s2">"index"</span><span class="p">:</span> <span class="s2">"indexflexion"</span><span class="p">,</span>
+    <span class="s2">"index2"</span><span class="p">:</span> <span class="s2">"indexflexion"</span><span class="p">,</span>
+    <span class="s2">"2fingerinch"</span><span class="p">:</span> <span class="s2">"twofingerpinch"</span><span class="p">,</span>
+    <span class="s2">"3fingerchuck"</span><span class="p">:</span> <span class="s2">"threefingerchuck"</span><span class="p">,</span>
     <span class="c1"># typos that show up:</span>
-    <span class="s2">&quot;pinkyfelxion&quot;</span><span class="p">:</span> <span class="s2">&quot;pinkyflexion&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;pin kyflexion&quot;</span><span class="p">:</span> <span class="s2">&quot;pinkyflexion&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;pinkyflexon&quot;</span><span class="p">:</span> <span class="s2">&quot;pinkyflexion&quot;</span><span class="p">,</span>
+    <span class="s2">"pinkyfelxion"</span><span class="p">:</span> <span class="s2">"pinkyflexion"</span><span class="p">,</span>
+    <span class="s2">"pin kyflexion"</span><span class="p">:</span> <span class="s2">"pinkyflexion"</span><span class="p">,</span>
+    <span class="s2">"pinkyflexon"</span><span class="p">:</span> <span class="s2">"pinkyflexion"</span><span class="p">,</span>
     <span class="c1"># the one you mentioned (extra space + odd casing is already handled by normalization)</span>
 <span class="p">}</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_normalize_token</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;strip, remove separators, lowercase.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[\s_-]+&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">"""strip, remove separators, lowercase."""</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[\s_-]+"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
 
 <div class="viewcode-block" id="canonical_label">
 <a class="viewcode-back" href="../../../intan_api/intan.io.html#intan.io._canonicalizer.canonical_label">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">canonical_label</span><span class="p">(</span>
     <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;lower&quot;</span><span class="p">,</span>     <span class="c1"># &quot;camel&quot; -&gt; CamelCase name from CANON; &quot;lower&quot; -&gt; canonical key</span>
+    <span class="n">style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"lower"</span><span class="p">,</span>     <span class="c1"># "camel" -&gt; CamelCase name from CANON; "lower" -&gt; canonical key</span>
     <span class="n">allow_fuzzy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">fuzzy_cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.88</span><span class="p">,</span>
     <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>     <span class="c1"># if True, raise on unknown</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Canonicalize a raw label string to your official namespace.</span>
 
-<span class="sd">    - style=&quot;camel&quot;: return CamelCase (e.g., &quot;PinkyFlexion&quot;)</span>
-<span class="sd">    - style=&quot;lower&quot;: return canonical token key (e.g., &quot;pinkyflexion&quot;)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    - style="camel": return CamelCase (e.g., "PinkyFlexion")</span>
+<span class="sd">    - style="lower": return canonical token key (e.g., "pinkyflexion")</span>
+<span class="sd">    """</span>
     <span class="n">tok</span> <span class="o">=</span> <span class="n">_normalize_token</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
     <span class="c1"># map synonyms (including “nan”→rest if you want that behavior)</span>
     <span class="n">tok</span> <span class="o">=</span> <span class="n">SYNONYMS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">tok</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">CANON</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">CANON</span><span class="p">[</span><span class="n">tok</span><span class="p">]</span> <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;camel&quot;</span> <span class="k">else</span> <span class="n">tok</span>
+        <span class="k">return</span> <span class="n">CANON</span><span class="p">[</span><span class="n">tok</span><span class="p">]</span> <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s2">"camel"</span> <span class="k">else</span> <span class="n">tok</span>
 
     <span class="k">if</span> <span class="n">allow_fuzzy</span><span class="p">:</span>
         <span class="c1"># try fuzzy against known keys</span>
         <span class="n">match</span> <span class="o">=</span> <span class="n">difflib</span><span class="o">.</span><span class="n">get_close_matches</span><span class="p">(</span><span class="n">tok</span><span class="p">,</span> <span class="n">CANON</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="n">fuzzy_cutoff</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
             <span class="n">m</span> <span class="o">=</span> <span class="n">match</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">CANON</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;camel&quot;</span> <span class="k">else</span> <span class="n">m</span>
+            <span class="k">return</span> <span class="n">CANON</span><span class="p">[</span><span class="n">m</span><span class="p">]</span> <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s2">"camel"</span> <span class="k">else</span> <span class="n">m</span>
 
     <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown label: </span><span class="si">{</span><span class="n">s</span><span class="si">!r}</span><span class="s2"> → </span><span class="si">{</span><span class="n">tok</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown label: </span><span class="si">{</span><span class="n">s</span><span class="si">!r}</span><span class="s2"> → </span><span class="si">{</span><span class="n">tok</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="c1"># last resort: make a readable CamelCase from the normalized token</span>
     <span class="c1"># (still stable, but not guaranteed to be one of your official classes)</span>
-    <span class="n">fallback_camel</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;([a-z])([0-9])&quot;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;\1 \2&quot;</span><span class="p">,</span> <span class="n">tok</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">fallback_camel</span> <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s2">&quot;camel&quot;</span> <span class="k">else</span> <span class="n">tok</span></div>
+    <span class="n">fallback_camel</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"([a-z])([0-9])"</span><span class="p">,</span> <span class="sa">r</span><span class="s2">"\1 \2"</span><span class="p">,</span> <span class="n">tok</span><span class="p">)</span><span class="o">.</span><span class="n">title</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fallback_camel</span> <span class="k">if</span> <span class="n">style</span> <span class="o">==</span> <span class="s2">"camel"</span> <span class="k">else</span> <span class="n">tok</span></div>
 
 </pre></div>
 
